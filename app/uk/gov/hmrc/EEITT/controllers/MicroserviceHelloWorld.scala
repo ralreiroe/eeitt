@@ -9,7 +9,7 @@ object MicroserviceHelloWorld extends MicroserviceHelloWorld
 
 trait MicroserviceHelloWorld extends BaseController {
 
-	def hello() = Action.async { implicit request =>
-		Future.successful(Ok("Hello world"))
-	}
+  def hello() = Action.async { implicit request =>
+    Future.successful(Ok("Hello world"))
+  }
 }
