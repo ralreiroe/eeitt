@@ -1,4 +1,4 @@
-package uk.gov.hmrc.EEITT.controllers
+package uk.gov.hmrc.eeitt.controllers
 
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._

@@ -1,4 +1,4 @@
-package uk.gov.hmrc.EEITT
+package uk.gov.hmrc.eeitt
 
 import com.typesafe.config.Config
 import play.api.{Application, Configuration, Play}
