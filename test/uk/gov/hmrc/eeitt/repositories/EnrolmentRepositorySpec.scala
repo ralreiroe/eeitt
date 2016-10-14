@@ -43,6 +43,19 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   }
 
+  "lookup enrolments" should {
+
+    "find enrolment by registationNumber" in {
+      insertEnrolment(Enrolment(fakeId, "1", "12LT34", true, "SE39EP"))
+      insertEnrolment(Enrolment(fakeId, "1", "12LT35", true, "SE39XY"))
+      repo.count.futureValue shouldBe 2
+
+      await(repo.lookupEnrolment("12LT35").size) shouldBe 1
+    }
+
+  }
+
+
   def insertEnrolment(enrolment: Enrolment): BSONObjectID = {
     val lease = Enrolment(id = BSONObjectID.generate, enrolment.formTypeRef, enrolment.registrationNumber, enrolment.livesInTheUk, enrolment.postcode)
     await(repo.collection.insert(lease))
