@@ -1,6 +1,7 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.repositories.{ Enrolment, EnrolmentRepository }
+import uk.gov.hmrc.eeitt.model.Enrolment
+import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
 
 import scala.concurrent.Future
 

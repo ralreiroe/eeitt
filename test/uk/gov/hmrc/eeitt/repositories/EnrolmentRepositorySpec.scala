@@ -3,6 +3,7 @@ package uk.gov.hmrc.eeitt.repositories
 import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
 import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import reactivemongo.bson.BSONObjectID
+import uk.gov.hmrc.eeitt.model.Enrolment
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 

@@ -3,20 +3,11 @@ package uk.gov.hmrc.eeitt.repositories
 import play.api.Logger
 import play.api.libs.json.{ Format, JsObject, Json, OFormat }
 import reactivemongo.api.DB
-import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.eeitt.model.Enrolment
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
-case class Enrolment(id: BSONObjectID, formId: String, registrationId: String, postalCode: String)
-
-object Enrolment {
-  private implicit val BSONObjectIDFormat = ReactiveMongoFormats.objectIdFormats
-  implicit val mongoFormats: Format[Enrolment] = Json.format[Enrolment]
-  implicit val oFormat: OFormat[Enrolment] = Json.format[Enrolment]
-}
 
 class EnrolmentRepository(implicit mongo: () => DB) extends ReactiveRepository[Enrolment, String]("enrolments", mongo, Enrolment.mongoFormats, implicitly[Format[String]]) {
 
