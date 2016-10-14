@@ -21,9 +21,9 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
   "query all enrolments" should {
 
     "produce all enrolments from repository" in {
-      insertEnrolment(Enrolment(fakeId, "1", "12LT31", "SE39EP"))
-      insertEnrolment(Enrolment(fakeId, "2", "12LT32", "SE39XY"))
-      insertEnrolment(Enrolment(fakeId, "3", "12LT33", "SE39XZ"))
+      insertEnrolment(Enrolment(fakeId, "1", "12LT31", true, "SE39EP"))
+      insertEnrolment(Enrolment(fakeId, "2", "12LT32", true, "SE39XY"))
+      insertEnrolment(Enrolment(fakeId, "3", "12LT33", true, "SE39XZ"))
       repo.count.futureValue shouldBe 3
 
       await(repo.getAllEnrolments().size) shouldBe 3
@@ -34,8 +34,8 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
   "query all enrolments for form id" should {
 
     "produce enrolments from repository" in {
-      insertEnrolment(Enrolment(fakeId, "1", "12LT34", "SE39EP"))
-      insertEnrolment(Enrolment(fakeId, "1", "12LT35", "SE39XY"))
+      insertEnrolment(Enrolment(fakeId, "1", "12LT34", true, "SE39EP"))
+      insertEnrolment(Enrolment(fakeId, "1", "12LT35", true, "SE39XY"))
       repo.count.futureValue shouldBe 2
 
       await(repo.getAllEnrolmentsWithFormId("1").size) shouldBe 2
@@ -44,7 +44,7 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
   }
 
   def insertEnrolment(enrolment: Enrolment): BSONObjectID = {
-    val lease = Enrolment(id = BSONObjectID.generate, enrolment.formId, enrolment.registrationId, enrolment.postalCode)
+    val lease = Enrolment(id = BSONObjectID.generate, enrolment.formTypeRef, enrolment.registrationNumber, enrolment.livesInTheUk, enrolment.postcode)
     await(repo.collection.insert(lease))
     lease.id
   }
