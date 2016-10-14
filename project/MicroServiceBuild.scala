@@ -51,7 +51,11 @@ private object AppDependencies {
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
         "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
-        "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
+        "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
+        "uk.gov.hmrc" %% "auth-test" % "2.4.0" % scope,
+        "uk.gov.hmrc" %% "reactivemongo-test" % "1.6.0" % scope,
+        "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
+        "org.mockito" % "mockito-all" % "1.9.5" % "test"
       )
     }.test
   }
@@ -65,7 +69,9 @@ private object AppDependencies {
         "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
         "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
-        "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
+        "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
+        "uk.gov.hmrc" %% "auth-test" % "2.4.0" % scope,
+        "uk.gov.hmrc" %% "reactivemongo-test" % "1.6.0" % scope
       )
     }.test
   }
