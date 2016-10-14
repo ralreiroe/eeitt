@@ -1,4 +1,4 @@
-package uk.gov.hmrc.EEITT.controllers
+package uk.gov.hmrc.eeitt.controllers
 
 import play.api.http.Status
 import play.api.test.FakeRequest

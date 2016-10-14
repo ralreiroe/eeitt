@@ -1,4 +1,4 @@
-package uk.gov.hmrc.EEITT
+package uk.gov.hmrc.eeitt
 
 import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
