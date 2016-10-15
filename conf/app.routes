@@ -1,5 +1,4 @@
 # microservice specific routes
 
-GET        /hello             uk.gov.hmrc.eeitt.controllers.MicroserviceHelloWorld.hello
-GET        /enrolments        uk.gov.hmrc.eeitt.controllers.EnrolmentController.enrolments
+GET        /ping              uk.gov.hmrc.eeitt.controllers.MicroservicePing.ping
 POST       /verify            uk.gov.hmrc.eeitt.controllers.EnrolmentController.verify

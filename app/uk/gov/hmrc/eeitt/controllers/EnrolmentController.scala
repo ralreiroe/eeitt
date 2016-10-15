@@ -5,30 +5,24 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.services.EnrolmentStoreService
+import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
 
 import scala.concurrent.Future
 
 object EnrolmentController extends EnrolmentController {
-  val enrolmentStoreService = EnrolmentStoreService
+  val enrolmentStoreService = EnrolmentVerificationService
 }
 
 trait EnrolmentController extends BaseController {
 
   this: BaseController =>
 
-  val enrolmentStoreService: EnrolmentStoreService
-
-  def enrolments() = Action.async { implicit request =>
-    enrolmentStoreService.getEnrolments().map {
-      enrolmentList => Ok(Json.toJson(enrolmentList))
-    }
-  }
+  val enrolmentStoreService: EnrolmentVerificationService
 
   def verify() = Action.async(parse.json) { implicit request =>
     request.body.validate[EnrolmentVerificationRequest] match {
       case JsSuccess(req, _) =>
-        enrolmentStoreService.lookupEnrolment(req) map (response => Ok(Json.toJson(response)))
+        enrolmentStoreService.verify(req) map (response => Ok(Json.toJson(response)))
       case JsError(errs) =>
         Future(BadRequest(Json.toJson(IncorrectRequest)))
     }

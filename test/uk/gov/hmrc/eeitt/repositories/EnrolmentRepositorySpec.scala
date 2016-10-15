@@ -31,9 +31,9 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   }
 
-  "query all enrolments for form id" should {
+  "query enrolments with a form type" should {
 
-    "produce enrolments from repository" in {
+    "produce all enrolments from repository with a given form type" in {
       insertEnrolment(Enrolment(fakeId, "1", "12LT34", true, "SE39EP"))
       insertEnrolment(Enrolment(fakeId, "1", "12LT35", true, "SE39XY"))
       repo.count.futureValue shouldBe 2
@@ -43,9 +43,9 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   }
 
-  "lookup enrolments" should {
+  "lookup enrolments by registration number " should {
 
-    "find enrolment by registationNumber" in {
+    "find enrolment with a given registration number" in {
       insertEnrolment(Enrolment(fakeId, "1", "12LT34", true, "SE39EP"))
       insertEnrolment(Enrolment(fakeId, "1", "12LT35", true, "SE39XY"))
       repo.count.futureValue shouldBe 2
