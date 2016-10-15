@@ -2,3 +2,4 @@
 
 GET        /hello             uk.gov.hmrc.eeitt.controllers.MicroserviceHelloWorld.hello
 GET        /enrolments        uk.gov.hmrc.eeitt.controllers.EnrolmentController.enrolments
+POST       /verify            uk.gov.hmrc.eeitt.controllers.EnrolmentController.verify

@@ -4,7 +4,7 @@ import play.api.libs.json.{ JsError, JsSuccess, Json }
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import play.api.mvc._
-import uk.gov.hmrc.eeitt.model.{ Enrolment, IncorrectRequest, EnrolmentResponseOk, EnrolmentVerificationRequest }
+import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.services.EnrolmentStoreService
 
 import scala.concurrent.Future
@@ -27,8 +27,10 @@ trait EnrolmentController extends BaseController {
 
   def verify() = Action.async(parse.json) { implicit request =>
     request.body.validate[EnrolmentVerificationRequest] match {
-      case JsSuccess(req, _) => Future(Ok(Json.toJson(EnrolmentResponseOk)))
-      case JsError(errs) => Future(BadRequest(Json.toJson(IncorrectRequest)))
+      case JsSuccess(req, _) =>
+        enrolmentStoreService.lookupEnrolment(req) map (response => Ok(Json.toJson(response)))
+      case JsError(errs) =>
+        Future(BadRequest(Json.toJson(IncorrectRequest)))
     }
   }
 

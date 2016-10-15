@@ -14,7 +14,7 @@ trait EnrolmentStoreService {
     enrolmentRepo.getAllEnrolments()
   }
 
-  def lookupEnrolment(enrolment: Enrolment): Future[EnrolmentResponse] = {
+  def lookupEnrolment(enrolment: EnrolmentVerificationRequest): Future[EnrolmentResponse] = {
     enrolmentRepo.lookupEnrolment(enrolment.registrationNumber).map { enrolments =>
       enrolments match {
         case Nil => EnrolmentResponseNotFound
