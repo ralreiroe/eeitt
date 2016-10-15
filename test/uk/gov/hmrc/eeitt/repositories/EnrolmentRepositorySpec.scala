@@ -55,7 +55,6 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   }
 
-
   def insertEnrolment(enrolment: Enrolment): BSONObjectID = {
     val lease = Enrolment(id = BSONObjectID.generate, enrolment.formTypeRef, enrolment.registrationNumber, enrolment.livesInTheUk, enrolment.postcode)
     await(repo.collection.insert(lease))

@@ -1,11 +1,19 @@
 package uk.gov.hmrc.eeitt.model
 
-case class EnrolmentResponse(ok:Boolean, response: Option[String])
+import play.api.libs.json.{ Format, Json }
+
+case class EnrolmentResponse(ok: Boolean, response: Option[String])
 
 object EnrolmentResponseNotFound extends EnrolmentResponse(false, Some("not found"))
 
 object EnrolmentResponseOk extends EnrolmentResponse(true, None)
 
-object EnrolmentResponseMultipleFound extends EnrolmentResponse(false, Some("more than one record found"))
+object MultipleFound extends EnrolmentResponse(false, Some("more than one record found"))
 
-object EnrolmentResponseLookupProblem extends EnrolmentResponse(false, Some("lookup problem"))
+object LookupProblem extends EnrolmentResponse(false, Some("lookup problem"))
+
+object IncorrectRequest extends EnrolmentResponse(false, Some("incorrect request"))
+
+object EnrolmentResponse {
+  implicit val enrolmentResponseFormat: Format[EnrolmentResponse] = Json.format[EnrolmentResponse]
+}

@@ -15,12 +15,12 @@ trait EnrolmentStoreService {
   }
 
   def lookupEnrolment(enrolment: Enrolment): Future[EnrolmentResponse] = {
-    enrolmentRepo.lookupEnrolment(enrolment.registrationNumber).map{ enrolments =>
-        enrolments match {
-          case Nil => EnrolmentResponseNotFound
-          case x::Nil => EnrolmentResponseOk
-          case xs if xs.size > 1 => EnrolmentResponseMultipleFound
-          case _ => EnrolmentResponseLookupProblem
+    enrolmentRepo.lookupEnrolment(enrolment.registrationNumber).map { enrolments =>
+      enrolments match {
+        case Nil => EnrolmentResponseNotFound
+        case x :: Nil => EnrolmentResponseOk
+        case xs if xs.size > 1 => MultipleFound
+        case _ => LookupProblem
       }
     }
   }

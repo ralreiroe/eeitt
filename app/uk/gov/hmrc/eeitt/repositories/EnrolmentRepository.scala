@@ -21,7 +21,7 @@ class EnrolmentRepository(implicit mongo: () => DB) extends ReactiveRepository[E
     collection.find(Json.obj("formTypeRef" -> formTypeRef)).cursor[Enrolment].collect[List]()
   }
 
-  def lookupEnrolment(registrationNumber:String): Future[List[Enrolment]] = withCurrentTime { now =>
+  def lookupEnrolment(registrationNumber: String): Future[List[Enrolment]] = withCurrentTime { now =>
     Logger.debug(s"lookup enrolment with registration number '$registrationNumber'")
     collection.find(Json.obj("registrationNumber" -> registrationNumber)).cursor[Enrolment].collect[List]()
   }

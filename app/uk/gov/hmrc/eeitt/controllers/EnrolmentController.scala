@@ -1,24 +1,34 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import play.api.libs.json.Json
+import play.api.libs.json.{ JsError, JsSuccess, Json }
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import play.api.mvc._
-import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.Enrolment
+import uk.gov.hmrc.eeitt.model.{ Enrolment, IncorrectRequest, EnrolmentResponseOk, EnrolmentVerificationRequest }
 import uk.gov.hmrc.eeitt.services.EnrolmentStoreService
 
 import scala.concurrent.Future
 
-object EnrolmentController extends EnrolmentController
+object EnrolmentController extends EnrolmentController {
+  val enrolmentStoreService = EnrolmentStoreService
+}
 
 trait EnrolmentController extends BaseController {
 
-  val enrolmentStoreService = EnrolmentStoreService
+  this: BaseController =>
+
+  val enrolmentStoreService: EnrolmentStoreService
 
   def enrolments() = Action.async { implicit request =>
     enrolmentStoreService.getEnrolments().map {
       enrolmentList => Ok(Json.toJson(enrolmentList))
+    }
+  }
+
+  def verify() = Action.async(parse.json) { implicit request =>
+    request.body.validate[EnrolmentVerificationRequest] match {
+      case JsSuccess(req, _) => Future(Ok(Json.toJson(EnrolmentResponseOk)))
+      case JsError(errs) => Future(BadRequest(Json.toJson(IncorrectRequest)))
     }
   }
 
