@@ -4,15 +4,15 @@ import play.api.http.Status
 import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 
-class MicroservicePingSpec extends UnitSpec with WithFakeApplication {
+class MicroserviceHelloWorldSpec extends UnitSpec with WithFakeApplication {
 
-  val fakeRequest = FakeRequest("GET", "/ping")
+  val fakeRequest = FakeRequest("GET", "/hello")
 
-  "GET /ping" should {
+  "GET /hello" should {
     "return 200 and text pong" in {
-      val result = MicroservicePing.ping()(fakeRequest)
+      val result = MicroserviceHelloWorld.hello()(fakeRequest)
       status(result) shouldBe Status.OK
-      bodyOf(await(result)) shouldBe "pong"
+      bodyOf(await(result)) shouldBe "HelloWorld"
     }
   }
 

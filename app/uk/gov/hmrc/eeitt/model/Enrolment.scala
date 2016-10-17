@@ -6,7 +6,7 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 //import scala.util.matching.Regex
 
-case class Enrolment(id: BSONObjectID, formTypeRef: String, registrationNumber: String, livesInTheUk: Boolean, postcode: String) {
+case class Enrolment(_id: BSONObjectID, formTypeRef: String, registrationNumber: String, livesInTheUk: Boolean, postcode: String) {
 
   //  def is = Enrolment.table.contains(this)
   //  def isRegistrationNumberOk = registrationNumber.contains(formTypeRef)

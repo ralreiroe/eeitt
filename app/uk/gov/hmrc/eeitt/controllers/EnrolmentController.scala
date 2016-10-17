@@ -6,6 +6,7 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
+import play.api.Logger
 
 import scala.concurrent.Future
 
@@ -24,6 +25,7 @@ trait EnrolmentController extends BaseController {
       case JsSuccess(req, _) =>
         enrolmentStoreService.verify(req) map (response => Ok(Json.toJson(response)))
       case JsError(errs) =>
+        Logger.debug(s"incorrect request: $errs")
         Future(BadRequest(Json.toJson(IncorrectRequest)))
     }
   }
