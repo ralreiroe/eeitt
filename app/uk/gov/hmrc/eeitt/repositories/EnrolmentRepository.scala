@@ -1,7 +1,7 @@
 package uk.gov.hmrc.eeitt.repositories
 
 import play.api.Logger
-import play.api.libs.json.{ Format, JsObject, Json, OFormat }
+import play.api.libs.json.Format
 import reactivemongo.api.DB
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.eeitt.model.Enrolment
@@ -12,12 +12,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class EnrolmentRepository(implicit mongo: () => DB) extends ReactiveRepository[Enrolment, String]("enrolments", mongo, Enrolment.mongoFormats, implicitly[Format[String]]) {
 
   def getAllEnrolments(): Future[List[Enrolment]] = withCurrentTime { now =>
-    Logger.debug(s"retrieve all enrolments")
+    Logger.debug(s"retrieve all enrolments in database ${collection.db.name}")
     findAll()
   }
 
-  def getAllEnrolmentsWithFormId(formTypeRef: String): Future[List[Enrolment]] = withCurrentTime { now =>
-    Logger.debug(s"retrieve all enrolments for form ID '$formTypeRef'")
+  def getAllEnrolmentsWithFormType(formTypeRef: String): Future[List[Enrolment]] = withCurrentTime { now =>
+    Logger.debug(s"retrieve all enrolments for form ID '$formTypeRef' in database ${collection.db.name}")
     find(("formTypeRef", formTypeRef))
   }
 

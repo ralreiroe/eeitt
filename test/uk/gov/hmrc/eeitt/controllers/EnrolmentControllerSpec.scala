@@ -48,7 +48,4 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Moc
     }
   }
 
-  /**
-   * TODO test optionality of zip code
-   */
 }
