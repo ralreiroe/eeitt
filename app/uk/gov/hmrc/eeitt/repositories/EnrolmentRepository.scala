@@ -13,17 +13,17 @@ class EnrolmentRepository(implicit mongo: () => DB) extends ReactiveRepository[E
 
   def getAllEnrolments(): Future[List[Enrolment]] = withCurrentTime { now =>
     Logger.debug(s"retrieve all enrolments")
-    collection.find(Json.obj()).cursor[Enrolment].collect[List]()
+    findAll()
   }
 
   def getAllEnrolmentsWithFormId(formTypeRef: String): Future[List[Enrolment]] = withCurrentTime { now =>
     Logger.debug(s"retrieve all enrolments for form ID '$formTypeRef'")
-    collection.find(Json.obj("formTypeRef" -> formTypeRef)).cursor[Enrolment].collect[List]()
+    find(("formTypeRef", formTypeRef))
   }
 
   def lookupEnrolment(registrationNumber: String): Future[List[Enrolment]] = withCurrentTime { now =>
     Logger.debug(s"lookup enrolment with registration number '$registrationNumber' in database ${collection.db.name}")
-    collection.find(Json.obj("registrationNumber" -> registrationNumber)).cursor[Enrolment].collect[List]()
+    find(("registrationNumber", registrationNumber))
   }
 
 }
