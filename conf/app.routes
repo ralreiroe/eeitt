@@ -1,4 +1,3 @@
 # microservice specific routes
 
-GET        /hello             uk.gov.hmrc.eeitt.controllers.MicroserviceHelloWorld.hello
 POST       /verify            uk.gov.hmrc.eeitt.controllers.EnrolmentController.verify
