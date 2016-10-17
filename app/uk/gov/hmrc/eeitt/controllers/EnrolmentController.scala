@@ -14,9 +14,6 @@ object EnrolmentController extends EnrolmentController {
 }
 
 trait EnrolmentController extends BaseController {
-
-  this: BaseController =>
-
   val enrolmentVerificationService: EnrolmentVerificationService
 
   def verify() = Action.async(parse.json) { implicit request =>
@@ -27,5 +24,4 @@ trait EnrolmentController extends BaseController {
         Future(BadRequest(Json.toJson(ResponseNotFound)))
     }
   }
-
 }
