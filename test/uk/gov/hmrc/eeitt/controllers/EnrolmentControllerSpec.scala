@@ -5,6 +5,7 @@ import play.api.http.Status
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
 import reactivemongo.bson.BSONObjectID
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ RESPONSE_OK, RESPONSE_NOT_FOUND, RESPONSE_DIFFERENT_FORM_TYPE }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
@@ -31,19 +32,19 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Moc
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "foo", true, "SE39EP")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(ResponseOk)
+      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_OK))
     }
     "return 200 and error response for unsuccessful verification" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "12LT32", true, "SE39EP")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(ResponseNotFound)
+      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_NOT_FOUND))
     }
     "return 200 and correct error response when registration found but for wrong form type" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("2", "foo", true, "SE39EP")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RegisteredForDifferentFormType)
+      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_DIFFERENT_FORM_TYPE))
     }
   }
 

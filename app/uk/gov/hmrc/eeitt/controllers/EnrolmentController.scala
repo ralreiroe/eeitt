@@ -1,9 +1,10 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import play.api.libs.json.{ JsError, JsSuccess, Json }
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import play.api.mvc._
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.RESPONSE_NOT_FOUND
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
 
@@ -21,7 +22,7 @@ trait EnrolmentController extends BaseController {
       case JsSuccess(req, _) =>
         enrolmentVerificationService.verify(req) map (response => Ok(Json.toJson(response)))
       case JsError(errs) =>
-        Future(BadRequest(Json.toJson(ResponseNotFound)))
+        Future(BadRequest(Json.toJson(EnrolmentVerificationResponse(RESPONSE_NOT_FOUND))))
     }
   }
 }
