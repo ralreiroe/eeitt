@@ -23,7 +23,7 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Moc
   }
 
   object TestEnrolmentController extends EnrolmentController {
-    val enrolmentStoreService = TestEnrolmentStoreService
+    val enrolmentVerificationService = TestEnrolmentStoreService
   }
 
   "POST /verify" should {
@@ -31,13 +31,13 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Moc
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "foo", true, "SE39EP")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentResponseOk)
+      jsonBodyOf(await(result)) shouldBe toJson(ResponseOk)
     }
     "return 200 and error response for unsuccessful verification" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "12LT32", true, "SE39EP")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentResponseNotFound)
+      jsonBodyOf(await(result)) shouldBe toJson(ResponseNotFound)
     }
     "return 200 and correct error response when registration found but for wrong form type" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("2", "foo", true, "SE39EP")))

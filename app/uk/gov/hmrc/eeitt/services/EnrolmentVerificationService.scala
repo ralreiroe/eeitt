@@ -10,19 +10,18 @@ trait EnrolmentVerificationService {
 
   def enrolmentRepo: EnrolmentRepository
 
-  def verify(enrolmentRequest: EnrolmentVerificationRequest): Future[EnrolmentResponse] = {
+  def verify(enrolmentRequest: EnrolmentVerificationRequest): Future[EnrolmentVerificationResponse] = {
     enrolmentRepo.lookupEnrolment(enrolmentRequest.registrationNumber).map { enrolments =>
       enrolments match {
-        case Nil => EnrolmentResponseNotFound
-        case x :: Nil => doVerify(enrolmentRequest, x)
-        case _ => LookupProblem
+        case Nil => ResponseNotFound
+        case x :: xs => doVerify(enrolmentRequest, x)
       }
     }
   }
 
-  private def doVerify(enrolmentRequest: EnrolmentVerificationRequest, enrolmentFound: Enrolment): EnrolmentResponse = {
+  private def doVerify(enrolmentRequest: EnrolmentVerificationRequest, enrolmentFound: Enrolment): EnrolmentVerificationResponse = {
     if (enrolmentFound.formTypeRef != enrolmentRequest.formTypeRef) RegisteredForDifferentFormType
-    else EnrolmentResponseOk
+    else ResponseOk
   }
 }
 
