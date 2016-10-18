@@ -1,6 +1,6 @@
 # EEITT
 
-[![Build Status](https://travis-ci.org/hmrc/EEITT.svg)](https://travis-ci.org/hmrc/EEITT) [ ![Download](https://api.bintray.com/packages/hmrc/releases/EEITT/images/download.svg) ](https://bintray.com/hmrc/releases/EEITT/_latestVersion)
+[![Build Status](https://travis-ci.org/hmrc/eeitt.svg)](https://travis-ci.org/hmrc/eeitt) [ ![Download](https://api.bintray.com/packages/hmrc/releases/eeitt/images/download.svg) ](https://bintray.com/hmrc/releases/eeitt/_latestVersion)
 
 This is the backend for the EEITT microservice.
 
