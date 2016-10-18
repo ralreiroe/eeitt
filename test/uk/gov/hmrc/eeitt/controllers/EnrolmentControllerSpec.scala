@@ -1,17 +1,17 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import org.specs2.matcher.{MustExpectations, NumericMatchers}
+import org.specs2.matcher.{ MustExpectations, NumericMatchers }
 import org.specs2.mock.Mockito
 import play.api.http.Status
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.json.Json._
-import play.api.test.{FakeRequest, Helpers}
+import play.api.test.{ FakeRequest, Helpers }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{RESPONSE_DIFFERENT_FORM_TYPE, RESPONSE_NOT_FOUND, RESPONSE_OK}
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ RESPONSE_DIFFERENT_FORM_TYPE, RESPONSE_NOT_FOUND, RESPONSE_OK }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 
 import scala.concurrent.Future
 

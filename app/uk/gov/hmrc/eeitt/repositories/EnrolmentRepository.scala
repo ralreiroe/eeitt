@@ -9,7 +9,7 @@ import uk.gov.hmrc.eeitt.model.Enrolment
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EnrolmentRepository(implicit mongo: () => DB) extends ReactiveRepository[Enrolment, String]("enrolments", mongo, Enrolment.mongoFormats, implicitly[Format[String]]) {
+class EnrolmentRepository(implicit mongo: () => DB) extends ReactiveRepository[Enrolment, String]("enrolments", mongo, Enrolment.oFormat, implicitly[Format[String]]) {
 
   def getAllEnrolments(): Future[List[Enrolment]] = withCurrentTime { now =>
     Logger.debug(s"retrieve all enrolments in database ${collection.db.name}")

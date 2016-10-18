@@ -8,7 +8,6 @@ case class Enrolment(_id: BSONObjectID, formTypeRef: String, registrationNumber:
 
 object Enrolment {
   private implicit val BSONObjectIDFormat = ReactiveMongoFormats.objectIdFormats
-  implicit val mongoFormats: Format[Enrolment] = Json.format[Enrolment]
   implicit val oFormat: OFormat[Enrolment] = Json.format[Enrolment]
 }
 
