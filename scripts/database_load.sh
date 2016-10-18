@@ -1,1 +1,1 @@
-mongoimport --db EEITT --collection enrolments --file data.json
+mongoimport --db EEITT --collection enrolments --drop --file data.json

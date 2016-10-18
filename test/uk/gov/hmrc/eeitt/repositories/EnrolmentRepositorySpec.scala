@@ -24,9 +24,8 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
       insertEnrolment(Enrolment(fakeId, "1", "12LT31", true, "SE39EP"))
       insertEnrolment(Enrolment(fakeId, "2", "12LT32", true, "SE39XY"))
       insertEnrolment(Enrolment(fakeId, "3", "12LT33", true, "SE39XZ"))
-      repo.count.futureValue shouldBe 3
-
-      await(repo.getAllEnrolments().size) shouldBe 3
+      await(repo.count) shouldBe 3
+      await(repo.getAllEnrolments()).size shouldBe 3
     }
 
   }
@@ -36,9 +35,8 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
     "produce all enrolments from repository with a given form type" in {
       insertEnrolment(Enrolment(fakeId, "1", "12LT34", true, "SE39EP"))
       insertEnrolment(Enrolment(fakeId, "1", "12LT35", true, "SE39XY"))
-      repo.count.futureValue shouldBe 2
-
-      await(repo.getAllEnrolmentsWithFormId("1").size) shouldBe 2
+      await(repo.count) shouldBe 2
+      await(repo.getAllEnrolmentsWithFormType("1")).size shouldBe 2
     }
 
   }
@@ -48,17 +46,16 @@ class EnrolmentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
     "find enrolment with a given registration number" in {
       insertEnrolment(Enrolment(fakeId, "1", "12LT34", true, "SE39EP"))
       insertEnrolment(Enrolment(fakeId, "1", "12LT35", true, "SE39XY"))
-      repo.count.futureValue shouldBe 2
-
-      await(repo.lookupEnrolment("12LT35").size) shouldBe 1
+      await(repo.count) shouldBe 2
+      await(repo.lookupEnrolment("12LT35")).size shouldBe 1
     }
 
   }
 
   def insertEnrolment(enrolment: Enrolment): BSONObjectID = {
-    val lease = Enrolment(_id = BSONObjectID.generate, enrolment.formTypeRef, enrolment.registrationNumber, enrolment.livesInTheUk, enrolment.postcode)
-    await(repo.collection.insert(lease))
-    lease._id
+    val e = Enrolment(_id = BSONObjectID.generate, enrolment.formTypeRef, enrolment.registrationNumber, enrolment.livesInTheUk, enrolment.postcode)
+    await(repo.collection.insert(e))
+    e._id
   }
 
 }
