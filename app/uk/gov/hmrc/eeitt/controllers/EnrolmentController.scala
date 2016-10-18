@@ -5,7 +5,6 @@ import play.api.libs.json.{ JsError, JsSuccess, Json }
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import play.api.mvc._
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.RESPONSE_NOT_FOUND
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
 
@@ -22,9 +21,9 @@ trait EnrolmentController extends BaseController {
     request.body.validate[EnrolmentVerificationRequest] match {
       case JsSuccess(req, _) =>
         enrolmentVerificationService.verify(req) map (response => Ok(Json.toJson(response)))
-      case JsError(errs) =>
-        Logger.debug(s"incorrect request: ${errs} ")
-        Future(BadRequest(Json.toJson(EnrolmentVerificationResponse(RESPONSE_NOT_FOUND))))
+      case JsError(jsonErrors) =>
+        Logger.debug(s"incorrect request: ${jsonErrors} ")
+        Future(BadRequest(Json.obj("status" -> 400, "message" -> JsError.toFlatJson(jsonErrors))))
     }
   }
 }
