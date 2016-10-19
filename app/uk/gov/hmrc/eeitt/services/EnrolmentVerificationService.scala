@@ -24,6 +24,7 @@ trait EnrolmentVerificationService {
     EnrolmentVerificationResponse((request, enrolment) match {
       case DifferentPostcodes() => INCORRECT_POSTCODE
       case DifferentFormTypes() => INCORRECT_REGIME
+      case DifferentArns() => INCORRECT_REGIME
       case _ => RESPONSE_OK
     })
   }
@@ -38,6 +39,12 @@ trait EnrolmentVerificationService {
   object DifferentFormTypes {
     def unapply(p: (EnrolmentVerificationRequest, Enrolment)): Boolean = p match {
       case (r, e) => r.formTypeRef != e.formTypeRef
+    }
+  }
+
+  object DifferentArns {
+    def unapply(p: (EnrolmentVerificationRequest, Enrolment)): Boolean = p match {
+      case (r, e) => r.maybeArn != e.maybeArn
     }
   }
 

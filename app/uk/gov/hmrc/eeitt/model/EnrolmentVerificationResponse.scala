@@ -10,4 +10,5 @@ object EnrolmentVerificationResponse {
   val RESPONSE_NOT_FOUND = Some("not found")
   val INCORRECT_REGIME = Some("incorrect regime")
   val INCORRECT_POSTCODE = Some("incorrect postcode")
+  val INCORRECT_ARN = Some("incorrect ARN")
 }
