@@ -9,4 +9,5 @@ object EnrolmentVerificationResponse {
   val RESPONSE_OK = None
   val RESPONSE_NOT_FOUND = Some("not found")
   val RESPONSE_DIFFERENT_FORM_TYPE = Some("registered for different form type")
+  val INCORRECT_POSTCODE = Some("incorrect postcode")
 }

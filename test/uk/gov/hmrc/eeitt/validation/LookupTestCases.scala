@@ -3,7 +3,7 @@ package uk.gov.hmrc.eeitt.validation
 import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
 import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.RESPONSE_NOT_FOUND
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{RESPONSE_OK,RESPONSE_NOT_FOUND,INCORRECT_POSTCODE}
 import uk.gov.hmrc.eeitt.model.{ Enrolment, EnrolmentVerificationRequest, EnrolmentVerificationResponse }
 import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
@@ -31,10 +31,9 @@ class LookupTestCases extends UnitSpec with MongoSpecSupport with BeforeAndAfter
 
   /**
    * Cases 7 and 11
-   * Also included in the below test cases is the usage of a business user with an agent but filing the return themselves.
    */
   "Look up enrollments by registration number with incorrect registration number" should {
-    "produce registration number incorrect response" in {
+    "produce 'registration number incorrect' response" in {
       insertEnrolment(Enrolment(fakeId, "Aggregate Levy", "AL1111111111111", true, "ME1 9AB"))
       repo.count.futureValue shouldBe 1
 
@@ -44,15 +43,26 @@ class LookupTestCases extends UnitSpec with MongoSpecSupport with BeforeAndAfter
     }
   }
 
-  //  "Look up enrollments using the postcode" should{
-  //    "Find record using the post code" in {
-  //      insertEnrolment(Enrolment(fakeId, "Aggregate Levy", "AL9876543210123", true, "ME1 9AB"))
-  //      insertEnrolment(Enrolment(fakeId, "Aggregate Levy", "AL9876543210123", true, "N12 6FG"))
-  //
-  //      repo.count.futureValue shouldBe 2
-  //    }
-  //  }
-  //
+  /**
+    * Cases 8 and 12
+    */
+  "Look up enrollments by registration number" should{
+    "produce wrong postcode response when stored postcode is different than requested postcode" in {
+      insertEnrolment(Enrolment(fakeId, "Aggregate Levy", "AL9876543210123", true, "ME1 9AB"))
+      repo.count.futureValue shouldBe 1
+
+      val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", true, "N12 6FG"))
+      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_POSTCODE)
+    }
+    "produce successful response when stored postcode is in different format than requested postcode" in {
+      insertEnrolment(Enrolment(fakeId, "Aggregate Levy", "AL9876543210123", true, "ME1 9AB"))
+      repo.count.futureValue shouldBe 1
+
+      val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", true, "me19ab"))
+      response.futureValue shouldBe EnrolmentVerificationResponse(RESPONSE_OK)
+    }
+  }
+
   //  "Lookup the tax that the business is enrolled to even though this may not be the one they expect to be enrolled to" should {
   //    "Find the correct tax that the customer is enrolled to" in {
   //      insertEnrolment(Enrolment(fakeId, "Bingo Tax", "AL9876543210123", true ,"ME1 9AB"))

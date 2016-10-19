@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ RESPONSE_OK, RESPONSE_NOT_FOUND, RESPONSE_DIFFERENT_FORM_TYPE }
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ RESPONSE_OK, RESPONSE_NOT_FOUND, RESPONSE_DIFFERENT_FORM_TYPE, INCORRECT_POSTCODE }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
 
@@ -20,14 +20,30 @@ trait EnrolmentVerificationService {
     }
   }
 
-  private def doVerify(enrolmentRequest: EnrolmentVerificationRequest, enrolmentFound: Enrolment): EnrolmentVerificationResponse = {
-    enrolmentFound.formTypeRef match {
-      case enrolmentRequest.formTypeRef => EnrolmentVerificationResponse(RESPONSE_OK)
-      case _ => EnrolmentVerificationResponse(RESPONSE_DIFFERENT_FORM_TYPE)
+  private def doVerify(request: EnrolmentVerificationRequest, enrolment: Enrolment): EnrolmentVerificationResponse = {
+    EnrolmentVerificationResponse((request, enrolment) match {
+      case DifferentPostcodes() => INCORRECT_POSTCODE
+      case DifferentFormTypes() => RESPONSE_DIFFERENT_FORM_TYPE
+      case _ => RESPONSE_OK
+    })
+  }
+
+  object DifferentPostcodes {
+    def unapply(p: (EnrolmentVerificationRequest, Enrolment)):Boolean = p match {
+      case(r,e) => normalize(r.postcode) !=  normalize(e.postcode)
+    }
+    private def normalize(p:String) = p.trim.toUpperCase.replaceAll("\\s","")
+  }
+
+  object DifferentFormTypes {
+    def unapply(p: (EnrolmentVerificationRequest, Enrolment)):Boolean = p match {
+      case(r,e) => r.formTypeRef !=  e.formTypeRef
     }
   }
+
 }
 
 object EnrolmentVerificationService extends EnrolmentVerificationService {
   lazy val enrolmentRepo = EnrolmentRepository
 }
+
