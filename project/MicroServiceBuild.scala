@@ -4,8 +4,10 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.versioning.SbtGitVersioning
 
 object MicroServiceBuild extends Build with MicroService {
+  import scala.util.Properties.envOrElse
 
   val appName = "eeitt"
+  val appVersion = envOrElse("EEITT_VERSION", "999-SNAPSHOT")
 
   override lazy val appDependencies: Seq[ModuleID] = AppDependencies()
 }
@@ -17,7 +19,7 @@ private object AppDependencies {
   private val microserviceBootstrapVersion = "4.4.0"
   private val playAuthVersion = "3.4.0"
   private val playHealthVersion = "1.1.0"
-  private val playJsonLoggerVersion = "2.1.1"  
+  private val playJsonLoggerVersion = "2.1.1"
   private val playUrlBindersVersion = "1.1.0"
   private val playConfigVersion = "2.1.0"
   private val domainVersion = "3.7.0"
@@ -76,4 +78,3 @@ private object AppDependencies {
 
   def apply() = compile ++ Test() ++ IntegrationTest()
 }
-
