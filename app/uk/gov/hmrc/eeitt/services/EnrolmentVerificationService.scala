@@ -29,15 +29,15 @@ trait EnrolmentVerificationService {
   }
 
   object DifferentPostcodes {
-    def unapply(p: (EnrolmentVerificationRequest, Enrolment)):Boolean = p match {
-      case(r,e) => normalize(r.postcode) !=  normalize(e.postcode)
+    def unapply(p: (EnrolmentVerificationRequest, Enrolment)): Boolean = p match {
+      case (r, e) => normalize(r.postcode) != normalize(e.postcode)
     }
-    private def normalize(p:String) = p.trim.toUpperCase.replaceAll("\\s","")
+    private def normalize(p: String) = p.trim.toUpperCase.replaceAll("\\s", "")
   }
 
   object DifferentFormTypes {
-    def unapply(p: (EnrolmentVerificationRequest, Enrolment)):Boolean = p match {
-      case(r,e) => r.formTypeRef !=  e.formTypeRef
+    def unapply(p: (EnrolmentVerificationRequest, Enrolment)): Boolean = p match {
+      case (r, e) => r.formTypeRef != e.formTypeRef
     }
   }
 
