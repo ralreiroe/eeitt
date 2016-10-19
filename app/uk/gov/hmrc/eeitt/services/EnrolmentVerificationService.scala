@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ RESPONSE_OK, RESPONSE_NOT_FOUND, RESPONSE_DIFFERENT_FORM_TYPE, INCORRECT_POSTCODE }
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ RESPONSE_OK, RESPONSE_NOT_FOUND, INCORRECT_REGIME, INCORRECT_POSTCODE }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
 
@@ -23,7 +23,7 @@ trait EnrolmentVerificationService {
   private def doVerify(request: EnrolmentVerificationRequest, enrolment: Enrolment): EnrolmentVerificationResponse = {
     EnrolmentVerificationResponse((request, enrolment) match {
       case DifferentPostcodes() => INCORRECT_POSTCODE
-      case DifferentFormTypes() => RESPONSE_DIFFERENT_FORM_TYPE
+      case DifferentFormTypes() => INCORRECT_REGIME
       case _ => RESPONSE_OK
     })
   }

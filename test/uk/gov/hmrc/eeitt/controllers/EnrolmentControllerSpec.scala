@@ -7,7 +7,7 @@ import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ RESPONSE_DIFFERENT_FORM_TYPE, RESPONSE_NOT_FOUND, RESPONSE_OK }
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_REGIME, RESPONSE_NOT_FOUND, RESPONSE_OK }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
@@ -46,7 +46,7 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Mus
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("2", "foo", true, "SE39EP")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_DIFFERENT_FORM_TYPE))
+      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(INCORRECT_REGIME))
     }
   }
 
