@@ -26,7 +26,7 @@ class LookupTestCases extends UnitSpec with RepositorySupport with BeforeAndAfte
     await(repo.removeAll())
   }
 
-  "Look up enrollments by registration number" should {
+  "Look up enrolments by registration number" should {
 
     /**
      * Cases 7 and 11
@@ -87,7 +87,34 @@ class LookupTestCases extends UnitSpec with RepositorySupport with BeforeAndAfte
     }
   }
 
-  "look up enrollments by ARN" should {
+  "look up enrolments by ARN" should {
+    /**
+     * Case 1 (Agent)
+     */
+    "produce 'registration number incorrect' response when enrolment is not found" in {
+      insertEnrolment(Enrolment(fakeId, "Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
+      repo.count.futureValue shouldBe 1
+      val response = service.verify(EnrolmentVerificationRequest("Landfill tax", "AL1234567890124", true, "BN1 2AB", true, "555555555555555"))
+      response.futureValue shouldBe EnrolmentVerificationResponse(RESPONSE_NOT_FOUND)
+    }
+    /**
+     * Case 2 (Agent)
+     */
+    "produce 'incorrect postcode' response when stored postcode is different than requested postcode" in {
+      insertEnrolment(Enrolment(fakeId, "Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
+      repo.count.futureValue shouldBe 1
+      val response = service.verify(EnrolmentVerificationRequest("Landfill tax", "AL1234567890123", true, "BN1 2XX", true, "555555555555555"))
+      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_POSTCODE)
+    }
+    /**
+     * Case 3 (Agent)
+     */
+    "produce 'regime incorrect' response if stored regime is different than requested regime" in {
+      insertEnrolment(Enrolment(fakeId, "Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
+      repo.count.futureValue shouldBe 1
+      val response = service.verify(EnrolmentVerificationRequest("Bingo", "AL1234567890123", true, "BN1 2AB", true, "555555555555555"))
+      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_REGIME)
+    }
     /**
      * Case 4 (Agent)
      */
