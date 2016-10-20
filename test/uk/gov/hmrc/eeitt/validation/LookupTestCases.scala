@@ -47,6 +47,18 @@ class LookupTestCases extends UnitSpec with RepositorySupport with BeforeAndAfte
       val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", true, "N12 6FG", false, ""))
       response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_POSTCODE)
     }
+    "produce 'incorrect postcode' response when stored postcode is the same as requested postcode but lives in the UK flags are different" in {
+      insertEnrolment(Enrolment(fakeId, "Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
+      repo.count.futureValue shouldBe 1
+      val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", false, "ME1 9AB", false, ""))
+      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_POSTCODE)
+    }
+    "produce successful response when stored postcode is different than requested postcode but lives in the UK flag stored is false" in {
+      insertEnrolment(Enrolment(fakeId, "Aggregate Levy", "AL9876543210123", false, "ME1 9AB", ""))
+      repo.count.futureValue shouldBe 1
+      val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", false, "N12 6FG", false, ""))
+      response.futureValue shouldBe EnrolmentVerificationResponse(RESPONSE_OK)
+    }
     "produce successful response when stored postcode is in different format than requested postcode" in {
       insertEnrolment(Enrolment(fakeId, "Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       repo.count.futureValue shouldBe 1

@@ -44,9 +44,9 @@ trait EnrolmentVerificationService {
 
   object DifferentPostcodes {
     def unapply(p: (EnrolmentVerificationRequest, Enrolment)): Boolean = p match {
-      case (r, e) => normalize(r.postcode) != normalize(e.postcode)
+      case (r, e) => (e.livesInTheUk && (norm(r.postcode) != norm(e.postcode))) || (r.livesInTheUk != e.livesInTheUk)
     }
-    private def normalize(p: String) = p.trim.toUpperCase.replaceAll("\\s", "")
+    private def norm(p: String) = p.trim.toUpperCase.replaceAll("\\s", "")
   }
 
   object DifferentFormTypes {
