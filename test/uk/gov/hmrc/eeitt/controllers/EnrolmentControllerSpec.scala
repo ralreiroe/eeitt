@@ -21,7 +21,7 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Mus
 
   object TestEnrolmentStoreService extends EnrolmentVerificationService {
     val enrolmentRepo = mock[EnrolmentRepository]
-    enrolmentRepo.lookupEnrolment("foo").returns(Future.successful(List(Enrolment(fakeId, "1", "foo", true, "SE39EP"))))
+    enrolmentRepo.lookupEnrolment("foo").returns(Future.successful(List(Enrolment(fakeId, "1", "foo", true, "SE39EP", ""))))
     enrolmentRepo.lookupEnrolment("12LT32").returns(Future.successful(List()))
   }
 
@@ -31,19 +31,19 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Mus
 
   "POST /verify" should {
     "return 200 and correct response for successful verification" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "foo", true, "SE39EP")))
+      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "foo", true, "SE39EP", false, "")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_OK))
     }
     "return 200 and error response for unsuccessful verification" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "12LT32", true, "SE39EP")))
+      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "12LT32", true, "SE39EP", false, "")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_NOT_FOUND))
     }
     "return 200 and correct error response when registration found but for wrong form type" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("2", "foo", true, "SE39EP")))
+      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("2", "foo", true, "SE39EP", false, "")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(INCORRECT_REGIME))

@@ -26,9 +26,9 @@ class EnrolmentRepository(implicit mongo: () => DB) extends ReactiveRepository[E
     find(("registrationNumber", registrationNumber))
   }
 
-  def getEnrolmentsWithArn(maybeArn: Option[String]): Future[List[Enrolment]] = {
-    Logger.debug(s"retrieve all enrolments for ARN '$maybeArn' in database ${collection.db.name}")
-    find(("maybeArn", maybeArn))
+  def getEnrolmentsWithArn(arn: String): Future[List[Enrolment]] = {
+    Logger.debug(s"retrieve all enrolments for ARN '$arn' in database ${collection.db.name}")
+    find(("arn", arn))
   }
 
 }

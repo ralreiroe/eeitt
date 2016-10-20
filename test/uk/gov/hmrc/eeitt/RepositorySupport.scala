@@ -13,7 +13,7 @@ trait RepositorySupport extends UnitSpec with MongoSpecSupport {
   val fakeId = BSONObjectID.generate
 
   def insertEnrolment(enrolment: Enrolment): BSONObjectID = {
-    val e = Enrolment(_id = BSONObjectID.generate, enrolment.formTypeRef, enrolment.registrationNumber, enrolment.livesInTheUk, enrolment.postcode, enrolment.maybeArn)
+    val e = Enrolment(_id = BSONObjectID.generate, enrolment.formTypeRef, enrolment.registrationNumber, enrolment.livesInTheUk, enrolment.postcode, enrolment.arn)
     await(repo.collection.insert(e))
     e._id
   }

@@ -11,4 +11,6 @@ object EnrolmentVerificationResponse {
   val INCORRECT_REGIME = Some("incorrect regime")
   val INCORRECT_POSTCODE = Some("incorrect postcode")
   val INCORRECT_ARN = Some("incorrect ARN")
+  val MISSING_ARN = Some("missing ARN")
+  val INCORRECT_ARN_FOR_CLIENT = Some("incorrect ARN for client")
 }
