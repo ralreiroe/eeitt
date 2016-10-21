@@ -8,6 +8,7 @@ object EnrolmentVerificationResponse {
   implicit val enrolmentResponseFormat: Format[EnrolmentVerificationResponse] = Json.format[EnrolmentVerificationResponse]
   val RESPONSE_OK = None
   val RESPONSE_NOT_FOUND = Some("not found")
+  val MULTIPLE_FOUND = Some("multiple found")
   val INCORRECT_REGIME = Some("incorrect regime")
   val INCORRECT_POSTCODE = Some("incorrect postcode")
   val INCORRECT_ARN = Some("incorrect ARN")

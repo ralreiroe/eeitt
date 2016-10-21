@@ -7,7 +7,7 @@ import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_REGIME, RESPONSE_NOT_FOUND, RESPONSE_OK, INCORRECT_ARN }
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_REGIME, RESPONSE_NOT_FOUND, RESPONSE_OK, INCORRECT_ARN, MULTIPLE_FOUND }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.MongoEnrolmentRepository
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
@@ -25,6 +25,7 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Mus
     enrolmentRepo.lookupEnrolment("fooclient").returns(Future.successful(List(Enrolment("1", "fooclient", true, "SE39EP", "agent"))))
     enrolmentRepo.getEnrolmentsWithArn("agentx").returns(Future.successful(List()))
     enrolmentRepo.lookupEnrolment("12LT32").returns(Future.successful(List()))
+    enrolmentRepo.lookupEnrolment("12LT33").returns(Future.successful(List(Enrolment("1", "fooclient", true, "SE39EP", "agent"), Enrolment("2", "fooclient", true, "SE39EP", "agent"))))
   }
 
   object TestEnrolmentController extends EnrolmentController {
@@ -49,6 +50,12 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Mus
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_NOT_FOUND))
+    }
+    "return 200 and error response for multiple records found for a given registration number" in {
+      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "12LT33", true, "SE39EP", false, "")))
+      val result = TestEnrolmentController.verify()(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(MULTIPLE_FOUND))
     }
     "return 200 and error response for unsuccessful verification of agent case" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "fooclient", true, "SE39EP", true, "agentx")))

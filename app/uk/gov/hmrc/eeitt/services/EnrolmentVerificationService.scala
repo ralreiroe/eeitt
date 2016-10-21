@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_ARN, INCORRECT_ARN_FOR_CLIENT, INCORRECT_POSTCODE, INCORRECT_REGIME, MISSING_ARN, RESPONSE_NOT_FOUND, RESPONSE_OK }
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_ARN, INCORRECT_ARN_FOR_CLIENT, INCORRECT_POSTCODE, INCORRECT_REGIME, MISSING_ARN, RESPONSE_NOT_FOUND, RESPONSE_OK, MULTIPLE_FOUND }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.{ EnrolmentRepository, enrolmentRepository }
 
@@ -14,18 +14,19 @@ trait EnrolmentVerificationService {
   def verify(enrolmentRequest: EnrolmentVerificationRequest): Future[EnrolmentVerificationResponse] =
     enrolmentRepo.lookupEnrolment(enrolmentRequest.registrationNumber).flatMap {
       case Nil => Future.successful(EnrolmentVerificationResponse(RESPONSE_NOT_FOUND))
-      case x :: xs => doVerify(enrolmentRequest, x)
+      case x :: Nil => doVerify(enrolmentRequest, x)
+      case x :: xs => Future.successful(EnrolmentVerificationResponse(MULTIPLE_FOUND))
     }
 
   private def doVerify(request: EnrolmentVerificationRequest, enrolment: Enrolment): Future[EnrolmentVerificationResponse] =
     (request, enrolment) match {
       case DifferentPostcodes() => Future.successful(EnrolmentVerificationResponse(INCORRECT_POSTCODE))
       case DifferentFormTypes() => Future.successful(EnrolmentVerificationResponse(INCORRECT_REGIME))
-      case DifferentArns() if request.isAgent => createIncorrectArnResponse(request)
+      case DifferentArns() if request.isAgent => incorrectArnResponse(request)
       case _ => Future.successful(EnrolmentVerificationResponse(RESPONSE_OK))
     }
 
-  private def createIncorrectArnResponse(request: EnrolmentVerificationRequest): Future[EnrolmentVerificationResponse] =
+  private def incorrectArnResponse(request: EnrolmentVerificationRequest): Future[EnrolmentVerificationResponse] =
     request.arn match {
       case _ if request.arn.isEmpty => Future.successful(EnrolmentVerificationResponse(MISSING_ARN))
       case arn =>
