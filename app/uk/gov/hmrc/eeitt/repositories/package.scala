@@ -8,5 +8,5 @@ package object repositories {
     ReactiveMongoPlugin.mongoConnector.db
   }
 
-  lazy val EnrolmentRepository = new EnrolmentRepository
+  lazy val EnrolmentRepository = new MongoEnrolmentRepository
 }

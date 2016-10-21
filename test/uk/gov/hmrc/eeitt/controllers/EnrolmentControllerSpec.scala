@@ -9,7 +9,7 @@ import play.api.test.{ FakeRequest, Helpers }
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_REGIME, RESPONSE_NOT_FOUND, RESPONSE_OK, INCORRECT_ARN }
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
+import uk.gov.hmrc.eeitt.repositories.MongoEnrolmentRepository
 import uk.gov.hmrc.eeitt.services.EnrolmentVerificationService
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 
@@ -20,7 +20,7 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Mus
   val fakeId = BSONObjectID.generate
 
   object TestEnrolmentStoreService extends EnrolmentVerificationService {
-    val enrolmentRepo = mock[EnrolmentRepository]
+    val enrolmentRepo = mock[MongoEnrolmentRepository]
     enrolmentRepo.lookupEnrolment("foo").returns(Future.successful(List(Enrolment(fakeId, "1", "foo", true, "SE39EP", ""))))
     enrolmentRepo.lookupEnrolment("fooclient").returns(Future.successful(List(Enrolment(fakeId, "1", "fooclient", true, "SE39EP", "agent"))))
     enrolmentRepo.getEnrolmentsWithArn("agentx").returns(Future.successful(List()))

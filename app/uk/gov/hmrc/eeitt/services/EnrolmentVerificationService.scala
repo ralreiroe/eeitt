@@ -1,8 +1,8 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ RESPONSE_OK, RESPONSE_NOT_FOUND, INCORRECT_REGIME, INCORRECT_POSTCODE, INCORRECT_ARN, MISSING_ARN, INCORRECT_ARN_FOR_CLIENT }
+import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_ARN, INCORRECT_ARN_FOR_CLIENT, INCORRECT_POSTCODE, INCORRECT_REGIME, MISSING_ARN, RESPONSE_NOT_FOUND, RESPONSE_OK }
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.repositories.EnrolmentRepository
+import uk.gov.hmrc.eeitt.repositories.{ EnrolmentRepository, MongoEnrolmentRepository }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global

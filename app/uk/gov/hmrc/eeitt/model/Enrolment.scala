@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.model
 
-import play.api.libs.json.{ Format, Json, OFormat }
+import play.api.libs.json.{ Json, OFormat }
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
