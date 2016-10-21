@@ -37,37 +37,37 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Mus
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "foo", true, "SE39EP", false, "")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_OK))
+      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_OK)
     }
     "return 200 and correct response for successful verification of agent case" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "fooclient", true, "SE39EP", true, "agent")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_OK))
+      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_OK)
     }
     "return 200 and error response for unsuccessful verification of client case" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "12LT32", true, "SE39EP", false, "")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(RESPONSE_NOT_FOUND))
+      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_NOT_FOUND)
     }
     "return 200 and error response for multiple records found for a given registration number" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "12LT33", true, "SE39EP", false, "")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(MULTIPLE_FOUND))
+      jsonBodyOf(await(result)) shouldBe toJson(MULTIPLE_FOUND)
     }
     "return 200 and error response for unsuccessful verification of agent case" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("1", "fooclient", true, "SE39EP", true, "agentx")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(INCORRECT_ARN))
+      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_ARN)
     }
     "return 200 and correct error response when registration found but for wrong form type" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(EnrolmentVerificationRequest("2", "foo", true, "SE39EP", false, "")))
       val result = TestEnrolmentController.verify()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(EnrolmentVerificationResponse(INCORRECT_REGIME))
+      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_REGIME)
     }
   }
 

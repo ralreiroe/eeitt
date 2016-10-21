@@ -13,26 +13,26 @@ trait EnrolmentVerificationService {
 
   def verify(enrolmentRequest: EnrolmentVerificationRequest): Future[EnrolmentVerificationResponse] =
     enrolmentRepo.lookupEnrolment(enrolmentRequest.registrationNumber).flatMap {
-      case Nil => Future.successful(EnrolmentVerificationResponse(RESPONSE_NOT_FOUND))
+      case Nil => Future.successful(RESPONSE_NOT_FOUND)
       case x :: Nil => doVerify(enrolmentRequest, x)
-      case x :: xs => Future.successful(EnrolmentVerificationResponse(MULTIPLE_FOUND))
+      case x :: xs => Future.successful(MULTIPLE_FOUND)
     }
 
   private def doVerify(request: EnrolmentVerificationRequest, enrolment: Enrolment): Future[EnrolmentVerificationResponse] =
     (request, enrolment) match {
-      case DifferentPostcodes() => Future.successful(EnrolmentVerificationResponse(INCORRECT_POSTCODE))
-      case DifferentFormTypes() => Future.successful(EnrolmentVerificationResponse(INCORRECT_REGIME))
+      case DifferentPostcodes() => Future.successful(INCORRECT_POSTCODE)
+      case DifferentFormTypes() => Future.successful(INCORRECT_REGIME)
       case DifferentArns() if request.isAgent => incorrectArnResponse(request)
-      case _ => Future.successful(EnrolmentVerificationResponse(RESPONSE_OK))
+      case _ => Future.successful(RESPONSE_OK)
     }
 
   private def incorrectArnResponse(request: EnrolmentVerificationRequest): Future[EnrolmentVerificationResponse] =
     request.arn match {
-      case _ if request.arn.isEmpty => Future.successful(EnrolmentVerificationResponse(MISSING_ARN))
+      case _ if request.arn.isEmpty => Future.successful(MISSING_ARN)
       case arn =>
         enrolmentRepo.getEnrolmentsWithArn(arn) map {
-          case Nil => EnrolmentVerificationResponse(INCORRECT_ARN)
-          case xs => EnrolmentVerificationResponse(INCORRECT_ARN_FOR_CLIENT)
+          case Nil => INCORRECT_ARN
+          case xs => INCORRECT_ARN_FOR_CLIENT
         }
     }
 

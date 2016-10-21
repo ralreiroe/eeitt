@@ -27,46 +27,46 @@ class EnrolmentVerificationServiceSpec extends UnitSpec with RepositorySupport w
       insertEnrolment(Enrolment("Aggregate Levy", "AL1111111111111", true, "ME1 9AB", ""))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL1111111111112", true, "ME1 9AB", false, ""))
-      response.futureValue shouldBe EnrolmentVerificationResponse(RESPONSE_NOT_FOUND)
+      response.futureValue shouldBe RESPONSE_NOT_FOUND
     }
 
     "produce 'incorrect postcode' response when stored postcode is different than requested postcode" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", true, "N12 6FG", false, ""))
-      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_POSTCODE)
+      response.futureValue shouldBe INCORRECT_POSTCODE
     }
     "produce 'incorrect postcode' response when stored postcode is the same as requested postcode but lives in the UK flags are different" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", false, "ME1 9AB", false, ""))
-      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_POSTCODE)
+      response.futureValue shouldBe INCORRECT_POSTCODE
     }
     "produce successful response when stored postcode is different than requested postcode but lives in the UK flag stored is false" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", false, "ME1 9AB", ""))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", false, "N12 6FG", false, ""))
-      response.futureValue shouldBe EnrolmentVerificationResponse(RESPONSE_OK)
+      response.futureValue shouldBe RESPONSE_OK
     }
     "produce successful response when stored postcode is in different format than requested postcode" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", true, "me19ab", false, ""))
-      response.futureValue shouldBe EnrolmentVerificationResponse(RESPONSE_OK)
+      response.futureValue shouldBe RESPONSE_OK
     }
 
     "produce 'regime incorrect' response if stored regime is different than requested regime" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Bingo", "AL9876543210123", true, "ME1 9AB", false, ""))
-      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_REGIME)
+      response.futureValue shouldBe INCORRECT_REGIME
     }
 
     "produce successful response when enrolment is found and passed the validation" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", false, ""))
-      response.futureValue shouldBe EnrolmentVerificationResponse(RESPONSE_OK)
+      response.futureValue shouldBe RESPONSE_OK
     }
   }
 
@@ -75,38 +75,38 @@ class EnrolmentVerificationServiceSpec extends UnitSpec with RepositorySupport w
       insertEnrolment(Enrolment("Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Landfill tax", "AL1234567890124", true, "BN1 2AB", true, "555555555555555"))
-      response.futureValue shouldBe EnrolmentVerificationResponse(RESPONSE_NOT_FOUND)
+      response.futureValue shouldBe RESPONSE_NOT_FOUND
     }
     "produce 'incorrect postcode' response when stored postcode is different than requested postcode" in {
       insertEnrolment(Enrolment("Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Landfill tax", "AL1234567890123", true, "BN1 2XX", true, "555555555555555"))
-      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_POSTCODE)
+      response.futureValue shouldBe INCORRECT_POSTCODE
     }
     "produce 'regime incorrect' response if stored regime is different than requested regime" in {
       insertEnrolment(Enrolment("Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Bingo", "AL1234567890123", true, "BN1 2AB", true, "555555555555555"))
-      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_REGIME)
+      response.futureValue shouldBe INCORRECT_REGIME
     }
     "produce 'ARN incorrect' response when enrolment with a given ARN not found" in {
       insertEnrolment(Enrolment("Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Landfill tax", "AL1234567890123", true, "BN1 2AB", true, "455555555555555"))
-      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_ARN)
+      response.futureValue shouldBe INCORRECT_ARN
     }
     "produce 'ARN missing' response when ARN is missing from agent request" in {
       insertEnrolment(Enrolment("Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
       repo.count.futureValue shouldBe 1
       val response = service.verify(EnrolmentVerificationRequest("Landfill tax", "AL1234567890123", true, "BN1 2AB", true, ""))
-      response.futureValue shouldBe EnrolmentVerificationResponse(MISSING_ARN)
+      response.futureValue shouldBe MISSING_ARN
     }
     "produce 'ARN exists but not for this client' response when enrolment with a given ARN found for different client" in {
       insertEnrolment(Enrolment("Landfill tax", "AL1234567890123", true, "BN1 2AB", "555555555555555"))
       insertEnrolment(Enrolment("Landfill tax", "AL1234567890124", true, "BN1 2XX", "455555555555555"))
       repo.count.futureValue shouldBe 2
       val response = service.verify(EnrolmentVerificationRequest("Landfill tax", "AL1234567890123", true, "BN1 2AB", true, "455555555555555"))
-      response.futureValue shouldBe EnrolmentVerificationResponse(INCORRECT_ARN_FOR_CLIENT)
+      response.futureValue shouldBe INCORRECT_ARN_FOR_CLIENT
     }
   }
 }
