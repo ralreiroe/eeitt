@@ -15,8 +15,8 @@ class EnrolmentRepositorySpec extends UnitSpec with RepositorySupport with Befor
 
   "query enrolments with ARN" should {
     "produce all enrolments from repository with a given ARN" in {
-      insertEnrolment(Enrolment(fakeId, "1", "12LT34", true, "SE39EP", "555555555555555"))
-      insertEnrolment(Enrolment(fakeId, "1", "12LT35", true, "SE39XY", "555555555555555"))
+      insertEnrolment(Enrolment("1", "12LT34", true, "SE39EP", "555555555555555"))
+      insertEnrolment(Enrolment("1", "12LT35", true, "SE39XY", "555555555555555"))
       await(repo.count) shouldBe 2
       await(repo.getEnrolmentsWithArn("555555555555555")).size shouldBe 2
     }
@@ -24,8 +24,8 @@ class EnrolmentRepositorySpec extends UnitSpec with RepositorySupport with Befor
 
   "lookup enrolments by registration number " should {
     "find enrolment with a given registration number" in {
-      insertEnrolment(Enrolment(fakeId, "1", "12LT34", true, "SE39EP", ""))
-      insertEnrolment(Enrolment(fakeId, "1", "12LT35", true, "SE39XY", ""))
+      insertEnrolment(Enrolment("1", "12LT34", true, "SE39EP", ""))
+      insertEnrolment(Enrolment("1", "12LT35", true, "SE39XY", ""))
       await(repo.count) shouldBe 2
       await(repo.lookupEnrolment("12LT35")).size shouldBe 1
     }

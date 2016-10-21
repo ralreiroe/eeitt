@@ -21,8 +21,8 @@ class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with Mus
 
   object TestEnrolmentStoreService extends EnrolmentVerificationService {
     val enrolmentRepo = mock[MongoEnrolmentRepository]
-    enrolmentRepo.lookupEnrolment("foo").returns(Future.successful(List(Enrolment(fakeId, "1", "foo", true, "SE39EP", ""))))
-    enrolmentRepo.lookupEnrolment("fooclient").returns(Future.successful(List(Enrolment(fakeId, "1", "fooclient", true, "SE39EP", "agent"))))
+    enrolmentRepo.lookupEnrolment("foo").returns(Future.successful(List(Enrolment("1", "foo", true, "SE39EP", ""))))
+    enrolmentRepo.lookupEnrolment("fooclient").returns(Future.successful(List(Enrolment("1", "fooclient", true, "SE39EP", "agent"))))
     enrolmentRepo.getEnrolmentsWithArn("agentx").returns(Future.successful(List()))
     enrolmentRepo.lookupEnrolment("12LT32").returns(Future.successful(List()))
   }
