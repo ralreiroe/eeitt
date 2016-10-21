@@ -2,7 +2,7 @@ package uk.gov.hmrc.eeitt.services
 
 import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_ARN, INCORRECT_ARN_FOR_CLIENT, INCORRECT_POSTCODE, INCORRECT_REGIME, MISSING_ARN, RESPONSE_NOT_FOUND, RESPONSE_OK }
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.repositories.{ EnrolmentRepository, MongoEnrolmentRepository }
+import uk.gov.hmrc.eeitt.repositories.{ EnrolmentRepository, enrolmentRepository }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,17 +21,17 @@ trait EnrolmentVerificationService {
     (request, enrolment) match {
       case DifferentPostcodes() => Future.successful(EnrolmentVerificationResponse(INCORRECT_POSTCODE))
       case DifferentFormTypes() => Future.successful(EnrolmentVerificationResponse(INCORRECT_REGIME))
-      case DifferentArns() if request.isAgent => doVerifyArn(request)
+      case DifferentArns() if request.isAgent => createIncorrectArnResponse(request)
       case _ => Future.successful(EnrolmentVerificationResponse(RESPONSE_OK))
     }
 
-  private def doVerifyArn(request: EnrolmentVerificationRequest): Future[EnrolmentVerificationResponse] =
+  private def createIncorrectArnResponse(request: EnrolmentVerificationRequest): Future[EnrolmentVerificationResponse] =
     request.arn match {
       case _ if request.arn.isEmpty => Future.successful(EnrolmentVerificationResponse(MISSING_ARN))
       case arn =>
         enrolmentRepo.getEnrolmentsWithArn(arn) map {
           case Nil => EnrolmentVerificationResponse(INCORRECT_ARN)
-          case x :: xs => EnrolmentVerificationResponse(INCORRECT_ARN_FOR_CLIENT)
+          case xs => EnrolmentVerificationResponse(INCORRECT_ARN_FOR_CLIENT)
         }
     }
 
@@ -57,6 +57,6 @@ trait EnrolmentVerificationService {
 }
 
 object EnrolmentVerificationService extends EnrolmentVerificationService {
-  lazy val enrolmentRepo = EnrolmentRepository
+  lazy val enrolmentRepo = enrolmentRepository
 }
 
