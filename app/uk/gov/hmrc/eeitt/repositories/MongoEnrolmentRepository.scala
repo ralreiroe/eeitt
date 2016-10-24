@@ -7,7 +7,7 @@ import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.eeitt.model.Enrolment
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait EnrolmentRepository {
@@ -18,7 +18,7 @@ trait EnrolmentRepository {
 class MongoEnrolmentRepository(implicit mongo: () => DB)
     extends ReactiveRepository[Enrolment, BSONObjectID]("enrolments", mongo, Enrolment.oFormat) with EnrolmentRepository {
 
-  override def ensureIndexes(implicit ec: scala.concurrent.ExecutionContext): Future[scala.Seq[Boolean]] = {
+  override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
     Future.sequence(Seq(
       collection.indexesManager.ensure(Index(Seq("registrationNumber" -> IndexType.Ascending), name = Some("registrationNumberIdx"), unique = true, sparse = false)),
       collection.indexesManager.ensure(Index(Seq("arn" -> IndexType.Ascending), name = Some("arnIdx"), unique = false, sparse = false))
