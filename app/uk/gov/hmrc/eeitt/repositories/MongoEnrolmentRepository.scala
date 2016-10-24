@@ -18,7 +18,7 @@ trait EnrolmentRepository {
 class MongoEnrolmentRepository(implicit mongo: () => DB)
     extends ReactiveRepository[Enrolment, BSONObjectID]("enrolments", mongo, Enrolment.oFormat) with EnrolmentRepository {
 
-  override def ensureIndexes(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[scala.Seq[scala.Boolean]] = {
+  override def ensureIndexes(implicit ec: scala.concurrent.ExecutionContext): Future[scala.Seq[Boolean]] = {
     Future.sequence(Seq(
       collection.indexesManager.ensure(Index(Seq("registrationNumber" -> IndexType.Ascending), name = Some("registrationNumberIdx"), unique = true, sparse = false)),
       collection.indexesManager.ensure(Index(Seq("arn" -> IndexType.Ascending), name = Some("arnIdx"), unique = false, sparse = false))
