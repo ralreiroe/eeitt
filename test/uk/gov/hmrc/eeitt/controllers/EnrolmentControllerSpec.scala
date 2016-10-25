@@ -6,7 +6,6 @@ import play.api.http.Status
 import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
-import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_REGIME, RESPONSE_NOT_FOUND, RESPONSE_OK, INCORRECT_ARN, MULTIPLE_FOUND }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.MongoEnrolmentRepository
@@ -16,8 +15,6 @@ import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 import scala.concurrent.Future
 
 class EnrolmentControllerSpec extends UnitSpec with WithFakeApplication with MustExpectations with NumericMatchers with Mockito {
-
-  val fakeId = BSONObjectID.generate
 
   object TestEnrolmentStoreService extends EnrolmentVerificationService {
     val enrolmentRepo = mock[MongoEnrolmentRepository]
