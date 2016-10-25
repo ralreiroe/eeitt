@@ -6,7 +6,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait RepositorySupport extends UnitSpec with MongoSpecSupport {
+trait EnrolmentRepositorySupport extends UnitSpec with MongoSpecSupport {
   val repo = new MongoEnrolmentRepository
 
   def insertEnrolment(enrolment: Enrolment): Unit = {

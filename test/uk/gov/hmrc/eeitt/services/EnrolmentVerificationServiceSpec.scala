@@ -4,12 +4,12 @@ import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
 import uk.gov.hmrc.eeitt.model.EnrolmentVerificationResponse.{ INCORRECT_ARN, INCORRECT_ARN_FOR_CLIENT, INCORRECT_POSTCODE, INCORRECT_REGIME, MISSING_ARN, RESPONSE_NOT_FOUND, RESPONSE_OK }
 import uk.gov.hmrc.eeitt.model.{ Enrolment, EnrolmentVerificationRequest }
-import uk.gov.hmrc.eeitt.repositories.RepositorySupport
+import uk.gov.hmrc.eeitt.repositories.EnrolmentRepositorySupport
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EnrolmentVerificationServiceSpec extends UnitSpec with RepositorySupport with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience {
+class EnrolmentVerificationServiceSpec extends UnitSpec with EnrolmentRepositorySupport with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience {
 
   object TestEnrolmentVerificationService extends EnrolmentVerificationService {
     val enrolmentRepo = repo

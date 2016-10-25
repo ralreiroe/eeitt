@@ -7,7 +7,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EnrolmentRepositorySpec extends UnitSpec with RepositorySupport with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience {
+class EnrolmentRepositorySpec extends UnitSpec with EnrolmentRepositorySupport with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience {
 
   override protected def beforeEach(): Unit = {
     await(repo.removeAll())
