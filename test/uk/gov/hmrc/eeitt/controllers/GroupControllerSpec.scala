@@ -15,13 +15,18 @@ import scala.concurrent.Future
 
 class GroupControllerSpec extends UnitSpec with WithFakeApplication with MustExpectations with NumericMatchers with Mockito {
 
+  private val group1 = Group("1", List("LT", "LL"), "12LT001", "SE39EP")
+  private val group2 = Group("2", List("LT", "LL", "XT"), "12LT002", "SE39EX")
+
   object TestGroupLookupService extends GroupLookupService {
     val groupRepo = mock[MongoGroupRepository]
-    groupRepo.lookupGroup("1").returns(Future.successful(List(Group("1", List("LT", "LL")))))
-    groupRepo.lookupGroup("2").returns(Future.successful(List(Group("2", List("LT", "LL", "XT")))))
+    groupRepo.lookupGroup("1").returns(Future.successful(List(group1)))
+    groupRepo.lookupGroup("2").returns(Future.successful(List(group2)))
     groupRepo.lookupGroup("3").returns(Future.successful(List()))
-    groupRepo.lookupGroup("4").returns(Future.successful(List(Group("4", List("LT", "LL")))))
-    groupRepo.lookupGroup("4").returns(Future.successful(List(Group("4", List("LT", "LL")), Group("4", List("LT", "XT")))))
+    groupRepo.lookupGroup("4").returns(Future.successful(List(
+      Group("4", List("LT", "LL"), "12LT004", "SE38ZZ"),
+      Group("4", List("LT", "XT"), "12LT005", "SE39ZZ")
+    )))
   }
 
   object TestGroupController extends GroupController {
@@ -33,7 +38,7 @@ class GroupControllerSpec extends UnitSpec with WithFakeApplication with MustExp
       val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
       val result = TestGroupController.regimes("1")(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(GroupLookupResponse(None, Some(Group("1", List("LT", "LL")))))
+      jsonBodyOf(await(result)) shouldBe toJson(GroupLookupResponse(None, Some(group1)))
     }
   }
 

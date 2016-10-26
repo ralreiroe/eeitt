@@ -10,7 +10,7 @@ trait GroupRepositorySupport extends UnitSpec with MongoSpecSupport {
   val repo = new MongoGroupRepository
 
   def insertGroup(group: Group): Unit = {
-    val g = Group(group.groupId, group.regimes)
+    val g = Group(group.groupId, group.formIds, group.registrationNumber, group.groupId)
     await(repo.collection.insert(g))
   }
 
