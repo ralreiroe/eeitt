@@ -5,5 +5,5 @@ verification.response.incorrect.postcode.msg=incorrect postcode
 verification.response.incorrect.arn.msg=incorrect ARN
 verification.response.missing.arn.msg=missing ARN
 verification.response.incorrect.arn.for.client.msg=incorrect ARN for client
-group.response.not.found.msg=not found
-group.response.multiple.found.msg=multiple found
+registration.not.found.msg=not found
+registration.multiple.found.msg=multiple found
