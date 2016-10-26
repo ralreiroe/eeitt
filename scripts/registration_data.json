@@ -1,2 +1,2 @@
-{"groupId" : "1", "formIds" : [ "LT", "LL" ], "registrationNumber": "10LT001", "postcode": "SE39EP"}
-{"groupId" : "2", "formIds" : [ "LT", "XT" ], "registrationNumber": "10LT002", "postcode": "SE39EJ"}
+{"groupId" : "1", "regimeIds" : [ "LT", "LL" ], "registrationNumber": "10LT001", "postcode": "SE39EP"}
+{"groupId" : "2", "regimeIds" : [ "LT", "XT" ], "registrationNumber": "10LT002", "postcode": "SE39EJ"}

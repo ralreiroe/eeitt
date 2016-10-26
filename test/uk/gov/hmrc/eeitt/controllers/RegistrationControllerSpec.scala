@@ -27,6 +27,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       Registration("4", List("LT", "LL"), "12LT004", "SE38ZZ"),
       Registration("4", List("LT", "XT"), "12LT005", "SE39ZZ")
     )))
+    registrationRepo.check("1", "LT").returns(Future.successful(List(registration1)))
   }
 
   object TestRegistrationController extends RegistrationController {
@@ -57,6 +58,15 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val result = TestRegistrationController.regimes("4")(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(MULTIPLE_FOUND)
+    }
+  }
+
+  "GET /check/{regimeId}/{groupId}" should {
+    "return 200 and correct response for successful registration lookup" in {
+      val fakeRequest = FakeRequest(Helpers.GET, "/check")
+      val result = TestRegistrationController.check("1", "LT")(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(None, Some(registration1)))
     }
   }
 

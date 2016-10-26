@@ -16,4 +16,8 @@ trait RegistrationController extends BaseController {
   def regimes(groupId: String) = Action.async { implicit request =>
     registrationLookupService.lookup(groupId) map (response => Ok(Json.toJson(response)))
   }
+
+  def check(groupId: String, regimeId: String) = Action.async { implicit request =>
+    registrationLookupService.check(groupId, regimeId) map (response => Ok(Json.toJson(response)))
+  }
 }

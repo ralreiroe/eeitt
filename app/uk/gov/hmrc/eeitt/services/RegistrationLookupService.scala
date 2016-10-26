@@ -18,6 +18,13 @@ trait RegistrationLookupService {
       case x :: Nil => RegistrationLookupResponse(None, Some(x))
       case x :: xs => MULTIPLE_FOUND
     }
+
+  def check(groupId: String, regimeId: String): Future[RegistrationLookupResponse] =
+    registrationRepo.check(groupId, regimeId).map {
+      case Nil => RESPONSE_NOT_FOUND
+      case x :: Nil => RegistrationLookupResponse(None, Some(x))
+      case x :: xs => MULTIPLE_FOUND
+    }
 }
 
 object RegistrationLookupService extends RegistrationLookupService {

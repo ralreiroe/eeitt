@@ -1,4 +1,5 @@
 # microservice specific routes
 
-POST       /verify            uk.gov.hmrc.eeitt.controllers.EnrolmentController.verify
-GET        /regimes/:groupId  uk.gov.hmrc.eeitt.controllers.RegistrationController.regimes(groupId)
+POST       /verify                      uk.gov.hmrc.eeitt.controllers.EnrolmentController.verify
+GET        /regimes/:groupId            uk.gov.hmrc.eeitt.controllers.RegistrationController.regimes(groupId)
+GET        /check/:regimeId/:groupId    uk.gov.hmrc.eeitt.controllers.RegistrationController.check(groupId,regimeId)
