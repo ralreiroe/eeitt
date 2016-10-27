@@ -5,11 +5,12 @@ import org.specs2.mock.Mockito
 import play.api.http.Status
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
-import uk.gov.hmrc.eeitt.model.{ Registration, RegistrationLookupResponse }
+import uk.gov.hmrc.eeitt.model.{ Registration, RegistrationLookupResponse, RegistrationRequest }
 import uk.gov.hmrc.eeitt.repositories.MongoRegistrationRepository
-import uk.gov.hmrc.eeitt.services.RegistrationLookupService
+import uk.gov.hmrc.eeitt.services.RegistrationService
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
-import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ RESPONSE_NOT_FOUND, MULTIPLE_FOUND }
+import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ MULTIPLE_FOUND, RESPONSE_NOT_FOUND }
+import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ INCORRECT_KNOWN_FACTS, REGISTRATION_OK }
 
 import scala.concurrent.Future
 
@@ -18,7 +19,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
   private val registration1 = Registration("1", List("LT", "LL"), "12LT001", "SE39EP")
   private val registration2 = Registration("2", List("LT", "LL", "XT"), "12LT002", "SE39EX")
 
-  object TestRegistrationLookupService extends RegistrationLookupService {
+  object TestRegistrationService extends RegistrationService {
     val registrationRepo = mock[MongoRegistrationRepository]
     registrationRepo.lookupRegistration("1").returns(Future.successful(List(registration1)))
     registrationRepo.lookupRegistration("2").returns(Future.successful(List(registration2)))
@@ -31,7 +32,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
   }
 
   object TestRegistrationController extends RegistrationController {
-    val registrationLookupService = TestRegistrationLookupService
+    val registrationService = TestRegistrationService
   }
 
   "GET /regimes/1" should {
@@ -69,5 +70,23 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(None, Some(registration1)))
     }
   }
+
+  "POST /register" should {
+    "return 200 and error if submitted known facts are different than stored known facts" in {
+      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegistrationRequest("1", "LT", "12LT009", "SE39EP")))
+      val result = TestRegistrationController.register()(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS)
+    }
+  }
+
+//  "POST /register" should {
+//    "return 200 and registration ok response if registration for given group id was not found" in {
+//      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegistrationRequest("3", "LT", "12LT009", "SE39EP")))
+//      val result = TestRegistrationController.register()(fakeRequest)
+//      status(result) shouldBe Status.OK
+//      jsonBodyOf(await(result)) shouldBe toJson(REGISTRATION_OK)
+//    }
+//  }
 
 }

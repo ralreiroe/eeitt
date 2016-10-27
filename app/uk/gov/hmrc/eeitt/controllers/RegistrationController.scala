@@ -1,23 +1,37 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import play.api.libs.json.Json
+import play.Logger
+import play.api.libs.json.{ JsError, JsSuccess, Json }
 import play.api.mvc._
-import uk.gov.hmrc.eeitt.services.RegistrationLookupService
+import uk.gov.hmrc.eeitt.model.RegistrationRequest
+import uk.gov.hmrc.eeitt.services.RegistrationService
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
+import scala.concurrent.Future
+
 object RegistrationController extends RegistrationController {
-  val registrationLookupService = RegistrationLookupService
+  val registrationService = RegistrationService
 }
 
 trait RegistrationController extends BaseController {
-  val registrationLookupService: RegistrationLookupService
+  val registrationService: RegistrationService
 
   def regimes(groupId: String) = Action.async { implicit request =>
-    registrationLookupService.lookup(groupId) map (response => Ok(Json.toJson(response)))
+    registrationService.lookup(groupId) map (response => Ok(Json.toJson(response)))
   }
 
   def check(groupId: String, regimeId: String) = Action.async { implicit request =>
-    registrationLookupService.check(groupId, regimeId) map (response => Ok(Json.toJson(response)))
+    registrationService.check(groupId, regimeId) map (response => Ok(Json.toJson(response)))
+  }
+
+  def register() = Action.async(parse.json) { implicit request =>
+    request.body.validate[RegistrationRequest] match {
+      case JsSuccess(req, _) =>
+        registrationService.register(req) map (response => Ok(Json.toJson(response)))
+      case JsError(jsonErrors) =>
+        Logger.debug(s"incorrect request: ${jsonErrors} ")
+        Future(BadRequest(Json.obj("status" -> 400, "message" -> JsError.toFlatJson(jsonErrors))))
+    }
   }
 }

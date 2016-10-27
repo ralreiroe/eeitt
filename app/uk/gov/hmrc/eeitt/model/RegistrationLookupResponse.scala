@@ -7,6 +7,6 @@ case class RegistrationLookupResponse(error: Option[String], registration: Optio
 
 object RegistrationLookupResponse {
   implicit val registrationLookupResponseFormat: Format[RegistrationLookupResponse] = Json.format[RegistrationLookupResponse]
-  val RESPONSE_NOT_FOUND = this(Some(Messages("registration.not.found.msg")), None)
-  val MULTIPLE_FOUND = this(Some(Messages("registration.multiple.found.msg")), None)
+  val RESPONSE_NOT_FOUND = this(Some(Messages("registration.lookup.not.found.msg")), None)
+  val MULTIPLE_FOUND = this(Some(Messages("registration.lookup.multiple.found.msg")), None)
 }

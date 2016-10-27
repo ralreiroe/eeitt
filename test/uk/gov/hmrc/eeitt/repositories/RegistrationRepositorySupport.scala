@@ -10,7 +10,7 @@ trait RegistrationRepositorySupport extends UnitSpec with MongoSpecSupport {
   val repo = new MongoRegistrationRepository
 
   def insertRegistration(registration: Registration): Unit = {
-    val g = Registration(registration.groupId, registration.regimeIds, registration.registrationNumber, registration.groupId)
+    val g = Registration(registration.groupId, registration.regimeIds, registration.registrationNumber, registration.postcode)
     await(repo.collection.insert(g))
   }
 
