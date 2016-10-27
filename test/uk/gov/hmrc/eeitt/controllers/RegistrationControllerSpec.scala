@@ -80,13 +80,4 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
     }
   }
 
-//  "POST /register" should {
-//    "return 200 and registration ok response if registration for given group id was not found" in {
-//      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegistrationRequest("3", "LT", "12LT009", "SE39EP")))
-//      val result = TestRegistrationController.register()(fakeRequest)
-//      status(result) shouldBe Status.OK
-//      jsonBodyOf(await(result)) shouldBe toJson(REGISTRATION_OK)
-//    }
-//  }
-
 }

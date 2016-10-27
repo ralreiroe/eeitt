@@ -23,7 +23,7 @@ trait EnrolmentController extends BaseController {
         enrolmentVerificationService.verify(req) map (response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: ${jsonErrors} ")
-        Future(BadRequest(Json.obj("status" -> 400, "message" -> JsError.toFlatJson(jsonErrors))))
+        Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors))))
     }
   }
 }
