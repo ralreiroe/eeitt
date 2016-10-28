@@ -5,11 +5,11 @@ import play.api.libs.json.Json
 import reactivemongo.api.DB
 import reactivemongo.api.indexes.{ Index, IndexType }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.eeitt.model.{ Registration, RegistrationRequest }
+import uk.gov.hmrc.mongo.ReactiveRepository
 
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait RegistrationRepository {
   def lookupRegistration(groupId: String): Future[List[Registration]]
@@ -46,8 +46,7 @@ class MongoRegistrationRepository(implicit mongo: () => DB)
     val modifier = Json.obj("$set" -> Json.obj("regimeIds" -> regimeIds))
     collection.update(selector, modifier) map {
       case r if r.ok => Right((): Unit)
-      case r if r.errmsg.isDefined => Left(r.errmsg.get)
-      case _ => Left(s"registration update problem for ${registration.groupId}")
+      case r => Left(r.message)
     }
   }
 
@@ -55,8 +54,7 @@ class MongoRegistrationRepository(implicit mongo: () => DB)
     val registration = Registration(rr.groupId, List(rr.regimeId), rr.registrationNumber, rr.groupId)
     insert(registration) map {
       case r if r.ok => Right(registration)
-      case r if r.errmsg.isDefined => Left(r.errmsg.get)
-      case _ => Left(s"registration problem for ${registration.groupId}")
+      case r => Left(r.message)
     }
   }
 
