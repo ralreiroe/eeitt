@@ -1,0 +1,7 @@
+verification.response.not.found.msg=not found
+verification.response.multiple.found.msg=multiple found
+verification.response.incorrect.regime.msg=incorrect regime
+verification.response.incorrect.postcode.msg=incorrect postcode
+verification.response.incorrect.arn.msg=incorrect ARN
+verification.response.missing.arn.msg=missing ARN
+verification.response.incorrect.arn.for.client.msg=incorrect ARN for client
