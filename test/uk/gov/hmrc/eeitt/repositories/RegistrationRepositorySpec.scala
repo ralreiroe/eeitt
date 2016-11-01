@@ -34,17 +34,4 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
     }
   }
 
-  "check registrations with a group id and a form id" should {
-    "produce a registration with the given id" in {
-      insertRegistration(Registration("g1", List("LT", "LL"), "12LT001", "SE39EP"))
-      insertRegistration(Registration("g2", List("LT", "LL", "XL"), "12LT002", "SE39ER"))
-      await(repo.count) shouldBe 2
-      await(repo.check("g2", "XL")) map (_.groupId) should contain theSameElementsAs (List("g2"))
-      await(repo.check("g2", "LL")) map (_.groupId) should contain theSameElementsAs (List("g2"))
-      await(repo.check("g2", "LT")) map (_.groupId) should contain theSameElementsAs (List("g2"))
-      await(repo.check("g2", "XX")).size shouldBe 0
-      await(repo.check("g1", "XL")).size shouldBe 0
-    }
-  }
-
 }

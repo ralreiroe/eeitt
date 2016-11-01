@@ -21,10 +21,6 @@ trait RegistrationController extends BaseController {
     registrationService.lookup(groupId) map (response => Ok(Json.toJson(response)))
   }
 
-  def check(groupId: String, regimeId: String) = Action.async { implicit request =>
-    registrationService.check(groupId, regimeId) map (response => Ok(Json.toJson(response)))
-  }
-
   def register() = Action.async(parse.json) { implicit request =>
     request.body.validate[RegistrationRequest] match {
       case JsSuccess(req, _) =>

@@ -19,13 +19,6 @@ trait RegistrationService {
       case x :: xs => MULTIPLE_FOUND
     }
 
-  def check(groupId: String, regimeId: String): Future[RegistrationLookupResponse] =
-    registrationRepo.check(groupId, regimeId).map {
-      case Nil => RESPONSE_NOT_FOUND
-      case x :: Nil => RegistrationLookupResponse(None, x.regimeIds)
-      case x :: xs => MULTIPLE_FOUND
-    }
-
   def register(registrationRequest: RegistrationRequest): Future[RegistrationResponse] = {
     registrationRepo.findRegistrations(registrationRequest.groupId).flatMap {
       case Nil => doRegister(registrationRequest)
