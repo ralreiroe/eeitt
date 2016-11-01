@@ -13,6 +13,7 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
 
   override protected def beforeEach(): Unit = {
     await(repo.removeAll())
+    awaitIndexCreation()
   }
 
   private val registration1: Registration = Registration("g1", List("LT", "LL"), "12LT001", "SE39EP")
