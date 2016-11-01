@@ -12,8 +12,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait RegistrationRepository {
-  def lookupRegistration(groupId: String): Future[List[Registration]]
   def check(groupId: String, regimeId: String): Future[List[Registration]]
+  def findRegistrations(groupId: String): Future[List[Registration]]
   def addRegime(registration: Registration, regimeId: String): Future[Either[String, Unit]]
   def register(registrationRequest: RegistrationRequest): Future[Either[String, Registration]]
 }
@@ -27,7 +27,7 @@ class MongoRegistrationRepository(implicit mongo: () => DB)
     ))
   }
 
-  def lookupRegistration(groupId: String): Future[List[Registration]] = {
+  def findRegistrations(groupId: String): Future[List[Registration]] = {
     Logger.debug(s"lookup registration with group id '$groupId' in database ${collection.db.name}")
     find(("groupId", groupId))
   }

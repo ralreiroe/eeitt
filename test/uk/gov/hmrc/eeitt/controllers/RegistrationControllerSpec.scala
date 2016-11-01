@@ -21,10 +21,10 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
 
   object TestRegistrationService extends RegistrationService {
     val registrationRepo = mock[MongoRegistrationRepository]
-    registrationRepo.lookupRegistration("1").returns(Future.successful(List(registration1)))
-    registrationRepo.lookupRegistration("2").returns(Future.successful(List(registration2)))
-    registrationRepo.lookupRegistration("3").returns(Future.successful(List()))
-    registrationRepo.lookupRegistration("4").returns(Future.successful(List(
+    registrationRepo.findRegistrations("1").returns(Future.successful(List(registration1)))
+    registrationRepo.findRegistrations("2").returns(Future.successful(List(registration2)))
+    registrationRepo.findRegistrations("3").returns(Future.successful(List()))
+    registrationRepo.findRegistrations("4").returns(Future.successful(List(
       Registration("4", List("LT", "LL"), "12LT004", "SE38ZZ"),
       Registration("4", List("LT", "XT"), "12LT005", "SE39ZZ")
     )))
@@ -40,7 +40,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
       val result = TestRegistrationController.regimes("1")(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(None, Some(registration1)))
+      jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(None, List("LT", "LL")))
     }
   }
 
@@ -67,7 +67,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val fakeRequest = FakeRequest(Helpers.GET, "/check")
       val result = TestRegistrationController.check("1", "LT")(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(None, Some(registration1)))
+      jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(None, List("LT", "LL")))
     }
   }
 

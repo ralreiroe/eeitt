@@ -23,7 +23,7 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
       insertRegistration(registration1)
       insertRegistration(registration2)
       await(repo.count) shouldBe 2
-      await(repo.lookupRegistration("g1")) map (_.groupId) should contain theSameElementsAs (List("g1"))
+      await(repo.findRegistrations("g1")) map (_.groupId) should contain theSameElementsAs (List("g1"))
     }
   }
 

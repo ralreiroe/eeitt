@@ -32,10 +32,10 @@ class RegistrationServiceSpec extends UnitSpec with RegistrationRepositorySuppor
     "effect an updated registration record if the requested regime is not present and known facts agree with the request" in {
       insertRegistration(Registration("3", List("LX"), "12LT009", "SE39EP"))
       repo.count.futureValue shouldBe 1
-      await(repo.lookupRegistration("3")) flatMap (_.regimeIds) should contain theSameElementsAs (List("LX"))
+      await(repo.findRegistrations("3")) flatMap (_.regimeIds) should contain theSameElementsAs (List("LX"))
       val response = service.register(RegistrationRequest("3", "LT", "12LT009", "SE39EP"))
       response.futureValue shouldBe REGISTRATION_OK
-      await(repo.lookupRegistration("3")) flatMap (_.regimeIds) should contain theSameElementsAs (List("LX", "LT"))
+      await(repo.findRegistrations("3")) flatMap (_.regimeIds) should contain theSameElementsAs (List("LX", "LT"))
     }
     "return an error if known facts do not agree with the request" in {
       insertRegistration(Registration("3", List("LX"), "12LT009", "SE39EP"))

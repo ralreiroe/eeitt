@@ -13,21 +13,21 @@ trait RegistrationService {
   def registrationRepo: RegistrationRepository
 
   def lookup(groupId: String): Future[RegistrationLookupResponse] =
-    registrationRepo.lookupRegistration(groupId).map {
+    registrationRepo.findRegistrations(groupId).map {
       case Nil => RESPONSE_NOT_FOUND
-      case x :: Nil => RegistrationLookupResponse(None, Some(x))
+      case x :: Nil => RegistrationLookupResponse(None, x.regimeIds)
       case x :: xs => MULTIPLE_FOUND
     }
 
   def check(groupId: String, regimeId: String): Future[RegistrationLookupResponse] =
     registrationRepo.check(groupId, regimeId).map {
       case Nil => RESPONSE_NOT_FOUND
-      case x :: Nil => RegistrationLookupResponse(None, Some(x))
+      case x :: Nil => RegistrationLookupResponse(None, x.regimeIds)
       case x :: xs => MULTIPLE_FOUND
     }
 
   def register(registrationRequest: RegistrationRequest): Future[RegistrationResponse] = {
-    registrationRepo.lookupRegistration(registrationRequest.groupId).flatMap {
+    registrationRepo.findRegistrations(registrationRequest.groupId).flatMap {
       case Nil => doRegister(registrationRequest)
       case x :: Nil => verifyOrAddRegime(registrationRequest, x)
       case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
