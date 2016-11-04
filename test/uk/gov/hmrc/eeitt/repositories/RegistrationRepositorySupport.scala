@@ -9,17 +9,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 trait RegistrationRepositorySupport extends UnitSpec with MongoSpecSupport {
-  val repo = new MongoRegistrationRepository
+  val regRepo = new MongoRegistrationRepository
 
   def insertRegistration(registration: Registration): Unit = {
     val g = Registration(registration.groupId, registration.regimeIds, registration.registrationNumber, registration.postcode)
-    await(repo.collection.insert(g))
+    await(regRepo.collection.insert(g))
   }
 
   def awaitIndexCreation() = {
     var keepChecking = true
     while (keepChecking) {
-      val indexes = Await.result(repo.collection.indexesManager.list(), 5.seconds)
+      val indexes = Await.result(regRepo.collection.indexesManager.list(), 5.seconds)
       if (indexes.exists(_.eventualName == "groupId")) {
         keepChecking = false
       }

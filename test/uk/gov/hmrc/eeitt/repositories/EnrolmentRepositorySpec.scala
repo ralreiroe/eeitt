@@ -10,15 +10,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class EnrolmentRepositorySpec extends UnitSpec with EnrolmentRepositorySupport with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience {
 
   override protected def beforeEach(): Unit = {
-    await(repo.removeAll())
+    await(enroRepo.removeAll())
   }
 
   "query enrolments with ARN" should {
     "produce all enrolments from repository with a given ARN" in {
       insertEnrolment(Enrolment("1", "12LT34", true, "SE39EP", "555555555555555"))
       insertEnrolment(Enrolment("1", "12LT35", true, "SE39XY", "555555555555555"))
-      await(repo.count) shouldBe 2
-      await(repo.getEnrolmentsWithArn("555555555555555")).size shouldBe 2
+      await(enroRepo.count) shouldBe 2
+      await(enroRepo.getEnrolmentsWithArn("555555555555555")).size shouldBe 2
     }
   }
 
@@ -26,8 +26,8 @@ class EnrolmentRepositorySpec extends UnitSpec with EnrolmentRepositorySupport w
     "find enrolment with a given registration number" in {
       insertEnrolment(Enrolment("1", "12LT34", true, "SE39EP", ""))
       insertEnrolment(Enrolment("1", "12LT35", true, "SE39XY", ""))
-      await(repo.count) shouldBe 2
-      await(repo.lookupEnrolment("12LT35")).size shouldBe 1
+      await(enroRepo.count) shouldBe 2
+      await(enroRepo.lookupEnrolment("12LT35")).size shouldBe 1
     }
   }
 

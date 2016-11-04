@@ -3,7 +3,7 @@ package uk.gov.hmrc.eeitt.services
 import uk.gov.hmrc.eeitt.model.{ Registration, RegistrationLookupResponse, RegistrationRequest, RegistrationResponse }
 import uk.gov.hmrc.eeitt.repositories.{ RegistrationRepository, registrationRepository }
 import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ MULTIPLE_FOUND, RESPONSE_NOT_FOUND }
-import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ INCORRECT_KNOWN_FACTS, ALREADY_REGISTERED, REGISTRATION_OK }
+import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, RESPONSE_OK, INCORRECT_KNOWN_FACTS }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -27,24 +27,32 @@ trait RegistrationService {
     }
   }
 
+  def registerVerified(registrationRequest: RegistrationRequest): Future[RegistrationResponse] = {
+    registrationRepo.findRegistrations(registrationRequest.groupId).flatMap {
+      case Nil => doRegister(registrationRequest)
+      case x :: Nil => verifyOrAddRegime(registrationRequest, x)
+      case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
+    }
+  }
+
   private def verifyOrAddRegime(request: RegistrationRequest, registration: Registration): Future[RegistrationResponse] = {
     (request, registration) match {
       case DifferentKnownFacts() => Future.successful(INCORRECT_KNOWN_FACTS)
-      case RegimePresent() => Future.successful(ALREADY_REGISTERED)
+      case RegimePresent() => Future.successful(RESPONSE_OK)
       case (rr, r) => addRegime(r, rr.regimeId)
     }
   }
 
   private def addRegime(registration: Registration, regimeId: String): Future[RegistrationResponse] = {
     registrationRepo.addRegime(registration, regimeId) map {
-      case Right(r) => REGISTRATION_OK
+      case Right(r) => RESPONSE_OK
       case Left(error) => RegistrationResponse(Some(error))
     }
   }
 
   private def doRegister(registrationRequest: RegistrationRequest): Future[RegistrationResponse] = {
     registrationRepo.register(registrationRequest) map {
-      case Right(r) => REGISTRATION_OK
+      case Right(r) => RESPONSE_OK
       case Left(error) => RegistrationResponse(Some(error))
     }
   }
