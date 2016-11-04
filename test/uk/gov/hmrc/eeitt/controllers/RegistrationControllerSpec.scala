@@ -10,25 +10,23 @@ import uk.gov.hmrc.eeitt.model.{ RegistrationRequest, _ }
 import uk.gov.hmrc.eeitt.repositories.{ MongoEnrolmentRepository, MongoRegistrationRepository }
 import uk.gov.hmrc.eeitt.services.{ EnrolmentVerificationService, RegistrationService }
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
-import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ MULTIPLE_FOUND, RESPONSE_NOT_FOUND }
+import uk.gov.hmrc.eeitt.model.VerificationResponse
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 
 import scala.concurrent.Future
 
 class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with MustExpectations with NumericMatchers with Mockito {
 
-  private val registration1 = Registration("1", List("LT", "LL"), "12LT001", "SE39EP")
-  private val registration2 = Registration("2", List("LT", "LL", "XT"), "12LT002", "SE39EX")
-
   object TestRegistrationService extends RegistrationService {
     val registrationRepo = mock[MongoRegistrationRepository]
-    registrationRepo.findRegistrations("1").returns(Future.successful(List(registration1)))
-    registrationRepo.findRegistrations("2").returns(Future.successful(List(registration2)))
+    registrationRepo.findRegistrations("1").returns(Future.successful(List(Registration("1", "SE39EP", false, "12LT001", "", List("LT", "LL")))))
+    registrationRepo.findRegistrations("2").returns(Future.successful(List(Registration("2", "SE39EX", false, "12LT002", "", List("LT", "LL", "XT")))))
     registrationRepo.findRegistrations("3").returns(Future.successful(List()))
     registrationRepo.findRegistrations("4").returns(Future.successful(List(
-      Registration("4", List("LT", "LL"), "12LT004", "SE38ZZ"),
-      Registration("4", List("LT", "XT"), "12LT005", "SE39ZZ")
+      Registration("4", "SE38ZZ", false, "12LT004", "", List("LT", "LL")),
+      Registration("4", "SE39ZZ", false, "12LT005", "", List("LT", "XT"))
     )))
+    registrationRepo.findRegistrations("5").returns(Future.successful(List(Registration("5", "SE39EP", true, "", "KARN001", List()))))
   }
 
   object TestEnrolmentStoreService extends EnrolmentVerificationService {
@@ -45,48 +43,48 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
     val enrolmentVerificationService = TestEnrolmentStoreService
   }
 
-  "GET /group-identifier/:gid/regimes/:regimeid/verification" should {
-    "return 200 and correct response for successful registration lookup where regime is authorised" in {
+  "GET /group-identifier/:gid/regimes/:regimeid/verification for successful registration lookup where regime is authorised" should {
+    "return 200 and is allowed" in {
       val fakeRequest = FakeRequest()
       val result = TestRegistrationController.verification("1", "LT")(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(true))
+      jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(true))
     }
   }
 
-  "GET /group-identifier/1/regimes/ZZ/verification" should {
-    "return 200 and correct response for successful registration lookup where regime is not authorised" in {
+  "GET /group-identifier/:gid/regimes/:regimeid/verification for successful registration lookup where regime is not authorised" should {
+    "return 200 and is not allowed" in {
       val fakeRequest = FakeRequest()
       val result = TestRegistrationController.verification("1", "ZZ")(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(false))
+      jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
     }
   }
 
-  "GET /group-identifier/99/regimes/LT/verification" should {
-    "return 200 and correct response for unsuccessful registration lookup" in {
+  "GET /group-identifier/:gid/regimes/:regimeid/verification for an unsuccessful registration lookup" should {
+    "return 200 and is not allowed" in {
+      val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
+      val result = TestRegistrationController.verification("3", "LT")(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
+    }
+  }
+
+  "GET /group-identifier/:gid/regimes/:regimeid/verification for a lookup which returned multiple registration instances" should {
+    "return 200 and is not allowed" in {
+      val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
+      val result = TestRegistrationController.verification("4", "LT")(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
+    }
+  }
+
+  "GET /group-identifier/:gid/regimes/:regimeid/verification for successful registration lookup of agent" should {
+    "return 200 and is allowed" in {
       val fakeRequest = FakeRequest()
-      val result = TestRegistrationController.verification("99", "LT")(fakeRequest)
+      val result = TestRegistrationController.verification("5", "LT")(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RegistrationLookupResponse(true))
-    }
-  }
-
-  "GET /regimes/3" should {
-    "return 200 and error response for an unsuccessful registration lookup" in {
-      val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
-      val result = TestRegistrationController.regimes("3")(fakeRequest)
-      status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_NOT_FOUND)
-    }
-  }
-
-  "GET /regimes/4" should {
-    "return 200 and error response for a lookup which returned multiple registration instances" in {
-      val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
-      val result = TestRegistrationController.regimes("4")(fakeRequest)
-      status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(MULTIPLE_FOUND)
+      jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(true))
     }
   }
 

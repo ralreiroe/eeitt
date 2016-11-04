@@ -18,8 +18,8 @@ object RegistrationController extends RegistrationController {
 trait RegistrationController extends BaseController {
   val registrationService: RegistrationService
 
-  def regimes(groupId: String) = Action.async { implicit request =>
-    registrationService.lookup(groupId) map (response => Ok(Json.toJson(response)))
+  def verification(groupId: String, regimeId: String) = Action.async { implicit request =>
+    registrationService.verification(groupId, regimeId) map (response => Ok(Json.toJson(response)))
   }
 
   def register() = Action.async(parse.json) { implicit request =>

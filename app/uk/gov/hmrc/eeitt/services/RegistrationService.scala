@@ -1,7 +1,8 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.{ Registration, RegistrationLookupResponse, RegistrationRequest, RegistrationResponse }
+import uk.gov.hmrc.eeitt.model.{ VerificationResponse$, RegistrationLookupResponse, RegistrationRequest, RegistrationResponse, Registration }
 import uk.gov.hmrc.eeitt.repositories.{ RegistrationRepository, registrationRepository }
+import uk.gov.hmrc.eeitt.model.VerificationResponse
 import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ MULTIPLE_FOUND, RESPONSE_NOT_FOUND }
 import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, RESPONSE_OK, INCORRECT_KNOWN_FACTS }
 
@@ -12,10 +13,22 @@ trait RegistrationService {
 
   def registrationRepo: RegistrationRepository
 
+  def verification(groupId: String, regimeId: String): Future[VerificationResponse] =
+    registrationRepo.findRegistrations(groupId).map {
+      case Nil => VerificationResponse(false)
+      case x :: Nil =>
+        val z: VerificationResponse = x match {
+          case Registration(_, _, false, _, _, y) => VerificationResponse(y.contains(regimeId))
+          case Registration(_, _, true, _, _, _) => VerificationResponse(true)
+        }
+        z
+      case x :: xs => VerificationResponse(false)
+    }
+
   def lookup(groupId: String): Future[RegistrationLookupResponse] =
     registrationRepo.findRegistrations(groupId).map {
       case Nil => RESPONSE_NOT_FOUND
-      case x :: Nil => RegistrationLookupResponse(None, x.regimeIds)
+      case x :: Nil => { RegistrationLookupResponse(None, x.regimeIds) }
       case x :: xs => MULTIPLE_FOUND
     }
 

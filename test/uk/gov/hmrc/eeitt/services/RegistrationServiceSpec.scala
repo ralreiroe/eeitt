@@ -44,7 +44,7 @@ class RegistrationServiceSpec extends UnitSpec with RegistrationRepositorySuppor
     "effect an updated registration record if the requested regime is not present and known facts agree with the request" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       enroRepo.count.futureValue shouldBe 1
-      insertRegistration(Registration("3", List("LX"), "AL9876543210123", "ME1 9AB"))
+      insertRegistration(Registration("3", "ME1 9AB", false, "AL9876543210123", "", List("LX")))
       regRepo.count.futureValue shouldBe 1
       await(regRepo.findRegistrations("3")) flatMap (_.regimeIds) should contain theSameElementsAs (List("LX"))
       val response = service.register(RegistrationRequest("3", "LT", "AL9876543210123", "ME1 9AB", "Aggregate Levy", true, false, ""))
@@ -54,7 +54,7 @@ class RegistrationServiceSpec extends UnitSpec with RegistrationRepositorySuppor
     "return an error if known facts do not agree with the request" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       enroRepo.count.futureValue shouldBe 1
-      insertRegistration(Registration("3", List("LX"), "AL9876543210123", "ME1 9AB"))
+      insertRegistration(Registration("3", "ME1 9AB", false, "AL9876543210123", "", List("LX")))
       enroRepo.count.futureValue shouldBe 1
       val response = service.register(RegistrationRequest("3", "LT", "AL9876543210123", "ME1 9ABX", "Aggregate Levy", true, false, ""))
       response.futureValue shouldBe INCORRECT_KNOWN_FACTS
@@ -62,7 +62,7 @@ class RegistrationServiceSpec extends UnitSpec with RegistrationRepositorySuppor
     "return an error if the group id is already registered" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       enroRepo.count.futureValue shouldBe 1
-      insertRegistration(Registration("3", List("LT"), "AL9876543210123", "ME1 9AB"))
+      insertRegistration(Registration("3", "ME1 9AB", false, "AL9876543210123", "", List("LT")))
       enroRepo.count.futureValue shouldBe 1
       val response = service.register(RegistrationRequest("3", "LT", "AL9876543210123", "ME1 9AB", "Aggregate Levy", true, false, ""))
       response.futureValue shouldBe ALREADY_REGISTERED

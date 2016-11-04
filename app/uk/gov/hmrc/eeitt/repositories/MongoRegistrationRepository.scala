@@ -42,7 +42,7 @@ class MongoRegistrationRepository(implicit mongo: () => DB)
   }
 
   def register(rr: RegistrationRequest): Future[Either[String, Registration]] = {
-    val registration = Registration(rr.groupId, List(rr.regimeId), rr.registrationNumber, rr.groupId)
+    val registration = ??? // Registration(rr.groupId, List(rr.regimeId), rr.registrationNumber, rr.groupId)
     insert(registration) map {
       case r if r.ok => Right(registration)
       case r => Left(r.message)
