@@ -27,6 +27,8 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       Registration("4", false, "12LT005", "", List("LT", "XT"))
     )))
     registrationRepo.findRegistrations("5").returns(Future.successful(List(Registration("5", true, "", "KARN001", List()))))
+    val userRepository = ???
+    val agentRepository = ???
   }
 
   //  object TestEnrolmentStoreService extends EnrolmentVerificationService {

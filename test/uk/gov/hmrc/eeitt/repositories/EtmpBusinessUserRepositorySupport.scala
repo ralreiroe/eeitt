@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 trait EtmpBusinessUserRepositorySupport extends UnitSpec with MongoSpecSupport {
-  val userRepo = new MongoRegistrationRepository
+  val userRepo = new MongoEtmpBusinessUsersRepository
 
   def insertBusinessUser(etmpBusinessUser: EtmpBusinessUser): Unit = {
     val g = EtmpBusinessUser(etmpBusinessUser.registrationNumber, etmpBusinessUser.postcode)

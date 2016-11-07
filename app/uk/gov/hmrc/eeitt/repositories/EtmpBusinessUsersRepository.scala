@@ -20,6 +20,9 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
     extends ReactiveRepository[EtmpBusinessUser, BSONObjectID]("etmpBusinessUsers", mongo, Json.format[EtmpBusinessUser])
     with EtmpBusinessUsersRepository {
 
+  val db = DB
+
+
   override def ensureIndexes(implicit ec: ExecutionContext) = {
     collection.indexesManager.ensure(
       Index(
@@ -31,11 +34,14 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
   }
 
   def userExists(etmpBusinessUser: EtmpBusinessUser): Future[Boolean] = {
-    collection
+    val result = collection
       .find(etmpBusinessUser)
       .cursor[EtmpBusinessUser](ReadPreference.secondaryPreferred)
       .collect[List]()
-      .map(_.nonEmpty)
+      .map( x=> {
+        x.nonEmpty
+      })
+    result
   }
 
   // todo: if this method fails EEITT may fail to work...
