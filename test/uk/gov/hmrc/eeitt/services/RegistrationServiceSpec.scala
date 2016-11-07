@@ -1,10 +1,10 @@
 package uk.gov.hmrc.eeitt.services
 
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.{BeforeAndAfterEach, Inspectors, LoneElement}
-import uk.gov.hmrc.eeitt.model.{RegisterAgentRequest, _}
+import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
+import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
+import uk.gov.hmrc.eeitt.model.{ RegisterAgentRequest, _ }
 import uk.gov.hmrc.eeitt.repositories._
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -88,11 +88,12 @@ class RegistrationServiceSpec extends UnitSpec
     }
     "return an error if known facts do not agree with the request" in {
       insertAgent(EtmpAgent("KARN9876543210123"))
-      agentRepo.count.futureValue shouldBe 1
+      insertAgent(EtmpAgent("KARN9876543210124"))
+      agentRepo.count.futureValue shouldBe 2
       insertRegistration(Registration("3", true, "", "KARN9876543210123", Seq()))
       regRepo.count.futureValue shouldBe 1
       val response = service.register(RegisterAgentRequest("3", "KARN9876543210124"))
-      response.futureValue shouldBe RESPONSE_NOT_FOUND
+      response.futureValue shouldBe INCORRECT_KNOWN_FACTS
     }
   }
 

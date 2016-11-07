@@ -22,7 +22,6 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
 
   val db = DB
 
-
   override def ensureIndexes(implicit ec: ExecutionContext) = {
     collection.indexesManager.ensure(
       Index(
@@ -38,7 +37,7 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
       .find(etmpBusinessUser)
       .cursor[EtmpBusinessUser](ReadPreference.secondaryPreferred)
       .collect[List]()
-      .map( x=> {
+      .map(x => {
         x.nonEmpty
       })
     result

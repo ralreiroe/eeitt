@@ -1,15 +1,15 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import org.specs2.matcher.{MustExpectations, NumericMatchers}
+import org.specs2.matcher.{ MustExpectations, NumericMatchers }
 import org.specs2.mock.Mockito
 import play.api.http.Status
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.json.Json._
-import play.api.test.{FakeRequest, Helpers}
+import play.api.test.{ FakeRequest, Helpers }
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.repositories.{MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationRepository}
+import uk.gov.hmrc.eeitt.repositories.{ MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationRepository }
 import uk.gov.hmrc.eeitt.services.RegistrationService
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 import uk.gov.hmrc.eeitt.model.VerificationResponse
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 
@@ -58,7 +58,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
     }
-    "return 200 and is not allowedfor a lookup which returned multiple registration instances" in {
+    "return 200 and is not allowed for a lookup which returned multiple registration instances" in {
       val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
       val result = TestRegistrationController.verification("4", "LT")(fakeRequest)
       status(result) shouldBe Status.OK

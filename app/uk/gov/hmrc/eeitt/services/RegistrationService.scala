@@ -1,9 +1,9 @@
 package uk.gov.hmrc.eeitt.services
 
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.repositories.{EtmpAgentRepository, EtmpBusinessUsersRepository, RegistrationRepository, etmpBusinessUserRepository, etmpAgentRepository, registrationRepository}
-import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{MULTIPLE_FOUND, RESPONSE_NOT_FOUND}
-import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ALREADY_REGISTERED, INCORRECT_KNOWN_FACTS, IS_AGENT, IS_NOT_AGENT, RESPONSE_OK}
+import uk.gov.hmrc.eeitt.repositories.{ EtmpAgentRepository, EtmpBusinessUsersRepository, RegistrationRepository, etmpBusinessUserRepository, etmpAgentRepository, registrationRepository }
+import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ MULTIPLE_FOUND, RESPONSE_NOT_FOUND }
+import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, INCORRECT_KNOWN_FACTS, IS_AGENT, IS_NOT_AGENT, RESPONSE_OK }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,15 +11,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 trait RegistrationService {
 
   def registrationRepo: RegistrationRepository
-  def userRepository : EtmpBusinessUsersRepository
-  def agentRepository : EtmpAgentRepository
+  def userRepository: EtmpBusinessUsersRepository
+  def agentRepository: EtmpAgentRepository
 
   def register(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
     verify(registerRequest).flatMap {
       case RESPONSE_OK =>
         registrationRepo.findRegistrations(registerRequest.groupId).flatMap {
           case Nil => addRegistration(registerRequest)
-          case x :: Nil => if (x.isAgent) Future.successful(IS_NOT_AGENT) else updateRegistration(registerRequest, x)
+          case x :: Nil => if (x.isAgent) Future.successful(IS_NOT_AGENT) else {
+            if (x.registrationNumber == registerRequest.registrationNumber)
+              updateRegistration(registerRequest, x)
+            else
+              Future.successful(INCORRECT_KNOWN_FACTS)
+          }
           case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
         }
       case x => Future.successful(x)
@@ -38,7 +43,9 @@ trait RegistrationService {
       case RESPONSE_OK =>
         registrationRepo.findRegistrations(registerAgentRequest.groupId).flatMap {
           case Nil => addRegistration(registerAgentRequest)
-          case x :: Nil => if (x.isAgent) Future.successful(RegistrationResponse.RESPONSE_OK) else Future.successful(IS_AGENT)
+          case x :: Nil => if (x.isAgent) {
+            if (x.arn == registerAgentRequest.arn) Future.successful(RESPONSE_OK) else Future.successful(INCORRECT_KNOWN_FACTS)
+          } else Future.successful(IS_NOT_AGENT)
           case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
         }
       case x => Future.successful(x)
