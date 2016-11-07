@@ -2,4 +2,4 @@
 
 GET        /group-identifier/:groupId/regimes/:regimeId/verification uk.gov.hmrc.eeitt.controllers.RegistrationController.verification(groupId, regimeId)
 POST       /register                    uk.gov.hmrc.eeitt.controllers.RegistrationController.register
-POST       /register-agent              uk.gov.hmrc.eeitt.controllers.RegistrationController.register
+POST       /register-agent              uk.gov.hmrc.eeitt.controllers.RegistrationController.registerAgent

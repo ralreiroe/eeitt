@@ -17,4 +17,6 @@ object RegistrationResponse {
   val MISSING_ARN = this(Some(Messages("verification.response.missing.arn.msg")))
   val INCORRECT_ARN_FOR_CLIENT = this(Some(Messages("verification.response.incorrect.arn.for.client.msg")))
   val ALREADY_REGISTERED = this(Some(Messages("registration.already.registered")))
+  val IS_AGENT = this(Some(Messages("registration.is.registered.as.agent")))
+  val IS_NOT_AGENT = this(Some(Messages("registration.is.registered.as.not_agent")))
 }

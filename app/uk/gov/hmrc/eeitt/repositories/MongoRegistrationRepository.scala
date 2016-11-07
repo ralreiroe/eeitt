@@ -5,7 +5,7 @@ import play.api.libs.json.Json
 import reactivemongo.api.DB
 import reactivemongo.api.indexes.{ Index, IndexType }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.{ Registration, RegistrationRequest }
+import uk.gov.hmrc.eeitt.model.{ Registration, RegisterRequest, RegisterAgentRequest }
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -14,7 +14,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 trait RegistrationRepository {
   def findRegistrations(groupId: String): Future[List[Registration]]
   def addRegime(registration: Registration, regimeId: String): Future[Either[String, Unit]]
-  def register(registrationRequest: RegistrationRequest): Future[Either[String, Registration]]
+  def register(registrationRequest: RegisterRequest): Future[Either[String, Unit]]
+  def registerA(rr: RegisterAgentRequest): Future[Either[String, Unit]]
 }
 
 class MongoRegistrationRepository(implicit mongo: () => DB)
@@ -41,10 +42,20 @@ class MongoRegistrationRepository(implicit mongo: () => DB)
     }
   }
 
-  def register(rr: RegistrationRequest): Future[Either[String, Registration]] = {
-    val registration = ??? // Registration(rr.groupId, List(rr.regimeId), rr.registrationNumber, rr.groupId)
+  def register(rr: RegisterRequest): Future[Either[String, Unit]] = {
+    val isNotAgent = false
+    val registration = Registration(rr.groupId, isNotAgent, "", rr.registrationNumber, Seq(rr.regimeId))
     insert(registration) map {
-      case r if r.ok => Right(registration)
+      case r if r.ok => Right(() => Nil)
+      case r => Left(r.message)
+    }
+  }
+
+  def registerA(rr: RegisterAgentRequest): Future[Either[String, Unit]] = {
+    val isNotAgent = false
+    val registration = Registration(rr.groupId, isNotAgent, "", rr.arn, Seq())
+    insert(registration) map {
+      case r if r.ok => Right(() => Nil)
       case r => Left(r.message)
     }
   }

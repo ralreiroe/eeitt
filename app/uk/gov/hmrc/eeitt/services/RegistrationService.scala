@@ -1,10 +1,10 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.{ VerificationResponse$, RegistrationLookupResponse, RegistrationRequest, RegistrationResponse, Registration }
+import uk.gov.hmrc.eeitt.model.{ RegisterAgentRequest, RegisterRequest, Registration, RegistrationLookupResponse, RegistrationResponse, VerificationResponse }
 import uk.gov.hmrc.eeitt.repositories.{ RegistrationRepository, registrationRepository }
 import uk.gov.hmrc.eeitt.model.VerificationResponse
 import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ MULTIPLE_FOUND, RESPONSE_NOT_FOUND }
-import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, RESPONSE_OK, INCORRECT_KNOWN_FACTS }
+import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, INCORRECT_KNOWN_FACTS, RESPONSE_OK, IS_AGENT, IS_NOT_AGENT }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -13,13 +13,61 @@ trait RegistrationService {
 
   def registrationRepo: RegistrationRepository
 
+  def register(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
+    EnrolmentVerificationService.verify(registerRequest).flatMap {
+      case RESPONSE_OK =>
+        registrationRepo.findRegistrations(registerRequest.groupId).flatMap {
+          case Nil => addRegistration(registerRequest)
+          case x :: Nil => if (x.isAgent) Future.successful(IS_NOT_AGENT) else updateRegistration(registerRequest, x)
+          case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
+        }
+      case x => Future.successful(x)
+    }
+  }
+
+  def registerAgent(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
+    EnrolmentVerificationService.verifyAgent(registerAgentRequest).flatMap {
+      case RESPONSE_OK =>
+        registrationRepo.findRegistrations(registerAgentRequest.groupId).flatMap {
+          case Nil => addAgentRegistration(registerAgentRequest)
+          case x :: Nil => if (x.isAgent) Future.successful(RegistrationResponse.RESPONSE_OK) else Future.successful(IS_AGENT)
+          case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
+        }
+      case x => Future.successful(x)
+    }
+  }
+
+  private def addRegistration(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
+    registrationRepo.register(registerRequest).flatMap {
+      case Right(_) => Future.successful(RESPONSE_OK)
+      case Left(x) => Future.successful(RegistrationResponse(Some(x)))
+    }
+  }
+
+  private def addAgentRegistration(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
+    registrationRepo.registerA(registerAgentRequest).flatMap {
+      case Right(_) => Future.successful(RESPONSE_OK)
+      case Left(x) => Future.successful(RegistrationResponse(Some(x)))
+    }
+  }
+
+  private def updateRegistration(registerRequest: RegisterRequest, registration: Registration): Future[RegistrationResponse] = {
+    if (registration.regimeIds.contains(registerRequest.regimeId))
+      Future.successful(RESPONSE_OK)
+    else
+      registrationRepo.addRegime(registration, registerRequest.regimeId).flatMap {
+        case Right(_) => Future.successful(RESPONSE_OK)
+        case Left(x) => Future.successful(RegistrationResponse(Some(x)))
+      }
+  }
+
   def verification(groupId: String, regimeId: String): Future[VerificationResponse] =
     registrationRepo.findRegistrations(groupId).map {
       case Nil => VerificationResponse(false)
       case x :: Nil =>
         val z: VerificationResponse = x match {
-          case Registration(_, _, false, _, _, y) => VerificationResponse(y.contains(regimeId))
-          case Registration(_, _, true, _, _, _) => VerificationResponse(true)
+          case Registration(_, false, _, _, y) => VerificationResponse(y.contains(regimeId))
+          case Registration(_, true, _, _, _) => VerificationResponse(true)
         }
         z
       case x :: xs => VerificationResponse(false)
@@ -32,56 +80,26 @@ trait RegistrationService {
       case x :: xs => MULTIPLE_FOUND
     }
 
-  def register(registrationRequest: RegistrationRequest): Future[RegistrationResponse] = {
+  def registerVerified(registrationRequest: RegisterRequest): Future[RegistrationResponse] = {
     registrationRepo.findRegistrations(registrationRequest.groupId).flatMap {
-      case Nil => doRegister(registrationRequest)
-      case x :: Nil => verifyOrAddRegime(registrationRequest, x)
+      case Nil => addRegistration(registrationRequest)
+      case x :: Nil => updateRegistration(registrationRequest, x)
       case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
     }
   }
 
-  def registerVerified(registrationRequest: RegistrationRequest): Future[RegistrationResponse] = {
-    registrationRepo.findRegistrations(registrationRequest.groupId).flatMap {
-      case Nil => doRegister(registrationRequest)
-      case x :: Nil => verifyOrAddRegime(registrationRequest, x)
-      case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
-    }
-  }
-
-  private def verifyOrAddRegime(request: RegistrationRequest, registration: Registration): Future[RegistrationResponse] = {
-    (request, registration) match {
-      case DifferentKnownFacts() => Future.successful(INCORRECT_KNOWN_FACTS)
-      case RegimePresent() => Future.successful(RESPONSE_OK)
-      case (rr, r) => addRegime(r, rr.regimeId)
-    }
-  }
-
-  private def addRegime(registration: Registration, regimeId: String): Future[RegistrationResponse] = {
-    registrationRepo.addRegime(registration, regimeId) map {
-      case Right(r) => RESPONSE_OK
-      case Left(error) => RegistrationResponse(Some(error))
-    }
-  }
-
-  private def doRegister(registrationRequest: RegistrationRequest): Future[RegistrationResponse] = {
-    registrationRepo.register(registrationRequest) map {
-      case Right(r) => RESPONSE_OK
-      case Left(error) => RegistrationResponse(Some(error))
-    }
-  }
-
-  object DifferentKnownFacts {
-    def unapply(p: (RegistrationRequest, Registration)): Boolean = p match {
-      case (rr, r) => rr.registrationNumber != r.registrationNumber || norm(rr.postcode) != norm(r.postcode)
-    }
-    private def norm(p: String) = p.trim.toUpperCase.replaceAll("\\s", "")
-  }
-
-  object RegimePresent {
-    def unapply(p: (RegistrationRequest, Registration)): Boolean = p match {
-      case (rr, r) => r.regimeIds.contains(rr.regimeId)
-    }
-  }
+//  object DifferentKnownFacts {
+//    def unapply(p: (RegisterRequest, Registration)): Boolean = p match {
+//      case (rr, r) => rr.registrationNumber != r.registrationNumber || norm(rr.postcode) != norm(r.postcode)
+//    }
+//    private def norm(p: String) = p.trim.toUpperCase.replaceAll("\\s", "")
+//  }
+//
+//  object RegimePresent {
+//    def unapply(p: (RegisterRequest, Registration)): Boolean = p match {
+//      case (rr, r) => r.regimeIds.contains(rr.regimeId)
+//    }
+//  }
 }
 
 object RegistrationService extends RegistrationService {

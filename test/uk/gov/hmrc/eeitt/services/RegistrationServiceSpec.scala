@@ -2,7 +2,7 @@ package uk.gov.hmrc.eeitt.services
 
 import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
-import uk.gov.hmrc.eeitt.model.{ Enrolment, Registration, RegistrationRequest }
+import uk.gov.hmrc.eeitt.model.{ Enrolment, Registration, RegisterRequest$ }
 import uk.gov.hmrc.eeitt.repositories.EnrolmentRepositorySupport
 import uk.gov.hmrc.eeitt.repositories.RegistrationRepositorySupport
 import uk.gov.hmrc.play.test.UnitSpec
@@ -26,16 +26,11 @@ class RegistrationServiceSpec extends UnitSpec with RegistrationRepositorySuppor
     await(removeRegistrations)
   }
 
-  //    case class RegistrationRequest(groupId: String, regimeId: String, registrationNumber: String, postcode: String,
-  //                                   formTypeRef: String, livesInTheUk: Boolean, isAgent: Boolean, arn: String)
-
-  // case class EnrolmentVerificationRequest(formTypeRef: String, registrationNumber: String, livesInTheUk: Boolean, postcode: String, isAgent: Boolean, arn: String)
-
   "Registering with a group id which is not present in repository" should {
     "effect a new registration record and a 'registration ok' response" in {
       insertEnrolment(Enrolment("Aggregate Levy", "AL9876543210123", true, "ME1 9AB", ""))
       enroRepo.count.futureValue shouldBe 1
-      val response = service.register(RegistrationRequest("3", "LT", "AL9876543210123", "ME1 9AB", "Aggregate Levy", true, false, ""))
+      val response = service.register(RegisterRequest("3", "LT", "AL9876543210123", "ME1 9AB", "Aggregate Levy", true, false, ""))
       response.futureValue shouldBe RESPONSE_OK
     }
   }
@@ -47,7 +42,7 @@ class RegistrationServiceSpec extends UnitSpec with RegistrationRepositorySuppor
       insertRegistration(Registration("3", "ME1 9AB", false, "AL9876543210123", "", List("LX")))
       regRepo.count.futureValue shouldBe 1
       await(regRepo.findRegistrations("3")) flatMap (_.regimeIds) should contain theSameElementsAs (List("LX"))
-      val response = service.register(RegistrationRequest("3", "LT", "AL9876543210123", "ME1 9AB", "Aggregate Levy", true, false, ""))
+      val response = service.register(RegisterRequest("3", "LT", "AL9876543210123", "ME1 9AB", "Aggregate Levy", true, false, ""))
       response.futureValue shouldBe RESPONSE_OK
       await(regRepo.findRegistrations("3")) flatMap (_.regimeIds) should contain theSameElementsAs (List("LX", "LT"))
     }
@@ -56,7 +51,7 @@ class RegistrationServiceSpec extends UnitSpec with RegistrationRepositorySuppor
       enroRepo.count.futureValue shouldBe 1
       insertRegistration(Registration("3", "ME1 9AB", false, "AL9876543210123", "", List("LX")))
       enroRepo.count.futureValue shouldBe 1
-      val response = service.register(RegistrationRequest("3", "LT", "AL9876543210123", "ME1 9ABX", "Aggregate Levy", true, false, ""))
+      val response = service.register(RegisterRequest("3", "LT", "AL9876543210123", "ME1 9ABX", "Aggregate Levy", true, false, ""))
       response.futureValue shouldBe INCORRECT_KNOWN_FACTS
     }
     "return an error if the group id is already registered" in {
@@ -64,7 +59,7 @@ class RegistrationServiceSpec extends UnitSpec with RegistrationRepositorySuppor
       enroRepo.count.futureValue shouldBe 1
       insertRegistration(Registration("3", "ME1 9AB", false, "AL9876543210123", "", List("LT")))
       enroRepo.count.futureValue shouldBe 1
-      val response = service.register(RegistrationRequest("3", "LT", "AL9876543210123", "ME1 9AB", "Aggregate Levy", true, false, ""))
+      val response = service.register(RegisterRequest("3", "LT", "AL9876543210123", "ME1 9AB", "Aggregate Levy", true, false, ""))
       response.futureValue shouldBe ALREADY_REGISTERED
     }
   }
