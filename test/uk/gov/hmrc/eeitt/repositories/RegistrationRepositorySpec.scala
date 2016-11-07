@@ -13,11 +13,11 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
 
   override protected def beforeEach(): Unit = {
     await(regRepo.removeAll())
-    awaitIndexCreation()
+    awaitRegistrationIndexCreation()
   }
 
-  private val registration1: Registration = Registration("g1", "SE39EP", false, "12LT001", "", List("LT", "LL"))
-  private val registration2: Registration = Registration("g2", "SE39EX", false, "12LT002", "", List("LT", "LL", "XL"))
+  private val registration1: Registration = Registration("g1", false, "12LT001", "", List("LT", "LL"))
+  private val registration2: Registration = Registration("g2", false, "12LT002", "", List("LT", "LL", "XL"))
 
   "query registrations with a group id" should {
     "produce registration with the given group id" in {

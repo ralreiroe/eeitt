@@ -12,11 +12,11 @@ trait RegistrationRepositorySupport extends UnitSpec with MongoSpecSupport {
   val regRepo = new MongoRegistrationRepository
 
   def insertRegistration(registration: Registration): Unit = {
-    val g = Registration(registration.groupId, registration.postcode, registration.isAgent, registration.registrationNumber, registration.arn, registration.regimeIds)
+    val g = Registration(registration.groupId, registration.isAgent, registration.registrationNumber, registration.arn, registration.regimeIds)
     await(regRepo.collection.insert(g))
   }
 
-  def awaitIndexCreation() = {
+  def awaitRegistrationIndexCreation() = {
     var keepChecking = true
     while (keepChecking) {
       val indexes = Await.result(regRepo.collection.indexesManager.list(), 5.seconds)

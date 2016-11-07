@@ -6,9 +6,9 @@ import play.api.http.Status
 import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
-import uk.gov.hmrc.eeitt.model.{ RegisterRequest$, _ }
-import uk.gov.hmrc.eeitt.repositories.{ MongoEnrolmentRepository, MongoRegistrationRepository }
-import uk.gov.hmrc.eeitt.services.{ EnrolmentVerificationService, RegistrationService }
+import uk.gov.hmrc.eeitt.model._
+import uk.gov.hmrc.eeitt.repositories.MongoRegistrationRepository
+import uk.gov.hmrc.eeitt.services.RegistrationService
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 import uk.gov.hmrc.eeitt.model.VerificationResponse
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
@@ -19,28 +19,27 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
 
   object TestRegistrationService extends RegistrationService {
     val registrationRepo = mock[MongoRegistrationRepository]
-    registrationRepo.findRegistrations("1").returns(Future.successful(List(Registration("1", "SE39EP", false, "12LT001", "", List("LT", "LL")))))
-    registrationRepo.findRegistrations("2").returns(Future.successful(List(Registration("2", "SE39EX", false, "12LT002", "", List("LT", "LL", "XT")))))
+    registrationRepo.findRegistrations("1").returns(Future.successful(List(Registration("1", false, "12LT001", "", List("LT", "LL")))))
+    registrationRepo.findRegistrations("2").returns(Future.successful(List(Registration("2", false, "12LT002", "", List("LT", "LL", "XT")))))
     registrationRepo.findRegistrations("3").returns(Future.successful(List()))
     registrationRepo.findRegistrations("4").returns(Future.successful(List(
-      Registration("4", "SE38ZZ", false, "12LT004", "", List("LT", "LL")),
-      Registration("4", "SE39ZZ", false, "12LT005", "", List("LT", "XT"))
+      Registration("4", false, "12LT004", "", List("LT", "LL")),
+      Registration("4", false, "12LT005", "", List("LT", "XT"))
     )))
-    registrationRepo.findRegistrations("5").returns(Future.successful(List(Registration("5", "SE39EP", true, "", "KARN001", List()))))
+    registrationRepo.findRegistrations("5").returns(Future.successful(List(Registration("5", true, "", "KARN001", List()))))
   }
 
-  object TestEnrolmentStoreService extends EnrolmentVerificationService {
-    val enrolmentRepo = mock[MongoEnrolmentRepository]
-    enrolmentRepo.lookupEnrolment("12LT001").returns(Future.successful(List(Enrolment("1", "12LT001", true, "SE39EP", ""))))
-    enrolmentRepo.lookupEnrolment("12LT002").returns(Future.successful(List(Enrolment("1", "12LT002", true, "SE39EP", "agent"))))
-    enrolmentRepo.getEnrolmentsWithArn("agentx").returns(Future.successful(List()))
-    enrolmentRepo.lookupEnrolment("12LT32").returns(Future.successful(List()))
-    enrolmentRepo.lookupEnrolment("12LT33").returns(Future.successful(List(Enrolment("1", "12LT002", true, "SE39EP", "agent"), Enrolment("2", "12LT002", true, "SE39EP", "agent"))))
-  }
+  //  object TestEnrolmentStoreService extends EnrolmentVerificationService {
+  //    val enrolmentRepo = mock[MongoEnrolmentRepository]
+  //    enrolmentRepo.lookupEnrolment("12LT001").returns(Future.successful(List(Enrolment("1", "12LT001", true, "SE39EP", ""))))
+  //    enrolmentRepo.lookupEnrolment("12LT002").returns(Future.successful(List(Enrolment("1", "12LT002", true, "SE39EP", "agent"))))
+  //    enrolmentRepo.getEnrolmentsWithArn("agentx").returns(Future.successful(List()))
+  //    enrolmentRepo.lookupEnrolment("12LT32").returns(Future.successful(List()))
+  //    enrolmentRepo.lookupEnrolment("12LT33").returns(Future.successful(List(Enrolment("1", "12LT002", true, "SE39EP", "agent"), Enrolment("2", "12LT002", true, "SE39EP", "agent"))))
+  //  }
 
   object TestRegistrationController extends RegistrationController {
     val registrationService = TestRegistrationService
-    val enrolmentVerificationService = TestEnrolmentStoreService
   }
 
   "GET /group-identifier/:gid/regimes/:regimeid/verification" should {
@@ -84,47 +83,11 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS)
     }
-    //    "return 200 and correct response for successful verification of client case and registration" in {
-    //      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(RegisterRequest("1", "LT", "12LT001", "SE39EP", "Aggregate Levy", true, false, "")))
-    //      val result = TestRegistrationController.register()(fakeRequest)
-    //      status(result) shouldBe Status.OK
-    //      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_OK)
-    //    }
-    //    "return 200 and correct response for successful verification of agent case" in {
-    //      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(RegisterRequest("1", "LT", "12LT002", "SE39EX", "Aggregate Levy", true, true, "agent")))
-    //      val result = TestRegistrationController.register()(fakeRequest)
-    //      status(result) shouldBe Status.OK
-    //      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_OK)
-    //    }
-    //    "return 200 and error response for unsuccessful verification of client case" in {
-    //      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(RegisterRequest("1", "LT", "12LT032", "SE39EP", "Aggregate Levy", true, false, "")))
-    //      val result = TestRegistrationController.register()(fakeRequest)
-    //      status(result) shouldBe Status.OK
-    //      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_NOT_FOUND)
-    //    }
-    //    "return 200 and error response for multiple records found for a given registration number" in {
-    //      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(RegisterRequest("1", "LT", "12LT033", "SE39EP", "Aggregate Levy", true, false, "")))
-    //      val result = TestRegistrationController.register()(fakeRequest)
-    //      status(result) shouldBe Status.OK
-    //      jsonBodyOf(await(result)) shouldBe toJson(MULTIPLE_FOUND)
-    //    }
-    //    "return 200 and error response for unsuccessful verification of agent case" in {
-    //      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(RegisterRequest("1", "LT", "12LT002", "SE39EP", "Aggregate Levy", true, true, "agentx")))
-    //      val result = TestRegistrationController.register()(fakeRequest)
-    //      status(result) shouldBe Status.OK
-    //      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_ARN)
-    //    }
-    //    "return 200 and correct error response when registration found but for wrong form type" in {
-    //      val fakeRequest = FakeRequest(Helpers.POST, "/verify").withBody(toJson(RegisterRequest("2", "LT", "12LT033", "SE39EP", "Aggregate Levy", true, false, "")))
-    //      val result = TestRegistrationController.register()(fakeRequest)
-    //      status(result) shouldBe Status.OK
-    //      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_REGIME)
-    //    }
   }
 
   "POST /eeitt-auth/register-agent" should {
     "return 200 and error if submitted known facts are different than stored known facts" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterAgentRequest("1", "KARN001", "SE39EPX")))
+      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterAgentRequest("1", "KARN001")))
       val result = TestRegistrationController.register()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS)

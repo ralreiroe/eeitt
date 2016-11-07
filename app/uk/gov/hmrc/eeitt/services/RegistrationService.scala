@@ -1,10 +1,9 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.{ RegisterAgentRequest, RegisterRequest, Registration, RegistrationLookupResponse, RegistrationResponse, VerificationResponse }
-import uk.gov.hmrc.eeitt.repositories.{ RegistrationRepository, registrationRepository }
-import uk.gov.hmrc.eeitt.model.VerificationResponse
+import uk.gov.hmrc.eeitt.model._
+import uk.gov.hmrc.eeitt.repositories.{ RegistrationRepository, etmpBusinessUserRepository, etmpAgentRepository, registrationRepository }
 import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ MULTIPLE_FOUND, RESPONSE_NOT_FOUND }
-import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, INCORRECT_KNOWN_FACTS, RESPONSE_OK, IS_AGENT, IS_NOT_AGENT }
+import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, INCORRECT_KNOWN_FACTS, IS_AGENT, IS_NOT_AGENT, RESPONSE_OK }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -14,7 +13,7 @@ trait RegistrationService {
   def registrationRepo: RegistrationRepository
 
   def register(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
-    EnrolmentVerificationService.verify(registerRequest).flatMap {
+    verify(registerRequest).flatMap {
       case RESPONSE_OK =>
         registrationRepo.findRegistrations(registerRequest.groupId).flatMap {
           case Nil => addRegistration(registerRequest)
@@ -25,8 +24,15 @@ trait RegistrationService {
     }
   }
 
+  private def verify(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
+    etmpBusinessUserRepository.userExists(EtmpBusinessUser(registerRequest.groupId, registerRequest.postcode)).flatMap {
+      case true => Future.successful(RESPONSE_OK)
+      case false => Future.successful(RegistrationResponse.RESPONSE_NOT_FOUND)
+    }
+  }
+
   def registerAgent(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
-    EnrolmentVerificationService.verifyAgent(registerAgentRequest).flatMap {
+    verifyAgent(registerAgentRequest).flatMap {
       case RESPONSE_OK =>
         registrationRepo.findRegistrations(registerAgentRequest.groupId).flatMap {
           case Nil => addAgentRegistration(registerAgentRequest)
@@ -36,6 +42,12 @@ trait RegistrationService {
       case x => Future.successful(x)
     }
   }
+
+  private def verifyAgent(registerRequest: RegisterAgentRequest): Future[RegistrationResponse] =
+    etmpAgentRepository.agentExists(EtmpAgent(registerRequest.groupId)).flatMap {
+      case true => Future.successful(RESPONSE_OK)
+      case false => Future.successful(RegistrationResponse.RESPONSE_NOT_FOUND)
+    }
 
   private def addRegistration(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
     registrationRepo.register(registerRequest).flatMap {
@@ -88,18 +100,6 @@ trait RegistrationService {
     }
   }
 
-//  object DifferentKnownFacts {
-//    def unapply(p: (RegisterRequest, Registration)): Boolean = p match {
-//      case (rr, r) => rr.registrationNumber != r.registrationNumber || norm(rr.postcode) != norm(r.postcode)
-//    }
-//    private def norm(p: String) = p.trim.toUpperCase.replaceAll("\\s", "")
-//  }
-//
-//  object RegimePresent {
-//    def unapply(p: (RegisterRequest, Registration)): Boolean = p match {
-//      case (rr, r) => r.regimeIds.contains(rr.regimeId)
-//    }
-//  }
 }
 
 object RegistrationService extends RegistrationService {

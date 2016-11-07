@@ -5,7 +5,7 @@ import play.api.libs.json.{ JsError, JsSuccess, Json }
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model.RegisterRequest
 import uk.gov.hmrc.eeitt.model.RegisterAgentRequest
-import uk.gov.hmrc.eeitt.services.{ EnrolmentVerificationService, RegistrationService }
+import uk.gov.hmrc.eeitt.services.RegistrationService
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
@@ -13,7 +13,6 @@ import scala.concurrent.Future
 
 object RegistrationController extends RegistrationController {
   val registrationService = RegistrationService
-  val enrolmentVerificationService = EnrolmentVerificationService
 }
 
 trait RegistrationController extends BaseController {
