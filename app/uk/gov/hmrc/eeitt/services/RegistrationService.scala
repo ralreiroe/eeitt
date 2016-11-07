@@ -28,12 +28,8 @@ trait RegistrationService {
 
   private def verify(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
     userRepository.userExists(EtmpBusinessUser(registerRequest.registrationNumber, registerRequest.postcode)).flatMap {
-      case true => {
-        Future.successful(RESPONSE_OK)
-      }
-      case false => {
-        Future.successful(RegistrationResponse.INCORRECT_KNOWN_FACTS)
-      }
+      case true => Future.successful(RESPONSE_OK)
+      case false => Future.successful(RegistrationResponse.INCORRECT_KNOWN_FACTS)
     }
   }
 
@@ -52,7 +48,7 @@ trait RegistrationService {
   private def verify(registerRequest: RegisterAgentRequest): Future[RegistrationResponse] =
     agentRepository.agentExists(EtmpAgent(registerRequest.arn)).flatMap {
       case true => Future.successful(RESPONSE_OK)
-      case false => Future.successful(RegistrationResponse.RESPONSE_NOT_FOUND)
+      case false => Future.successful(RegistrationResponse.INCORRECT_KNOWN_FACTS)
     }
 
   private def addRegistration(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
@@ -94,7 +90,7 @@ trait RegistrationService {
   def lookup(groupId: String): Future[RegistrationLookupResponse] =
     registrationRepo.findRegistrations(groupId).map {
       case Nil => RESPONSE_NOT_FOUND
-      case x :: Nil => { RegistrationLookupResponse(None, x.regimeIds) }
+      case x :: Nil => RegistrationLookupResponse(None, x.regimeIds)
       case x :: xs => MULTIPLE_FOUND
     }
 }

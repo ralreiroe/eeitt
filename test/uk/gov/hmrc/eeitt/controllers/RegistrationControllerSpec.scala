@@ -1,15 +1,15 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import org.specs2.matcher.{ MustExpectations, NumericMatchers }
+import org.specs2.matcher.{MustExpectations, NumericMatchers}
 import org.specs2.mock.Mockito
 import play.api.http.Status
-import play.api.libs.json.{ JsValue, Json }
+import play.api.libs.json.{JsValue, Json}
 import play.api.libs.json.Json._
-import play.api.test.{ FakeRequest, Helpers }
+import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.repositories.MongoRegistrationRepository
+import uk.gov.hmrc.eeitt.repositories.{MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationRepository}
 import uk.gov.hmrc.eeitt.services.RegistrationService
-import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.eeitt.model.VerificationResponse
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 
@@ -27,18 +27,13 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       Registration("4", false, "12LT005", "", List("LT", "XT"))
     )))
     registrationRepo.findRegistrations("5").returns(Future.successful(List(Registration("5", true, "", "KARN001", List()))))
-    val userRepository = ???
-    val agentRepository = ???
+    val userRepository = mock[MongoEtmpBusinessUsersRepository]
+    userRepository.userExists(EtmpBusinessUser("12LT001", "SE39EP")).returns(Future.successful(true))
+    userRepository.userExists(EtmpBusinessUser("12LT009", "SE39EPX")).returns(Future.successful(false))
+    val agentRepository = mock[MongoEtmpAgentRepository]
+    agentRepository.agentExists(EtmpAgent("KARN001")).returns(Future.successful(true))
+    agentRepository.agentExists(EtmpAgent("KARN002")).returns(Future.successful(false))
   }
-
-  //  object TestEnrolmentStoreService extends EnrolmentVerificationService {
-  //    val enrolmentRepo = mock[MongoEnrolmentRepository]
-  //    enrolmentRepo.lookupEnrolment("12LT001").returns(Future.successful(List(Enrolment("1", "12LT001", true, "SE39EP", ""))))
-  //    enrolmentRepo.lookupEnrolment("12LT002").returns(Future.successful(List(Enrolment("1", "12LT002", true, "SE39EP", "agent"))))
-  //    enrolmentRepo.getEnrolmentsWithArn("agentx").returns(Future.successful(List()))
-  //    enrolmentRepo.lookupEnrolment("12LT32").returns(Future.successful(List()))
-  //    enrolmentRepo.lookupEnrolment("12LT33").returns(Future.successful(List(Enrolment("1", "12LT002", true, "SE39EP", "agent"), Enrolment("2", "12LT002", true, "SE39EP", "agent"))))
-  //  }
 
   object TestRegistrationController extends RegistrationController {
     val registrationService = TestRegistrationService
@@ -89,8 +84,8 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
 
   "POST /eeitt-auth/register-agent" should {
     "return 200 and error if submitted known facts are different than stored known facts" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterAgentRequest("1", "KARN001")))
-      val result = TestRegistrationController.register()(fakeRequest)
+      val fakeRequest = FakeRequest(Helpers.POST, "/register/agent").withBody(toJson(RegisterAgentRequest("1", "KARN002")))
+      val result = TestRegistrationController.registerAgent()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS)
     }
