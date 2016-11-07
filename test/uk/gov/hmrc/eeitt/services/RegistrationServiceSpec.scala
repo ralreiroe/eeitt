@@ -74,7 +74,7 @@ class RegistrationServiceSpec extends UnitSpec
     "effect a new registration record and a 'registration ok' response" in {
       insertAgent(EtmpAgent("KARN9876543210123"))
       agentRepo.count.futureValue shouldBe 1
-      val response = service.registerAgent(RegisterAgentRequest("3", "KARN9876543210123"))
+      val response = service.register(RegisterAgentRequest("3", "KARN9876543210123"))
       response.futureValue shouldBe RESPONSE_OK
     }
   }
@@ -85,7 +85,7 @@ class RegistrationServiceSpec extends UnitSpec
       agentRepo.count.futureValue shouldBe 1
       insertRegistration(Registration("3", true, "", "KARN9876543210123", Seq()))
       regRepo.count.futureValue shouldBe 1
-      val response = service.registerAgent(RegisterAgentRequest("3", "KARN9876543210123"))
+      val response = service.register(RegisterAgentRequest("3", "KARN9876543210123"))
       response.futureValue shouldBe RESPONSE_OK
     }
     "return an error if known facts do not agree with the request" in {
@@ -93,7 +93,7 @@ class RegistrationServiceSpec extends UnitSpec
       agentRepo.count.futureValue shouldBe 1
       insertRegistration(Registration("3", true, "", "KARN9876543210123", Seq()))
       regRepo.count.futureValue shouldBe 1
-      val response = service.registerAgent(RegisterAgentRequest("3", "KARN9876543210124"))
+      val response = service.register(RegisterAgentRequest("3", "KARN9876543210124"))
       response.futureValue shouldBe ALREADY_REGISTERED
     }
   }

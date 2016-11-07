@@ -31,11 +31,11 @@ trait RegistrationService {
     }
   }
 
-  def registerAgent(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
-    verifyAgent(registerAgentRequest).flatMap {
+  def register(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
+    verify(registerAgentRequest).flatMap {
       case RESPONSE_OK =>
         registrationRepo.findRegistrations(registerAgentRequest.groupId).flatMap {
-          case Nil => addAgentRegistration(registerAgentRequest)
+          case Nil => addRegistration(registerAgentRequest)
           case x :: Nil => if (x.isAgent) Future.successful(RegistrationResponse.RESPONSE_OK) else Future.successful(IS_AGENT)
           case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
         }
@@ -43,7 +43,7 @@ trait RegistrationService {
     }
   }
 
-  private def verifyAgent(registerRequest: RegisterAgentRequest): Future[RegistrationResponse] =
+  private def verify(registerRequest: RegisterAgentRequest): Future[RegistrationResponse] =
     etmpAgentRepository.agentExists(EtmpAgent(registerRequest.groupId)).flatMap {
       case true => Future.successful(RESPONSE_OK)
       case false => Future.successful(RegistrationResponse.RESPONSE_NOT_FOUND)
@@ -56,7 +56,7 @@ trait RegistrationService {
     }
   }
 
-  private def addAgentRegistration(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
+  private def addRegistration(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
     registrationRepo.registerA(registerAgentRequest).flatMap {
       case Right(_) => Future.successful(RESPONSE_OK)
       case Left(x) => Future.successful(RegistrationResponse(Some(x)))
@@ -91,15 +91,6 @@ trait RegistrationService {
       case x :: Nil => { RegistrationLookupResponse(None, x.regimeIds) }
       case x :: xs => MULTIPLE_FOUND
     }
-
-  def registerVerified(registrationRequest: RegisterRequest): Future[RegistrationResponse] = {
-    registrationRepo.findRegistrations(registrationRequest.groupId).flatMap {
-      case Nil => addRegistration(registrationRequest)
-      case x :: Nil => updateRegistration(registrationRequest, x)
-      case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
-    }
-  }
-
 }
 
 object RegistrationService extends RegistrationService {

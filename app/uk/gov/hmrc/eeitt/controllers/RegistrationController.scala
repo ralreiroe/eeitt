@@ -35,7 +35,7 @@ trait RegistrationController extends BaseController {
   def registerAgent() = Action.async(parse.json) { implicit request =>
     request.body.validate[RegisterAgentRequest] match {
       case JsSuccess(req, _) =>
-        registrationService.registerAgent(req) map (response => Ok(Json.toJson(response)))
+        registrationService.register(req) map (response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: ${jsonErrors} ")
         Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors))))
