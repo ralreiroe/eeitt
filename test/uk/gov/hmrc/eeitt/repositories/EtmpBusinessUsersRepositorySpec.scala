@@ -59,6 +59,7 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
 
   def testEtmpBusinessUser() = {
     def randomize(s: String) = s + "-" + UUID.randomUUID()
+
     EtmpBusinessUser(randomize("regNumber"), randomize("postcode"))
   }
 

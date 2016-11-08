@@ -13,8 +13,11 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait RegistrationRepository {
   def findRegistrations(groupId: String): Future[List[Registration]]
+
   def addRegime(registration: Registration, regimeId: String): Future[Either[String, Unit]]
+
   def register(registrationRequest: RegisterRequest): Future[Either[String, Unit]]
+
   def registerA(rr: RegisterAgentRequest): Future[Either[String, Unit]]
 }
 

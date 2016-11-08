@@ -3,7 +3,6 @@ package uk.gov.hmrc.eeitt.controllers
 import org.specs2.matcher.{ MustExpectations, NumericMatchers }
 import org.specs2.mock.Mockito
 import play.api.http.Status
-import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
 import uk.gov.hmrc.eeitt.model._

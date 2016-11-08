@@ -4,7 +4,7 @@ import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
 import uk.gov.hmrc.eeitt.model.{ RegisterAgentRequest, _ }
 import uk.gov.hmrc.eeitt.repositories._
-import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
+import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 
 import scala.concurrent.ExecutionContext.Implicits.global

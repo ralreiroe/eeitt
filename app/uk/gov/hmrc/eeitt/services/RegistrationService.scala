@@ -2,7 +2,6 @@ package uk.gov.hmrc.eeitt.services
 
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories.{ EtmpAgentRepository, EtmpBusinessUsersRepository, RegistrationRepository, etmpBusinessUserRepository, etmpAgentRepository, registrationRepository }
-import uk.gov.hmrc.eeitt.model.RegistrationLookupResponse.{ MULTIPLE_FOUND, RESPONSE_NOT_FOUND }
 import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, INCORRECT_KNOWN_FACTS, IS_AGENT, IS_NOT_AGENT, RESPONSE_OK }
 
 import scala.concurrent.Future
@@ -11,7 +10,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 trait RegistrationService {
 
   def registrationRepo: RegistrationRepository
+
   def userRepository: EtmpBusinessUsersRepository
+
   def agentRepository: EtmpAgentRepository
 
   def register(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
@@ -92,13 +93,6 @@ trait RegistrationService {
         }
         z
       case x :: xs => VerificationResponse(false)
-    }
-
-  def lookup(groupId: String): Future[RegistrationLookupResponse] =
-    registrationRepo.findRegistrations(groupId).map {
-      case Nil => RESPONSE_NOT_FOUND
-      case x :: Nil => RegistrationLookupResponse(None, x.regimeIds)
-      case x :: xs => MULTIPLE_FOUND
     }
 }
 

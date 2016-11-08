@@ -13,6 +13,7 @@ import scala.concurrent.Future
 trait EtmpDataLoaderController extends BaseController {
 
   def businessUserRepo: EtmpBusinessUsersRepository
+
   def agentRepo: EtmpAgentRepository
 
   def loadBusinessUsers = load(EtmpBusinessUserParser.parseFile, businessUserRepo.replaceAll)

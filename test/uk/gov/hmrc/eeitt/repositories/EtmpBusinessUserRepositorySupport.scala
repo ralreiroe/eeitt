@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.repositories
 
-import uk.gov.hmrc.eeitt.model.{ EtmpBusinessUser, Registration }
+import uk.gov.hmrc.eeitt.model.EtmpBusinessUser
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 

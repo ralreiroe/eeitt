@@ -13,6 +13,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait EtmpAgentRepository {
   def agentExists(etmpAgent: EtmpAgent): Future[Boolean]
+
   def replaceAll(users: Seq[EtmpAgent]): Future[MultiBulkWriteResult]
 }
 
