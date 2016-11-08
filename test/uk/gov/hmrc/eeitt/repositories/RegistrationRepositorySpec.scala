@@ -19,7 +19,8 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
   private val registration1: Registration = Registration("g1", false, "12LT001", "", List("LT", "LL"))
   private val registration2: Registration = Registration("g2", false, "12LT002", "", List("LT", "LL", "XL"))
 
-  "query registrations with a group id" should {
+  "query registrations with a group id" should {import uk.gov.hmrc.eeitt.services.RegistrationService
+
     "produce registration with the given group id" in {
       insertRegistration(registration1)
       insertRegistration(registration2)
