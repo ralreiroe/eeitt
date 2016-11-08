@@ -23,7 +23,7 @@ trait RegistrationService {
             if (x.registrationNumber == registerRequest.registrationNumber)
               updateRegistration(registerRequest, x)
             else
-              Future.successful(INCORRECT_KNOWN_FACTS)
+              Future.successful(ALREADY_REGISTERED)
           }
           case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
         }
@@ -44,7 +44,7 @@ trait RegistrationService {
         registrationRepo.findRegistrations(registerAgentRequest.groupId).flatMap {
           case Nil => addRegistration(registerAgentRequest)
           case x :: Nil => if (x.isAgent) {
-            if (x.arn == registerAgentRequest.arn) Future.successful(RESPONSE_OK) else Future.successful(INCORRECT_KNOWN_FACTS)
+            if (x.arn == registerAgentRequest.arn) Future.successful(RESPONSE_OK) else Future.successful(ALREADY_REGISTERED)
           } else Future.successful(IS_NOT_AGENT)
           case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
         }
@@ -74,7 +74,7 @@ trait RegistrationService {
 
   private def updateRegistration(registerRequest: RegisterRequest, registration: Registration): Future[RegistrationResponse] = {
     if (registration.regimeIds.contains(registerRequest.regimeId))
-      Future.successful(ALREADY_REGISTERED)
+      Future.successful(RESPONSE_OK)
     else
       registrationRepo.addRegime(registration, registerRequest.regimeId).flatMap {
         case Right(_) => Future.successful(RESPONSE_OK)

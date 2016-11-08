@@ -58,6 +58,15 @@ class RegistrationServiceSpec extends UnitSpec
       val response = service.register(RegisterRequest("3", "LX", "AL9876543210123", "ME1 9ABX"))
       response.futureValue shouldBe INCORRECT_KNOWN_FACTS
     }
+    "return an error if try to register another business user" in {
+      insertBusinessUser(EtmpBusinessUser("AL9876543210123", "ME1 9AB"))
+      insertBusinessUser(EtmpBusinessUser("AL9876543210124", "ME1 9AB"))
+      userRepo.count.futureValue shouldBe 2
+      insertRegistration(Registration("3", false, "AL9876543210123", "", List("LX")))
+      regRepo.count.futureValue shouldBe 1
+      val response = service.register(RegisterRequest("3", "LX", "AL9876543210124", "ME1 9ABX"))
+      response.futureValue shouldBe ALREADY_REGISTERED
+    }
     "return an error if the group id is already registered" in {
       insertBusinessUser(EtmpBusinessUser("AL9876543210123", "ME1 9AB"))
       userRepo.count.futureValue shouldBe 1
@@ -86,14 +95,14 @@ class RegistrationServiceSpec extends UnitSpec
       val response = service.register(RegisterAgentRequest("3", "KARN9876543210123"))
       response.futureValue shouldBe RESPONSE_OK
     }
-    "return an error if known facts do not agree with the request" in {
+    "return an error if try to register another agent" in {
       insertAgent(EtmpAgent("KARN9876543210123"))
       insertAgent(EtmpAgent("KARN9876543210124"))
       agentRepo.count.futureValue shouldBe 2
       insertRegistration(Registration("3", true, "", "KARN9876543210123", Seq()))
       regRepo.count.futureValue shouldBe 1
       val response = service.register(RegisterAgentRequest("3", "KARN9876543210124"))
-      response.futureValue shouldBe INCORRECT_KNOWN_FACTS
+      response.futureValue shouldBe ALREADY_REGISTERED
     }
   }
 
