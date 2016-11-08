@@ -16,7 +16,7 @@ class RegistrationServiceSpec extends UnitSpec
   object TestRegistrationService extends RegistrationService {
     val userRepository = userRepo
     val agentRepository = agentRepo
-    val registrationRepo = regRepo
+    val regRepository = regRepo
   }
 
   val service = TestRegistrationService
@@ -67,6 +67,15 @@ class RegistrationServiceSpec extends UnitSpec
       val response = service.register(RegisterRequest("3", "LX", "AL9876543210124", "ME1 9AB"))
       response.futureValue shouldBe ALREADY_REGISTERED
     }
+    "return an error if already registered to an agent" in {
+      insertBusinessUser(EtmpBusinessUser("AL9876543210123", "ME1 9AB"))
+      insertBusinessUser(EtmpBusinessUser("AL9876543210124", "ME1 9AB"))
+      userRepo.count.futureValue shouldBe 2
+      insertRegistration(Registration("3", true, "", "KARN9876543210123", Seq()))
+      regRepo.count.futureValue shouldBe 1
+      val response = service.register(RegisterRequest("3", "LX", "AL9876543210124", "ME1 9AB"))
+      response.futureValue shouldBe IS_AGENT
+    }
   }
 
   "Registering an agent with a group id which is not present in repository" should {
@@ -95,6 +104,15 @@ class RegistrationServiceSpec extends UnitSpec
       regRepo.count.futureValue shouldBe 1
       val response = service.register(RegisterAgentRequest("3", "KARN9876543210124"))
       response.futureValue shouldBe ALREADY_REGISTERED
+    }
+    "return an error if already registered to a business user" in {
+      insertAgent(EtmpAgent("KARN9876543210123"))
+      insertAgent(EtmpAgent("KARN9876543210124"))
+      agentRepo.count.futureValue shouldBe 2
+      insertRegistration(Registration("3", false, "AL9876543210123", "", List("LX")))
+      regRepo.count.futureValue shouldBe 1
+      val response = service.register(RegisterAgentRequest("3", "KARN9876543210124"))
+      response.futureValue shouldBe IS_NOT_AGENT
     }
   }
 

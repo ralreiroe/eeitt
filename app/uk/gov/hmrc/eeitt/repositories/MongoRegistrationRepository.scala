@@ -18,7 +18,7 @@ trait RegistrationRepository {
 
   def register(registrationRequest: RegisterRequest): Future[Either[String, Unit]]
 
-  def registerA(rr: RegisterAgentRequest): Future[Either[String, Unit]]
+  def register(rr: RegisterAgentRequest): Future[Either[String, Unit]]
 }
 
 class MongoRegistrationRepository(implicit mongo: () => DB)
@@ -54,7 +54,7 @@ class MongoRegistrationRepository(implicit mongo: () => DB)
     }
   }
 
-  def registerA(rr: RegisterAgentRequest): Future[Either[String, Unit]] = {
+  def register(rr: RegisterAgentRequest): Future[Either[String, Unit]] = {
     val isNotAgent = false
     val registration = Registration(rr.groupId, isNotAgent, "", rr.arn, Seq())
     insert(registration) map {

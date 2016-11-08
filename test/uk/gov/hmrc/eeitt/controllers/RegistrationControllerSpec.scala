@@ -17,15 +17,15 @@ import scala.concurrent.Future
 class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with MustExpectations with NumericMatchers with Mockito {
 
   object TestRegistrationService extends RegistrationService {
-    val registrationRepo = mock[MongoRegistrationRepository]
-    registrationRepo.findRegistrations("1").returns(Future.successful(List(Registration("1", false, "12LT001", "", List("LT", "LL")))))
-    registrationRepo.findRegistrations("2").returns(Future.successful(List(Registration("2", false, "12LT002", "", List("LT", "LL", "XT")))))
-    registrationRepo.findRegistrations("3").returns(Future.successful(List()))
-    registrationRepo.findRegistrations("4").returns(Future.successful(List(
+    val regRepository = mock[MongoRegistrationRepository]
+    regRepository.findRegistrations("1").returns(Future.successful(List(Registration("1", false, "12LT001", "", List("LT", "LL")))))
+    regRepository.findRegistrations("2").returns(Future.successful(List(Registration("2", false, "12LT002", "", List("LT", "LL", "XT")))))
+    regRepository.findRegistrations("3").returns(Future.successful(List()))
+    regRepository.findRegistrations("4").returns(Future.successful(List(
       Registration("4", false, "12LT004", "", List("LT", "LL")),
       Registration("4", false, "12LT005", "", List("LT", "XT"))
     )))
-    registrationRepo.findRegistrations("5").returns(Future.successful(List(Registration("5", true, "", "KARN001", List()))))
+    regRepository.findRegistrations("5").returns(Future.successful(List(Registration("5", true, "", "KARN001", List()))))
     val userRepository = mock[MongoEtmpBusinessUsersRepository]
     userRepository.userExists(EtmpBusinessUser("12LT001", "SE39EP")).returns(Future.successful(true))
     userRepository.userExists(EtmpBusinessUser("12LT009", "SE39EPX")).returns(Future.successful(false))

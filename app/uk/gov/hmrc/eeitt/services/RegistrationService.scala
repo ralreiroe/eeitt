@@ -1,73 +1,69 @@
 package uk.gov.hmrc.eeitt.services
 
+import uk.gov.hmrc.eeitt.model.RegistrationResponse._
+import uk.gov.hmrc.eeitt.repositories._
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.repositories.{ EtmpAgentRepository, EtmpBusinessUsersRepository, RegistrationRepository, etmpBusinessUserRepository, etmpAgentRepository, registrationRepository }
-import uk.gov.hmrc.eeitt.model.RegistrationResponse.{ ALREADY_REGISTERED, INCORRECT_KNOWN_FACTS, IS_AGENT, IS_NOT_AGENT, RESPONSE_OK }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait RegistrationService {
 
-  def registrationRepo: RegistrationRepository
+  def regRepository: RegistrationRepository
 
   def userRepository: EtmpBusinessUsersRepository
 
   def agentRepository: EtmpAgentRepository
 
   def register(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
-    verify(registerRequest).flatMap {
-      case RESPONSE_OK =>
-        registrationRepo.findRegistrations(registerRequest.groupId).flatMap {
-          case Nil => addRegistration(registerRequest)
-          case x :: Nil => if (x.isAgent) Future.successful(IS_NOT_AGENT) else {
-            if (x.registrationNumber == registerRequest.registrationNumber)
-              updateRegistration(registerRequest, x)
-            else
-              Future.successful(ALREADY_REGISTERED)
-          }
-          case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
-        }
-      case x => Future.successful(x)
-    }
-  }
-
-  private def verify(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
     userRepository.userExists(EtmpBusinessUser(registerRequest.registrationNumber, registerRequest.postcode)).flatMap {
-      case true => Future.successful(RESPONSE_OK)
-      case false => Future.successful(RegistrationResponse.INCORRECT_KNOWN_FACTS)
+      case true =>
+        regRepository.findRegistrations(registerRequest.groupId).flatMap {
+          case Nil => addRegistration(registerRequest)
+          case x :: Nil => x match {
+            case Registration(_, false, registerRequest.registrationNumber, _, _) => updateRegistration(registerRequest, x)
+            case Registration(_, false, _, _, _) => Future.successful(ALREADY_REGISTERED)
+            case Registration(_, true, _, _, _) => Future.successful(IS_AGENT)
+
+          }
+          case x :: xs => Future.successful(MULTIPLE_FOUND)
+        }
+      case false => Future.successful(INCORRECT_KNOWN_FACTS)
     }
   }
 
   def register(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
-    verify(registerAgentRequest).flatMap {
-      case RESPONSE_OK =>
-        registrationRepo.findRegistrations(registerAgentRequest.groupId).flatMap {
+    agentRepository.agentExists(EtmpAgent(registerAgentRequest.arn)).flatMap {
+      case true =>
+        regRepository.findRegistrations(registerAgentRequest.groupId).flatMap {
           case Nil => addRegistration(registerAgentRequest)
-          case x :: Nil => if (x.isAgent) {
-            if (x.arn == registerAgentRequest.arn) Future.successful(RESPONSE_OK) else Future.successful(ALREADY_REGISTERED)
-          } else Future.successful(IS_NOT_AGENT)
-          case x :: xs => Future.successful(RegistrationResponse.MULTIPLE_FOUND)
+          case Registration(_, true, _, registerAgentRequest.arn, _) :: Nil => Future.successful(RESPONSE_OK)
+          case Registration(_, true, _, _, _) :: Nil => Future.successful(ALREADY_REGISTERED)
+          case Registration(_, false, _, _, _) :: Nil => Future.successful(IS_NOT_AGENT)
+          case x :: xs => Future.successful(MULTIPLE_FOUND)
         }
-      case x => Future.successful(x)
+      case false => Future.successful(INCORRECT_KNOWN_FACTS)
     }
   }
 
-  private def verify(registerRequest: RegisterAgentRequest): Future[RegistrationResponse] =
-    agentRepository.agentExists(EtmpAgent(registerRequest.arn)).flatMap {
-      case true => Future.successful(RESPONSE_OK)
-      case false => Future.successful(RegistrationResponse.INCORRECT_KNOWN_FACTS)
+  def verification(groupId: String, regimeId: String): Future[VerificationResponse] = {
+    regRepository.findRegistrations(groupId).map {
+      case Nil => VerificationResponse(false)
+      case Registration(_, false, _, _, y) :: Nil => VerificationResponse(y.contains(regimeId))
+      case Registration(_, true, _, _, _) :: Nil => VerificationResponse(true)
+      case x :: xs => VerificationResponse(false)
     }
+  }
 
   private def addRegistration(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
-    registrationRepo.register(registerRequest).flatMap {
+    regRepository.register(registerRequest).flatMap {
       case Right(_) => Future.successful(RESPONSE_OK)
       case Left(x) => Future.successful(RegistrationResponse(Some(x)))
     }
   }
 
   private def addRegistration(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
-    registrationRepo.registerA(registerAgentRequest).flatMap {
+    regRepository.register(registerAgentRequest).flatMap {
       case Right(_) => Future.successful(RESPONSE_OK)
       case Left(x) => Future.successful(RegistrationResponse(Some(x)))
     }
@@ -77,27 +73,15 @@ trait RegistrationService {
     if (registration.regimeIds.contains(registerRequest.regimeId))
       Future.successful(RESPONSE_OK)
     else
-      registrationRepo.addRegime(registration, registerRequest.regimeId).flatMap {
+      regRepository.addRegime(registration, registerRequest.regimeId).flatMap {
         case Right(_) => Future.successful(RESPONSE_OK)
         case Left(x) => Future.successful(RegistrationResponse(Some(x)))
       }
   }
-
-  def verification(groupId: String, regimeId: String): Future[VerificationResponse] =
-    registrationRepo.findRegistrations(groupId).map {
-      case Nil => VerificationResponse(false)
-      case x :: Nil =>
-        val z: VerificationResponse = x match {
-          case Registration(_, false, _, _, y) => VerificationResponse(y.contains(regimeId))
-          case Registration(_, true, _, _, _) => VerificationResponse(true)
-        }
-        z
-      case x :: xs => VerificationResponse(false)
-    }
 }
 
 object RegistrationService extends RegistrationService {
-  lazy val registrationRepo = registrationRepository
+  lazy val regRepository = registrationRepository
   lazy val userRepository = etmpBusinessUserRepository
   lazy val agentRepository = etmpAgentRepository
 }
