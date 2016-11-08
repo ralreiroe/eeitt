@@ -10,7 +10,7 @@ import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class RegistrationServiceSpec extends UnitSpec
-    with RegistrationRepositorySupport with EtmpAgentRepositorySupport with EtmpBusinessUserRepositorySupport with WithFakeApplication
+    with RegistrationRepositorySupport with EtmpAgentRepositorySupport with EtmpBusinessUserRepositorySupport
     with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience {
 
   object TestRegistrationService extends RegistrationService {
@@ -64,15 +64,7 @@ class RegistrationServiceSpec extends UnitSpec
       userRepo.count.futureValue shouldBe 2
       insertRegistration(Registration("3", false, "AL9876543210123", "", List("LX")))
       regRepo.count.futureValue shouldBe 1
-      val response = service.register(RegisterRequest("3", "LX", "AL9876543210124", "ME1 9ABX"))
-      response.futureValue shouldBe ALREADY_REGISTERED
-    }
-    "return an error if the group id is already registered" in {
-      insertBusinessUser(EtmpBusinessUser("AL9876543210123", "ME1 9AB"))
-      userRepo.count.futureValue shouldBe 1
-      insertRegistration(Registration("3", false, "AL9876543210123", "", List("LT")))
-      regRepo.count.futureValue shouldBe 1
-      val response = service.register(RegisterRequest("3", "LT", "AL9876543210123", "ME1 9AB"))
+      val response = service.register(RegisterRequest("3", "LX", "AL9876543210124", "ME1 9AB"))
       response.futureValue shouldBe ALREADY_REGISTERED
     }
   }
