@@ -53,18 +53,18 @@ class RegistrationServiceSpec extends UnitSpec
   }
 
   "Registering a business user with a group id which is present in repository" should {
-    "affect an updated registration record if the requested regime is not present and known facts agree with the request" in {
+    "return an error if try to register another business user" in {
       val response = service.register(RegisterRequest("1", "ALLX9876543210123", "ME1 9AB"))
-      response.futureValue shouldBe RESPONSE_OK
+      response.futureValue shouldBe ALREADY_REGISTERED
       //      verify(regRepository.register(RegisterRequest("3", "LX", "AL9876543210123", "ME1 9AB")), atLeastOnce())
     }
     "return an error if known facts do not agree with the request" in {
       val response = service.register(RegisterRequest("3", "ALLX9876543210123", "ME1 9ABX"))
       response.futureValue shouldBe INCORRECT_KNOWN_FACTS
     }
-    "return an error if try to register another business user" in {
+    "affect an updated registration record if the requested regime is not present and known facts agree with the request" in {
       val response = service.register(RegisterRequest("1", "ALLX9876543210124", "ME1 9AB"))
-      response.futureValue shouldBe ALREADY_REGISTERED
+      response.futureValue shouldBe RESPONSE_OK
     }
     "return an error if already registered to an agent" in {
       val response = service.register(RegisterRequest("5", "ALLX9876543210123", "ME1 9AB"))
@@ -82,11 +82,11 @@ class RegistrationServiceSpec extends UnitSpec
   "Registering an agent with a group id which is present in repository" should {
     "return success if the group id is already registered" in {
       val response = service.register(RegisterAgentRequest("5", "KARN9876543210123"))
-      response.futureValue shouldBe RESPONSE_OK
+      response.futureValue shouldBe ALREADY_REGISTERED
     }
     "return an error if try to register another agent" in {
       val response = service.register(RegisterAgentRequest("5", "KARN9876543210125"))
-      response.futureValue shouldBe ALREADY_REGISTERED
+      response.futureValue shouldBe RESPONSE_OK
     }
     "return an error if already registered to an agent user" in {
       val response = service.register(RegisterAgentRequest("1", "KARN9876543210123"))

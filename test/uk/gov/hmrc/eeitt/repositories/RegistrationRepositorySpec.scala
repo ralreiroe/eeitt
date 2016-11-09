@@ -1,7 +1,7 @@
 package uk.gov.hmrc.eeitt.repositories
 
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.{BeforeAndAfterEach, Inspectors, LoneElement}
+import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
+import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
 import org.specs2.matcher.ExceptionMatchers
 import reactivemongo.core.errors.DatabaseException
 import uk.gov.hmrc.eeitt.model.Registration

@@ -21,8 +21,8 @@ trait RegistrationService {
         regRepository.findRegistrations(registerRequest.groupId).flatMap {
           case Nil => addRegistration(registerRequest)
           case x :: Nil => x match {
-            case Registration(_, false, registerRequest.registrationNumber, _, _) => updateRegistration(registerRequest, x)
-            case Registration(_, false, _, _, _) => Future.successful(ALREADY_REGISTERED)
+            case Registration(_, false, registerRequest.registrationNumber, _, _) => Future.successful(ALREADY_REGISTERED)
+            case Registration(_, false, _, _, _) => updateRegistration(registerRequest, x)
             case Registration(_, true, _, _, _) => Future.successful(IS_AGENT)
 
           }
@@ -37,8 +37,8 @@ trait RegistrationService {
       case true =>
         regRepository.findRegistrations(registerAgentRequest.groupId).flatMap {
           case Nil => addRegistration(registerAgentRequest)
-          case Registration(_, true, _, registerAgentRequest.arn, _) :: Nil => Future.successful(RESPONSE_OK)
-          case Registration(_, true, _, _, _) :: Nil => Future.successful(ALREADY_REGISTERED)
+          case Registration(_, true, _, registerAgentRequest.arn, _) :: Nil => Future.successful(ALREADY_REGISTERED)
+          case Registration(_, true, _, _, _) :: Nil => Future.successful(RESPONSE_OK)
           case Registration(_, false, _, _, _) :: Nil => Future.successful(IS_NOT_AGENT)
           case x :: xs => Future.successful(MULTIPLE_FOUND)
         }

@@ -1,7 +1,9 @@
 # microservice specific routes
 
-GET        /group-identifier/:groupId/regimes/:regimeId/verification uk.gov.hmrc.eeitt.controllers.RegistrationController.verification(groupId, regimeId)
-POST       /register                    uk.gov.hmrc.eeitt.controllers.RegistrationController.register
-POST       /register/agent              uk.gov.hmrc.eeitt.controllers.RegistrationController.registerAgent
-POST       /etmp-data/business-users    uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadBusinessUsers
-POST       /etmp-data/agents            uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadAgents
+GET        /group-id/:groupId/regime/:regimeId/verification     uk.gov.hmrc.eeitt.controllers.RegistrationController.verification(groupId, regimeId)
+
+POST       /register                                            uk.gov.hmrc.eeitt.controllers.RegistrationController.register
+POST       /register-agent                                      uk.gov.hmrc.eeitt.controllers.RegistrationController.registerAgent
+
+POST       /etmp-data/business-users                            uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadBusinessUsers
+POST       /etmp-data/agents                                    uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadAgents

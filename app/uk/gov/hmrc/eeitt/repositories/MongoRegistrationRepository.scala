@@ -49,16 +49,16 @@ class MongoRegistrationRepository(implicit mongo: () => DB)
     val isNotAgent = false
     val registration = Registration(rr.groupId, isNotAgent, "", rr.registrationNumber, Seq(rr.regimeId))
     insert(registration) map {
-      case r if r.ok => Right(() => Nil)
+      case r if r.ok => Right((): Unit)
       case r => Left(r.message)
     }
   }
 
   def register(rr: RegisterAgentRequest): Future[Either[String, Unit]] = {
-    val isNotAgent = false
-    val registration = Registration(rr.groupId, isNotAgent, "", rr.arn, Seq())
+    val isAgent = true
+    val registration = Registration(rr.groupId, isAgent, "", rr.arn, Seq())
     insert(registration) map {
-      case r if r.ok => Right(() => Nil)
+      case r if r.ok => Right((): Unit)
       case r => Left(r.message)
     }
   }
