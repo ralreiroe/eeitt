@@ -1,7 +1,7 @@
 package uk.gov.hmrc.eeitt.repositories
 
-import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
-import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.{BeforeAndAfterEach, Inspectors, LoneElement}
 import org.specs2.matcher.ExceptionMatchers
 import reactivemongo.core.errors.DatabaseException
 import uk.gov.hmrc.eeitt.model.Registration
@@ -19,7 +19,7 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
   private val registration1: Registration = Registration("g1", false, "12LT001", "", List("LT", "LL"))
   private val registration2: Registration = Registration("g2", false, "12LT002", "", List("LT", "LL", "XL"))
 
-  "query registrations with a group id" should {import uk.gov.hmrc.eeitt.services.RegistrationService
+  "query registrations with a group id" should {
 
     "produce registration with the given group id" in {
       insertRegistration(registration1)
