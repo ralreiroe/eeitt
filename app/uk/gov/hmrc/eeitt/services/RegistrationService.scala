@@ -48,24 +48,24 @@ trait RegistrationService {
 
   def verification(groupId: String, regimeId: String): Future[VerificationResponse] = {
     regRepository.findRegistrations(groupId).map {
-      case Nil => VerificationResponse(false)
-      case Registration(_, false, _, _, y) :: Nil => VerificationResponse(y.contains(regimeId))
-      case Registration(_, true, _, _, _) :: Nil => VerificationResponse(true)
-      case x :: xs => VerificationResponse(false)
-    }
+      case Nil => false
+      case Registration(_, false, _, _, y) :: Nil => y.contains(regimeId)
+      case Registration(_, true, _, _, _) :: Nil => true
+      case x :: xs => false
+    }.map(VerificationResponse.apply)
   }
 
   private def addRegistration(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
-    regRepository.register(registerRequest).flatMap {
-      case Right(_) => Future.successful(RESPONSE_OK)
-      case Left(x) => Future.successful(RegistrationResponse(Some(x)))
+    regRepository.register(registerRequest).map {
+      case Right(_) => RESPONSE_OK
+      case Left(x) => RegistrationResponse(Some(x))
     }
   }
 
   private def addRegistration(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
-    regRepository.register(registerAgentRequest).flatMap {
-      case Right(_) => Future.successful(RESPONSE_OK)
-      case Left(x) => Future.successful(RegistrationResponse(Some(x)))
+    regRepository.register(registerAgentRequest).map {
+      case Right(_) => RESPONSE_OK
+      case Left(x) => RegistrationResponse(Some(x))
     }
   }
 
@@ -73,9 +73,9 @@ trait RegistrationService {
     if (registration.regimeIds.contains(registerRequest.regimeId))
       Future.successful(RESPONSE_OK)
     else
-      regRepository.addRegime(registration, registerRequest.regimeId).flatMap {
-        case Right(_) => Future.successful(RESPONSE_OK)
-        case Left(x) => Future.successful(RegistrationResponse(Some(x)))
+      regRepository.addRegime(registration, registerRequest.regimeId).map {
+        case Right(_) => RESPONSE_OK
+        case Left(x) => RegistrationResponse(Some(x))
       }
   }
 }
@@ -85,4 +85,3 @@ object RegistrationService extends RegistrationService {
   lazy val userRepository = etmpBusinessUserRepository
   lazy val agentRepository = etmpAgentRepository
 }
-
