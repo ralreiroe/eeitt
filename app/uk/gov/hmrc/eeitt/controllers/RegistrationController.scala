@@ -22,6 +22,19 @@ trait RegistrationController extends BaseController {
     registrationService.verification(groupId, regimeId) map (response => Ok(Json.toJson(response)))
   }
 
+  def prepopulation(groupId: String, regimeId: String) = Action.async { implicit request =>
+    registrationService.prepopulation(groupId, regimeId).map {
+      case registration :: Nil => Ok(Json.toJson(registration))
+      case Nil =>
+        Logger.warn(s"Prepopulation data not found for groupId: $groupId and regimeId: $regimeId")
+        NotFound
+      case registration :: xs =>
+        Logger.warn(s"More than one prepopulation data found for groupId: $groupId and regimeId: $regimeId")
+        Ok(Json.toJson(registration))
+    }
+  }
+
+
   def register() = Action.async(parse.json) { implicit request =>
     request.body.validate[RegisterRequest] match {
       case JsSuccess(req, _) =>

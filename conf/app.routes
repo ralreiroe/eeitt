@@ -1,6 +1,7 @@
 # microservice specific routes
 
 GET        /group-id/:groupId/regime/:regimeId/verification     uk.gov.hmrc.eeitt.controllers.RegistrationController.verification(groupId, regimeId)
+GET        /group-id/:groupId/regime/:regimeId/prepopulation    uk.gov.hmrc.eeitt.controllers.RegistrationController.prepopulation(groupId, regimeId)
 
 POST       /register                                            uk.gov.hmrc.eeitt.controllers.RegistrationController.register
 POST       /register-agent                                      uk.gov.hmrc.eeitt.controllers.RegistrationController.registerAgent
