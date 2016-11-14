@@ -12,8 +12,7 @@ trait EtmpBusinessUserRepositorySupport extends UnitSpec with MongoSpecSupport {
   val userRepo = new MongoEtmpBusinessUsersRepository
 
   def insertBusinessUser(etmpBusinessUser: EtmpBusinessUser): Unit = {
-    val g = EtmpBusinessUser(etmpBusinessUser.registrationNumber, etmpBusinessUser.postcode)
-    await(userRepo.collection.insert(g))
+    await(userRepo.collection.insert(etmpBusinessUser))
   }
 
   def awaitUserIndexCreation() = {

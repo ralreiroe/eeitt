@@ -12,15 +12,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait EtmpBusinessUsersRepository {
-  def userExists(etmpBusinessUser: EtmpBusinessUser): Future[Boolean]
+  def userExists(registrationNumber: String, postcode: String): Future[Boolean]
   def replaceAll(users: Seq[EtmpBusinessUser]): Future[MultiBulkWriteResult]
 }
 
 class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
     extends ReactiveRepository[EtmpBusinessUser, BSONObjectID]("etmpBusinessUsers", mongo, Json.format[EtmpBusinessUser])
     with EtmpBusinessUsersRepository {
-
-  val db = DB
 
   override def ensureIndexes(implicit ec: ExecutionContext) = {
     collection.indexesManager.ensure(
@@ -32,15 +30,12 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
     ).map(Seq(_))
   }
 
-  def userExists(etmpBusinessUser: EtmpBusinessUser): Future[Boolean] = {
-    val result = collection
-      .find(etmpBusinessUser)
+  def userExists(registrationNumber: String, postcode: String): Future[Boolean] = {
+    collection
+      .find(Json.obj("registrationNumber" -> registrationNumber, "postcode" -> postcode))
       .cursor[EtmpBusinessUser](ReadPreference.secondaryPreferred)
       .collect[List]()
-      .map(x => {
-        x.nonEmpty
-      })
-    result
+      .map(_.nonEmpty)
   }
 
   // todo: if this method fails EEITT may fail to work...
