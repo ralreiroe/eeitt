@@ -27,11 +27,11 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
     )))
     regRepository.findRegistrations("5").returns(Future.successful(List(Registration("5", true, "", "KARN001", List()))))
     val userRepository = mock[MongoEtmpBusinessUsersRepository]
-    userRepository.userExists(EtmpBusinessUser("12LT001", "SE39EP")).returns(Future.successful(true))
-    userRepository.userExists(EtmpBusinessUser("12LT009", "SE39EPX")).returns(Future.successful(false))
+    userRepository.userExists("12LT001", "SE39EP").returns(Future.successful(true))
+    userRepository.userExists("12LT009", "SE39EPX").returns(Future.successful(false))
     val agentRepository = mock[MongoEtmpAgentRepository]
-    agentRepository.agentExists(EtmpAgent("KARN001")).returns(Future.successful(true))
-    agentRepository.agentExists(EtmpAgent("KARN002")).returns(Future.successful(false))
+    agentRepository.agentExists("KARN001").returns(Future.successful(true))
+    agentRepository.agentExists("KARN002").returns(Future.successful(false))
   }
 
   object TestRegistrationController extends RegistrationController {

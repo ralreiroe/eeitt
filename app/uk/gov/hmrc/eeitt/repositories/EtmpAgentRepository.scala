@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait EtmpAgentRepository {
-  def agentExists(etmpAgent: EtmpAgent): Future[Boolean]
+  def agentExists(arn: String): Future[Boolean]
 
   def replaceAll(users: Seq[EtmpAgent]): Future[MultiBulkWriteResult]
 }
@@ -31,9 +31,9 @@ class MongoEtmpAgentRepository(implicit mongo: () => DB)
     ).map(Seq(_))
   }
 
-  def agentExists(etmpAgent: EtmpAgent): Future[Boolean] = {
+  def agentExists(arn: String): Future[Boolean] = {
     collection
-      .find(etmpAgent)
+      .find(Json.obj("arn" -> arn))
       .cursor[EtmpAgent](ReadPreference.secondaryPreferred)
       .collect[List]()
       .map(_.nonEmpty)

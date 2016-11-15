@@ -16,7 +16,7 @@ trait RegistrationService {
   def agentRepository: EtmpAgentRepository
 
   def register(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
-    userRepository.userExists(EtmpBusinessUser(registerRequest.registrationNumber, registerRequest.postcode)).flatMap {
+    userRepository.userExists(registerRequest.registrationNumber, registerRequest.postcode).flatMap {
       case true =>
         regRepository.findRegistrations(registerRequest.groupId).flatMap {
           case Nil => addRegistration(registerRequest)
@@ -33,7 +33,7 @@ trait RegistrationService {
   }
 
   def register(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
-    agentRepository.agentExists(EtmpAgent(registerAgentRequest.arn)).flatMap {
+    agentRepository.agentExists(registerAgentRequest.arn).flatMap {
       case true =>
         regRepository.findRegistrations(registerAgentRequest.groupId).flatMap {
           case Nil => addRegistration(registerAgentRequest)

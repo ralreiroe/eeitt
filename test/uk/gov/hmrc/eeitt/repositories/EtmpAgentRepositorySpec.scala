@@ -1,7 +1,5 @@
 package uk.gov.hmrc.eeitt.repositories
 
-import java.util.UUID
-
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import uk.gov.hmrc.eeitt.model.EtmpAgent
@@ -9,20 +7,21 @@ import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
 
 class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures {
 
   "Checking if agent exists in the db" should {
     "return `true` if at least one agent existed" in {
-      insert(EtmpAgent(arn = "arn"))
+      insert(testEtmpAgent().copy(arn = "arn"))
 
-      repo.agentExists(EtmpAgent(arn = "arn")).futureValue shouldBe true
+      repo.agentExists("arn").futureValue shouldBe true
     }
     "return `false` otherwise" in {
-      insert(EtmpAgent(arn = "otherArn"))
-      val agentToLookUp = EtmpAgent(arn = "arn")
+      val arnToLookup = "arn"
+      insert(testEtmpAgent().copy(arn = "otherArn"))
 
-      repo.agentExists(agentToLookUp).futureValue shouldBe false
+      repo.agentExists(arnToLookup).futureValue shouldBe false
     }
   }
 
@@ -54,9 +53,21 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
   def insert(EtmpAgent: EtmpAgent) = await(repo.collection.insert(EtmpAgent))
 
   def testEtmpAgent() = {
-    def randomize(s: String) = s + "-" + UUID.randomUUID()
-
-    EtmpAgent(randomize("arn"))
+    def randomize(s: String) = s + "-" + Random.alphanumeric.take(10).mkString
+    EtmpAgent(
+      randomize("arn"),
+      randomize("identificationType"),
+      randomize("identificationTypeDescription"),
+      randomize("organisationType"),
+      randomize("organisationTypeDescription"),
+      Some(randomize("organisationName")),
+      Some(randomize("title")),
+      Some(randomize("name1")),
+      Some(randomize("name2")),
+      Some(randomize("postcode")),
+      randomize("countryCode"),
+      customers = Seq()
+    )
   }
 
 }

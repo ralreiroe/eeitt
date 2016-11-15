@@ -25,13 +25,13 @@ class RegistrationServiceSpec extends UnitSpec
     regRepository.register(RegisterAgentRequest("5", "KARN9876543210123")).returns(Future.successful(Right(Nil)))
     regRepository.addRegime(Registration("1", false, "ALLX9876543210123", "", List("LT")), "LX").returns(Future.successful(Right(Nil)))
     val userRepository = mock[MongoEtmpBusinessUsersRepository]
-    userRepository.userExists(EtmpBusinessUser("ALLX9876543210123", "ME1 9AB")).returns(Future.successful(true))
-    userRepository.userExists(EtmpBusinessUser("ALLX9876543210123", "ME1 9ABX")).returns(Future.successful(false))
-    userRepository.userExists(EtmpBusinessUser("ALLX9876543210124", "ME1 9AB")).returns(Future.successful(true))
+    userRepository.userExists("ALLX9876543210123", "ME1 9AB").returns(Future.successful(true))
+    userRepository.userExists("ALLX9876543210123", "ME1 9ABX").returns(Future.successful(false))
+    userRepository.userExists("ALLX9876543210124", "ME1 9AB").returns(Future.successful(true))
     val agentRepository = mock[MongoEtmpAgentRepository]
-    agentRepository.agentExists(EtmpAgent("KARN9876543210123")).returns(Future.successful(true))
-    agentRepository.agentExists(EtmpAgent("KARN9876543210124")).returns(Future.successful(false))
-    agentRepository.agentExists(EtmpAgent("KARN9876543210125")).returns(Future.successful(true))
+    agentRepository.agentExists("KARN9876543210123").returns(Future.successful(true))
+    agentRepository.agentExists("KARN9876543210124").returns(Future.successful(false))
+    agentRepository.agentExists("KARN9876543210125").returns(Future.successful(true))
   }
 
   val service = TestRegistrationService
