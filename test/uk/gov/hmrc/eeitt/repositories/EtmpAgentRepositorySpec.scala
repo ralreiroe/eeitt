@@ -31,7 +31,7 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
       await(repo.replaceAll(expectedAgents))
 
-      repo.findAll().futureValue shouldBe expectedAgents
+      repo.findAll().futureValue should contain theSameElementsAs expectedAgents
     }
     "replace all existing agents with a new set of agents" in {
       val existingAgents = (1 to 10).map(_ => testEtmpAgent())
@@ -40,7 +40,7 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
       await(repo.replaceAll(newAgents))
 
-      repo.findAll().futureValue shouldBe newAgents
+      repo.findAll().futureValue should contain theSameElementsAs newAgents
     }
   }
 

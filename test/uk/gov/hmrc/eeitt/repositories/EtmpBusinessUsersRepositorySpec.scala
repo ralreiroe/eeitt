@@ -36,7 +36,7 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
 
       await(repo.replaceAll(expectedUsers))
 
-      repo.findAll().futureValue shouldBe expectedUsers
+      repo.findAll().futureValue should contain theSameElementsAs expectedUsers
     }
     "replace all existing users with a new set of users" in {
       val existingUsers = (1 to 10).map(_ => testEtmpBusinessUser())
@@ -45,7 +45,7 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
 
       await(repo.replaceAll(newUsers))
 
-      repo.findAll().futureValue shouldBe newUsers
+      repo.findAll().futureValue should contain theSameElementsAs newUsers
     }
   }
 
