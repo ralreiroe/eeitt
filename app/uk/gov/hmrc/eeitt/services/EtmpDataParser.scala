@@ -148,7 +148,7 @@ object EtmpDataParser {
 
   // This represents a single agent line as provided by ETMP. There will be as many lines for each agent
   // as many clients they have. This class is only used internally when parsing the file and all
-  // further interactions are done with EtmpAgent class which represents and agent and all their customers
+  // further interactions are done with EtmpAgent class which represents an agent and all their customers
   // in one class
   private[services] case class EtmpAgentRecord(
     arn: String,
