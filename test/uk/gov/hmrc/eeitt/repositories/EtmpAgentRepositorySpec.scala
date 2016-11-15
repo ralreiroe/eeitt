@@ -13,13 +13,13 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   "Checking if agent exists in the db" should {
     "return `true` if at least one agent existed" in {
-      insert(EtmpAgent(arn = "arn"))
+      insert(testEtmpAgent().copy(arn = "arn"))
 
       repo.agentExists("arn").futureValue shouldBe true
     }
     "return `false` otherwise" in {
-      insert(EtmpAgent(arn = "otherArn"))
       val arnToLookup = "arn"
+      insert(testEtmpAgent().copy(arn = "otherArn"))
 
       repo.agentExists(arnToLookup).futureValue shouldBe false
     }
@@ -54,20 +54,19 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   def testEtmpAgent() = {
     def randomize(s: String) = s + "-" + Random.alphanumeric.take(10).mkString
-
     EtmpAgent(
       randomize("arn"),
       randomize("identificationType"),
       randomize("identificationTypeDescription"),
       randomize("organisationType"),
       randomize("organisationTypeDescription"),
-      randomize("organisationName"),
-      randomize("title"),
-      randomize("name1"),
-      randomize("name2"),
-      randomize("postcode"),
+      Some(randomize("organisationName")),
+      Some(randomize("title")),
+      Some(randomize("name1")),
+      Some(randomize("name2")),
+      Some(randomize("postcode")),
       randomize("countryCode"),
-      customers = records.map(_.customer)
+      customers = Seq()
     )
   }
 

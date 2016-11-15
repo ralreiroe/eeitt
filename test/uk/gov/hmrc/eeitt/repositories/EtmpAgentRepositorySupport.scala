@@ -12,8 +12,7 @@ trait EtmpAgentRepositorySupport extends UnitSpec with MongoSpecSupport {
   val agentRepo = new MongoEtmpAgentRepository
 
   def insertAgent(etmpBusinessUser: EtmpAgent): Unit = {
-    val g = EtmpAgent(etmpBusinessUser.arn)
-    await(agentRepo.collection.insert(g))
+    await(agentRepo.collection.insert(etmpBusinessUser))
   }
 
   def awaitAgentIndexCreation() = {
