@@ -55,6 +55,10 @@ trait RegistrationService {
     }.map(VerificationResponse.apply)
   }
 
+  def prepopulation(groupId: String, regimeId: String): Future[List[Registration]] = {
+    regRepository.findRegistrations(groupId)
+  }
+
   private def addRegistration(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
     regRepository.register(registerRequest).map {
       case Right(_) => RESPONSE_OK
