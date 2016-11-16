@@ -21,8 +21,8 @@ class RegistrationServiceSpec extends UnitSpec
     regRepository.findRegistrations("3").returns(Future.successful(List()))
     regRepository.findRegistrations("5").returns(Future.successful(List(Registration("5", true, "", "KARN9876543210123", List()))))
     regRepository.register(RegisterRequest("3", "ALLX9876543210123", "ME1 9AB")).returns(Future.successful(Right(Nil)))
-    regRepository.register(RegisterAgentRequest("3", "KARN9876543210123")).returns(Future.successful(Right(Nil)))
-    regRepository.register(RegisterAgentRequest("5", "KARN9876543210123")).returns(Future.successful(Right(Nil)))
+    regRepository.register(RegisterAgentRequest("3", "KARN9876543210123", Some("ME1 9AB"))).returns(Future.successful(Right(Nil)))
+    regRepository.register(RegisterAgentRequest("5", "KARN9876543210123", Some("ME1 9AB"))).returns(Future.successful(Right(Nil)))
     regRepository.addRegime(Registration("1", false, "ALLX9876543210123", "", List("LT")), "LX").returns(Future.successful(Right(Nil)))
     val userRepository = mock[MongoEtmpBusinessUsersRepository]
     userRepository.userExists("ALLX9876543210123", "ME1 9AB").returns(Future.successful(true))
@@ -74,22 +74,22 @@ class RegistrationServiceSpec extends UnitSpec
 
   "Registering an agent with a group id which is not present in repository" should {
     "effect a new registration record and a 'registration ok' response" in {
-      val response = service.register(RegisterAgentRequest("3", "KARN9876543210123"))
+      val response = service.register(RegisterAgentRequest("3", "KARN9876543210123", Some("ME1 9AB")))
       response.futureValue shouldBe RESPONSE_OK
     }
   }
 
   "Registering an agent with a group id which is present in repository" should {
     "return success if the group id is already registered" in {
-      val response = service.register(RegisterAgentRequest("5", "KARN9876543210123"))
+      val response = service.register(RegisterAgentRequest("5", "KARN9876543210123", Some("ME1 9AB")))
       response.futureValue shouldBe ALREADY_REGISTERED
     }
     "return an error if try to register another agent" in {
-      val response = service.register(RegisterAgentRequest("5", "KARN9876543210125"))
+      val response = service.register(RegisterAgentRequest("5", "KARN9876543210125", Some("ME1 9AB")))
       response.futureValue shouldBe RESPONSE_OK
     }
     "return an error if already registered to an agent user" in {
-      val response = service.register(RegisterAgentRequest("1", "KARN9876543210123"))
+      val response = service.register(RegisterAgentRequest("1", "KARN9876543210123", Some("ME1 9AB")))
       response.futureValue shouldBe IS_NOT_AGENT
     }
   }
