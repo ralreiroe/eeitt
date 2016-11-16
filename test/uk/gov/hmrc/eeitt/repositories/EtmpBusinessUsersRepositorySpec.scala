@@ -2,31 +2,27 @@ package uk.gov.hmrc.eeitt.repositories
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
+import uk.gov.hmrc.eeitt.EtmpFixtures
 import uk.gov.hmrc.eeitt.model.EtmpBusinessUser
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Random
 
-class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures {
+class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures with EtmpFixtures {
 
   "Checking if user exists in the db" should {
-    "return `true` if at least one user existed" in {
-      insert(testEtmpBusinessUser().copy(registrationNumber = "regNumber", postcode = Some("postcode")))
+    "return a non empty list of users if at least one user existed with a given reg number exists" in {
+      insert(testEtmpBusinessUser().copy(registrationNumber = "regNumber"))
 
       withClue("all users in db: " + await(repo.findAll())) {
-        repo.userExists("regNumber", "postcode").futureValue shouldBe true
+        assert(repo.findByRegistrationNumber("regNumber").futureValue.nonEmpty)
       }
     }
-    "return `false` otherwise" in {
-      val existingUsersInDb = List(
-        testEtmpBusinessUser().copy(registrationNumber = "regNum", postcode = Some("otherPostcode")),
-        testEtmpBusinessUser().copy(registrationNumber = "otherRegNum", postcode = Some("postcode"))
-      )
-      await(repo.bulkInsert(existingUsersInDb))
+    "return empty list otherwise" in {
+      await(insert(testEtmpBusinessUser().copy(registrationNumber = "otherRegNum")))
 
-      repo.userExists("regNumber", "postcode").futureValue shouldBe false
+      assert(repo.findByRegistrationNumber("regNumber").futureValue.isEmpty)
     }
   }
 
@@ -56,23 +52,5 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
   }
 
   def insert(etmpBusinessUser: EtmpBusinessUser) = await(repo.collection.insert(etmpBusinessUser))
-
-  def testEtmpBusinessUser() = {
-    def randomize(s: String) = s + "-" + Random.alphanumeric.take(10).mkString
-    EtmpBusinessUser(
-      randomize("registrationNumber"),
-      randomize("taxRegime"),
-      randomize("taxRegimeDescription"),
-      randomize("organisationType"),
-      randomize("organisationTypeDescription"),
-      Some(randomize("organisationName")),
-      Some(randomize("customerTitle")),
-      Some(randomize("customerName1")),
-      Some(randomize("customerName2")),
-      Some(randomize("postcode")),
-      randomize("countryCode")
-    )
-
-  }
 
 }

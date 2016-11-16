@@ -1,6 +1,7 @@
 package uk.gov.hmrc.eeitt.services
 
 import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser }
+import uk.gov.hmrc.eeitt.utils.CountryCodes
 
 object EtmpDataParser {
 
@@ -136,7 +137,7 @@ object EtmpDataParser {
   }
 
   def mandatoryPostcodeIfFromTheUk(line: String, countryCode: String, postcode: String): Option[String] = {
-    if (countryCode == "GB" && postcode.trim.isEmpty) {
+    if (countryCode == CountryCodes.GB && postcode.trim.isEmpty) {
       throw LineParsingException(s"Missing postcode for a UK entity in line: $line")
     } else {
       optional(postcode)

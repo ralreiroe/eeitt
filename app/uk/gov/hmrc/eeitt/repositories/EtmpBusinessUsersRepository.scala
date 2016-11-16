@@ -1,9 +1,9 @@
 package uk.gov.hmrc.eeitt.repositories
 
 import play.api.libs.json.Json
+import reactivemongo.api.DB
 import reactivemongo.api.commands.MultiBulkWriteResult
 import reactivemongo.api.indexes.{ Index, IndexType }
-import reactivemongo.api.{ DB, ReadPreference }
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.eeitt.model.EtmpBusinessUser
 import uk.gov.hmrc.mongo.ReactiveRepository
@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait EtmpBusinessUsersRepository {
-  def userExists(registrationNumber: String, postcode: String): Future[Boolean]
+  def findByRegistrationNumber(registrationNumber: String): Future[List[EtmpBusinessUser]]
   def replaceAll(users: Seq[EtmpBusinessUser]): Future[MultiBulkWriteResult]
 }
 
@@ -30,13 +30,8 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
     ).map(Seq(_))
   }
 
-  def userExists(registrationNumber: String, postcode: String): Future[Boolean] = {
-    collection
-      .find(Json.obj("registrationNumber" -> registrationNumber, "postcode" -> postcode))
-      .cursor[EtmpBusinessUser](ReadPreference.secondaryPreferred)
-      .collect[List]()
-      .map(_.nonEmpty)
-  }
+  def findByRegistrationNumber(registrationNumber: String) =
+    find("registrationNumber" -> registrationNumber)
 
   // todo: if this method fails EEITT may fail to work...
   // todo: use a correct WriteConcern
