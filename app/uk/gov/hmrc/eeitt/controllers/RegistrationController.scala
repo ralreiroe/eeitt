@@ -3,11 +3,12 @@ package uk.gov.hmrc.eeitt.controllers
 import play.Logger
 import play.api.libs.json.{ JsError, JsSuccess, Json }
 import play.api.mvc._
-import uk.gov.hmrc.eeitt.model.{ AffinityGroup, RegisterRequest }
+import uk.gov.hmrc.eeitt.model.{ AffinityGroup, Agent, RegisterRequest }
 import uk.gov.hmrc.eeitt.model.RegisterAgentRequest
 import uk.gov.hmrc.eeitt.services.RegistrationService
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.eeitt.model.{ GroupId, RegimeId }
 
 import scala.concurrent.Future
 
@@ -19,7 +20,10 @@ trait RegistrationController extends BaseController {
   val registrationService: RegistrationService
 
   def verification(groupId: String, regimeId: String, affinityGroup: AffinityGroup) = Action.async { implicit request =>
-    registrationService.verification(groupId, regimeId) map (response => Ok(Json.toJson(response)))
+    affinityGroup match {
+      case Agent => registrationService.agentVerification(GroupId(groupId)) map (response => Ok(Json.toJson(response)))
+      case _ => registrationService.individualVerification(GroupId(groupId), RegimeId(regimeId)) map (response => Ok(Json.toJson(response)))
+    }
   }
 
   def prepopulation(groupId: String, regimeId: String, affinityGroup: AffinityGroup) = Action.async { implicit request =>

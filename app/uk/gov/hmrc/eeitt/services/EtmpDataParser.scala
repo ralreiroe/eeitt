@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser }
+import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser, RegistrationNumber, Arn }
 
 /*
     todo: add more constraints once we know more about the data:
@@ -55,7 +55,7 @@ case class LineParsingException(msg: String) extends Exception(msg)
 object EtmpBusinessUserParser extends EtmpDataParser[EtmpBusinessUser] {
   def extractDataFromTokens = {
     case Array(_, regNum, _, _, _, _, _, postcode) if regNum.nonEmpty && postcode.nonEmpty =>
-      EtmpBusinessUser(regNum, postcode)
+      EtmpBusinessUser(RegistrationNumber(regNum), postcode)
   }
 
   def isRecord(line: String): Boolean = line.startsWith("001|")
@@ -84,9 +84,8 @@ object EtmpBusinessUserParser extends EtmpDataParser[EtmpBusinessUser] {
  */
 object EtmpAgentParser extends EtmpDataParser[EtmpAgent] {
   def extractDataFromTokens = {
-    case Array(_, arn, _*) if arn.nonEmpty => EtmpAgent(arn)
+    case Array(_, arn, _*) if arn.nonEmpty => EtmpAgent(Arn(arn))
   }
 
   def isRecord(line: String): Boolean = line.startsWith("002|")
 }
-

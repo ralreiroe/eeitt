@@ -9,6 +9,7 @@ package object repositories {
   }
 
   lazy val registrationRepository = new MongoRegistrationRepository
+  lazy val agentRegistrationRepository = new AgentRegistrationRepository
   lazy val etmpBusinessUserRepository = new MongoEtmpBusinessUsersRepository
   lazy val etmpAgentRepository = new MongoEtmpAgentRepository
 }
