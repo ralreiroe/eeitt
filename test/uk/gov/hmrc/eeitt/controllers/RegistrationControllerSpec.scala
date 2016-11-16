@@ -41,31 +41,31 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
   "GET /group-identifier/:gid/regimes/:regimeid/verification" should {
     "return 200 and is allowed for successful registration lookup where regime is authorised" in {
       val fakeRequest = FakeRequest()
-      val result = TestRegistrationController.verification("1", "LT")(fakeRequest)
+      val result = TestRegistrationController.verification("1", "LT", Individual)(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(true))
     }
     "return 200 and is not allowed for successful registration lookup where regime is not authorised" in {
       val fakeRequest = FakeRequest()
-      val result = TestRegistrationController.verification("1", "ZZ")(fakeRequest)
+      val result = TestRegistrationController.verification("1", "ZZ", Individual)(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
     }
     "return 200 and is not allowed for an unsuccessful registration lookup" in {
       val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
-      val result = TestRegistrationController.verification("3", "LT")(fakeRequest)
+      val result = TestRegistrationController.verification("3", "LT", Individual)(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
     }
     "return 200 and is not allowed for a lookup which returned multiple registration instances" in {
       val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
-      val result = TestRegistrationController.verification("4", "LT")(fakeRequest)
+      val result = TestRegistrationController.verification("4", "LT", Individual)(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
     }
     "return 200 and is allowed for successful registration lookup of agent" in {
       val fakeRequest = FakeRequest()
-      val result = TestRegistrationController.verification("5", "LT")(fakeRequest)
+      val result = TestRegistrationController.verification("5", "LT", Individual)(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(true))
     }

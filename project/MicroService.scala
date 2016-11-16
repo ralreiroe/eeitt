@@ -30,6 +30,10 @@ trait MicroService {
     .settings(scalaSettings: _*)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
+    .settings(play.PlayImport.PlayKeys.routesImport ++= Seq(
+                "uk.gov.hmrc.eeitt.binders.AffinityGroupBinder._",
+                "uk.gov.hmrc.eeitt.model.AffinityGroup"
+              ))
     .settings(
       libraryDependencies ++= appDependencies,
       retrieveManaged := true,
