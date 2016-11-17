@@ -7,6 +7,50 @@ import uk.gov.hmrc.eeitt.model._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+trait Verification[O] {
+
+  def validRegistration(registrations: List[O]): Boolean
+
+  def verification(groupId: GroupId, regimeId: RegimeId): ((GroupId, RegimeId) => Future[List[O]]) => Future[VerificationResponse] =
+    findRegistrations => findRegistrations(groupId, regimeId).map(validRegistration).map(VerificationResponse.apply)
+}
+
+trait VerificationRepo[O] {
+  def verRepo(groupId: GroupId, regimeId: RegimeId): Future[List[O]]
+}
+
+package object implicits {
+  implicit val AgentVerification = new Verification[AgentRegistration] {
+    def validRegistration(registrations: List[AgentRegistration]): Boolean =
+      registrations match {
+        case Nil => false
+        case AgentRegistration(_, _) :: Nil => true
+        case x :: xs => false
+      }
+  }
+
+  implicit val IndividualVerification = new Verification[IndividualRegistration] {
+    def validRegistration(registrations: List[IndividualRegistration]): Boolean =
+      registrations match {
+        case Nil => false
+        case IndividualRegistration(_, _, _) :: Nil => true
+        case x :: xs => false
+      }
+  }
+
+  implicit def agentRepo(implicit regRepository: AgentRegistrationRepository) = {
+    new VerificationRepo[AgentRegistration] {
+      def verRepo(groupId: GroupId, regimeId: RegimeId): Future[List[AgentRegistration]] = regRepository.findRegistrations(groupId)
+    }
+  }
+
+  implicit def individualRepo(implicit regRepository: RegistrationRepository) = {
+    new VerificationRepo[IndividualRegistration] {
+      def verRepo(groupId: GroupId, regimeId: RegimeId): Future[List[IndividualRegistration]] = regRepository.findRegistrations(groupId, regimeId)
+    }
+  }
+}
+
 trait RegistrationService {
 
   def regRepository: RegistrationRepository
@@ -41,28 +85,15 @@ trait RegistrationService {
     }
   }
 
-  def verification(groupId: GroupId, regimeId: RegimeId): Future[VerificationResponse] = {
-    regRepository.findRegistrations(groupId, regimeId).map {
-      case Nil => false
-      case x :: Nil => true
-      case x :: xs => false
-    }.map(VerificationResponse.apply)
-  }
-
-  def agentVerification(groupId: GroupId): Future[VerificationResponse] = {
-    agentRegRepository.findRegistrations(groupId).map {
-      case Nil => false
-      case AgentRegistration(_, _) :: Nil => true
-      case x :: xs => false
-    }.map(VerificationResponse.apply)
-  }
-
-  def individualVerification(groupId: GroupId, regimeId: RegimeId): Future[VerificationResponse] = {
-    regRepository.findRegistrations(groupId, regimeId).map {
-      case Nil => false
-      case IndividualRegistration(_, _, _) :: Nil => true
-      case x :: xs => false
-    }.map(VerificationResponse.apply)
+  def verify[A](
+    groupId: GroupId,
+    regimeId: RegimeId
+  )(
+    implicit
+    verification: Verification[A],
+    vr: VerificationRepo[A]
+  ): Future[VerificationResponse] = {
+    verification.verification(groupId, regimeId)(vr.verRepo)
   }
 
   def prepopulation(groupId: String, regimeId: String): Future[List[AgentRegistration]] = {

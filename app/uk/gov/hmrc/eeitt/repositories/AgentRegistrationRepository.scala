@@ -11,14 +11,14 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait AgentRegistrationRepo {
+trait AgentRegistrationRepository {
   def findRegistrations(groupId: GroupId): Future[List[AgentRegistration]]
 
   def register(rr: RegisterAgentRequest): Future[Either[String, Unit]]
 }
 
-class AgentRegistrationRepository(implicit mongo: () => DB)
-    extends ReactiveRepository[AgentRegistration, BSONObjectID]("agentRegistrations", mongo, AgentRegistration.oFormat) with AgentRegistrationRepo {
+class MongoAgentRegistrationRepository(implicit mongo: () => DB)
+    extends ReactiveRepository[AgentRegistration, BSONObjectID]("agentRegistrations", mongo, AgentRegistration.oFormat) with AgentRegistrationRepository {
 
   override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
     Future.sequence(Seq(

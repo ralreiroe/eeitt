@@ -3,12 +3,14 @@ package uk.gov.hmrc.eeitt.controllers
 import play.Logger
 import play.api.libs.json.{ JsError, JsSuccess, Json }
 import play.api.mvc._
-import uk.gov.hmrc.eeitt.model.{ AffinityGroup, Agent, RegisterRequest }
+import uk.gov.hmrc.eeitt.model.{ AffinityGroup, Agent, AgentRegistration, IndividualRegistration, RegisterRequest }
 import uk.gov.hmrc.eeitt.model.RegisterAgentRequest
 import uk.gov.hmrc.eeitt.services.RegistrationService
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.model.{ GroupId, RegimeId }
+import uk.gov.hmrc.eeitt.services.Verification
+import uk.gov.hmrc.eeitt.services.VerificationRepo
 
 import scala.concurrent.Future
 
@@ -19,11 +21,24 @@ object RegistrationController extends RegistrationController {
 trait RegistrationController extends BaseController {
   val registrationService: RegistrationService
 
-  def verification(groupId: String, regimeId: String, affinityGroup: AffinityGroup) = Action.async { implicit request =>
+  import uk.gov.hmrc.eeitt.services.implicits._
+  implicit lazy val registrationRepository = uk.gov.hmrc.eeitt.repositories.registrationRepository
+  implicit lazy val agentRegistrationRepository = uk.gov.hmrc.eeitt.repositories.agentRegistrationRepository
+
+  def verification(groupId: String, regimeId: String, affinityGroup: AffinityGroup) = Action.async { request =>
+    val gId = GroupId(groupId)
+    val rId = RegimeId(regimeId)
     affinityGroup match {
-      case Agent => registrationService.agentVerification(GroupId(groupId)) map (response => Ok(Json.toJson(response)))
-      case _ => registrationService.individualVerification(GroupId(groupId), RegimeId(regimeId)) map (response => Ok(Json.toJson(response)))
+      case Agent => verify[AgentRegistration](gId, rId, request)
+      case _ => verify[IndividualRegistration](gId, rId, request)
     }
+  }
+
+  private def verify[A: Verification: VerificationRepo](groupId: GroupId, regimeId: RegimeId, request: Request[AnyContent]) = {
+
+    implicit val r = request // we need to get ExecutionContext from request by MdcLoggingExecutionContext means
+
+    registrationService.verify[A](groupId, regimeId) map (response => Ok(Json.toJson(response)))
   }
 
   def prepopulation(groupId: String, regimeId: String, affinityGroup: AffinityGroup) = Action.async { implicit request =>
