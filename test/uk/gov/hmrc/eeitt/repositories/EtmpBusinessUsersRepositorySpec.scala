@@ -4,7 +4,7 @@ import java.util.UUID
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import uk.gov.hmrc.eeitt.model.EtmpBusinessUser
+import uk.gov.hmrc.eeitt.model.{ EtmpBusinessUser, RegistrationNumber }
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -14,17 +14,17 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
 
   "Checking if user exists in the db" should {
     "return `true` if at least one user existed" in {
-      insert(EtmpBusinessUser(registrationNumber = "regNum", postcode = "postcode"))
+      insert(EtmpBusinessUser(registrationNumber = RegistrationNumber("regNum"), postcode = "postcode"))
 
-      repo.userExists(EtmpBusinessUser(registrationNumber = "regNum", postcode = "postcode")).futureValue shouldBe true
+      repo.userExists(EtmpBusinessUser(registrationNumber = RegistrationNumber("regNum"), postcode = "postcode")).futureValue shouldBe true
     }
     "return `false` otherwise" in {
       val existingUsersInDb = List(
-        EtmpBusinessUser("regNum", "otherPostcode"),
-        EtmpBusinessUser("otherRegNum", "postcode")
+        EtmpBusinessUser(RegistrationNumber("regNum"), "otherPostcode"),
+        EtmpBusinessUser(RegistrationNumber("otherRegNum"), "postcode")
       )
       await(repo.bulkInsert(existingUsersInDb))
-      val userToLookUp = EtmpBusinessUser(registrationNumber = "regNum", postcode = "postcode")
+      val userToLookUp = EtmpBusinessUser(registrationNumber = RegistrationNumber("regNum"), postcode = "postcode")
 
       repo.userExists(userToLookUp).futureValue shouldBe false
     }
@@ -60,7 +60,7 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
   def testEtmpBusinessUser() = {
     def randomize(s: String) = s + "-" + UUID.randomUUID()
 
-    EtmpBusinessUser(randomize("regNumber"), randomize("postcode"))
+    EtmpBusinessUser(RegistrationNumber(randomize("regNumber")), randomize("postcode"))
   }
 
 }

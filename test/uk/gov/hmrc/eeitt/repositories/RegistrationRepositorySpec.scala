@@ -4,7 +4,7 @@ import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
 import org.specs2.matcher.ExceptionMatchers
 import reactivemongo.core.errors.DatabaseException
-import uk.gov.hmrc.eeitt.model.Registration
+import uk.gov.hmrc.eeitt.model.{ GroupId, IndividualRegistration, RegimeId, RegistrationNumber }
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,8 +16,8 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
     awaitRegistrationIndexCreation()
   }
 
-  private val registration1: Registration = Registration("g1", false, "12LT001", "", List("LT", "LL"))
-  private val registration2: Registration = Registration("g2", false, "12LT002", "", List("LT", "LL", "XL"))
+  private val registration1: IndividualRegistration = IndividualRegistration(GroupId("g1"), RegistrationNumber("12LT001"), RegimeId("LT"))
+  private val registration2: IndividualRegistration = IndividualRegistration(GroupId("g2"), RegistrationNumber("12LT002"), RegimeId("LT"))
 
   "query registrations with a group id" should {
 
@@ -25,7 +25,7 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
       insertRegistration(registration1)
       insertRegistration(registration2)
       await(regRepo.count) shouldBe 2
-      await(regRepo.findRegistrations("g1")) map (_.groupId) should contain theSameElementsAs (List("g1"))
+      await(regRepo.findRegistrations(GroupId("g1"), RegimeId("LT"))) map (_.groupId) should contain theSameElementsAs (List(GroupId("g1")))
     }
   }
 

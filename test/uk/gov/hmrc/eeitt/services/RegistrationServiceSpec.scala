@@ -1,96 +1,166 @@
 package uk.gov.hmrc.eeitt.services
 
-import org.specs2.mock.Mockito
-import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
-import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
-import uk.gov.hmrc.eeitt.model.{ RegisterAgentRequest, _ }
-import uk.gov.hmrc.eeitt.repositories._
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.AppendedClues
+import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class RegistrationServiceSpec extends UnitSpec
-    with RegistrationRepositorySupport with EtmpAgentRepositorySupport with EtmpBusinessUserRepositorySupport
-    with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience with Mockito {
+class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedClues {
 
-  object TestRegistrationService extends RegistrationService {
-    val regRepository = mock[MongoRegistrationRepository]
-    regRepository.findRegistrations("1").returns(Future.successful(List(Registration("1", false, "ALLX9876543210123", "", List("LT")))))
-    regRepository.findRegistrations("3").returns(Future.successful(List()))
-    regRepository.findRegistrations("5").returns(Future.successful(List(Registration("5", true, "", "KARN9876543210123", List()))))
-    regRepository.register(RegisterRequest("3", "ALLX9876543210123", "ME1 9AB")).returns(Future.successful(Right(Nil)))
-    regRepository.register(RegisterAgentRequest("3", "KARN9876543210123")).returns(Future.successful(Right(Nil)))
-    regRepository.register(RegisterAgentRequest("5", "KARN9876543210123")).returns(Future.successful(Right(Nil)))
-    regRepository.addRegime(Registration("1", false, "ALLX9876543210123", "", List("LT")), "LX").returns(Future.successful(Right(Nil)))
-    val userRepository = mock[MongoEtmpBusinessUsersRepository]
-    userRepository.userExists(EtmpBusinessUser("ALLX9876543210123", "ME1 9AB")).returns(Future.successful(true))
-    userRepository.userExists(EtmpBusinessUser("ALLX9876543210123", "ME1 9ABX")).returns(Future.successful(false))
-    userRepository.userExists(EtmpBusinessUser("ALLX9876543210124", "ME1 9AB")).returns(Future.successful(true))
-    val agentRepository = mock[MongoEtmpAgentRepository]
-    agentRepository.agentExists(EtmpAgent("KARN9876543210123")).returns(Future.successful(true))
-    agentRepository.agentExists(EtmpAgent("KARN9876543210124")).returns(Future.successful(false))
-    agentRepository.agentExists(EtmpAgent("KARN9876543210125")).returns(Future.successful(true))
-  }
+  def userExists[A](returnValue: Boolean)(checks: A => Unit): UserExists[A] =
+    new UserExists[A] {
+      def apply(req: A): Future[Boolean] = {
+        checks(req)
+        Future.successful(returnValue)
+      }
+    }
 
-  val service = TestRegistrationService
+  def findRegistration[A, B](returnValue: List[B])(checks: A => Unit): FindRegistration[A, B] =
+    new FindRegistration[A, B] {
+      def apply(req: A): Future[List[B]] = {
+        checks(req)
+        Future.successful(returnValue)
+      }
+    }
 
-  override protected def beforeEach(): Unit = {
-    val removeBusinessUsers = agentRepo.removeAll()
-    val removeAgents = userRepo.removeAll()
-    val removeRegistrations = regRepo.removeAll()
-    await(removeAgents)
-    await(removeBusinessUsers)
-    await(removeRegistrations)
-  }
+  def addRegistration[A](returnValue: Either[String, Unit])(checks: A => Unit): AddRegistration[A] =
+    new AddRegistration[A] {
+      def apply(req: A): Future[Either[String, Unit]] = {
+        checks(req)
+        Future.successful(returnValue)
+      }
+    }
 
   "Registering a business user with a group id which is not present in repository" should {
     "affect a new registration record and a 'registration ok' response" in {
-      val response = service.register(RegisterRequest("3", "ALLX9876543210123", "ME1 9AB"))
-      response.futureValue shouldBe RESPONSE_OK
+
+      val request = RegisterRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), "ME1 9AB")
+
+      implicit val a = userExists(true) { req: RegisterRequest =>
+        req should be(request) withClue "in userExists"
+      }
+
+      implicit val b = findRegistration(List.empty[IndividualRegistration]) { req: RegisterRequest =>
+        req should be(request) withClue "in findRegistration"
+      }
+
+      implicit val c = addRegistration(Right(())) { req: RegisterRequest =>
+        req should be(request) withClue "in addRegistration"
+      }
+
+      val response = RegistrationService.register(request)
+      response.futureValue should be(RESPONSE_OK)
     }
   }
 
   "Registering a business user with a group id which is present in repository" should {
     "return an error if try to register another business user" in {
-      val response = service.register(RegisterRequest("1", "ALLX9876543210123", "ME1 9AB"))
-      response.futureValue shouldBe ALREADY_REGISTERED
-      //      verify(regRepository.register(RegisterRequest("3", "LX", "AL9876543210123", "ME1 9AB")), atLeastOnce())
+
+      val request = RegisterRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), "ME1 9AB")
+      val existingRegistration = IndividualRegistration(GroupId(""), RegistrationNumber(""), RegimeId(""))
+
+      implicit val a = userExists(true) { req: RegisterRequest =>
+        req should be(request) withClue "in userExists"
+      }
+
+      implicit val b = findRegistration(List(existingRegistration)) { req: RegisterRequest =>
+        req should be(request) withClue "in findRegistration"
+      }
+
+      implicit val c = addRegistration(Right(())) { req: RegisterRequest => /* is not called */ }
+
+      val response = RegistrationService.register(request)
+      response.futureValue should be(ALREADY_REGISTERED)
     }
+
     "return an error if known facts do not agree with the request" in {
-      val response = service.register(RegisterRequest("3", "ALLX9876543210123", "ME1 9ABX"))
-      response.futureValue shouldBe INCORRECT_KNOWN_FACTS
-    }
-    "affect an updated registration record if the requested regime is not present and known facts agree with the request" in {
-      val response = service.register(RegisterRequest("1", "ALLX9876543210124", "ME1 9AB"))
-      response.futureValue shouldBe RESPONSE_OK
-    }
-    "return an error if already registered to an agent" in {
-      val response = service.register(RegisterRequest("5", "ALLX9876543210123", "ME1 9AB"))
-      response.futureValue shouldBe IS_AGENT
+
+      val request = RegisterRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), "ME1 9AB")
+
+      implicit val a = userExists(false) { req: RegisterRequest =>
+        req should be(request) withClue "in userExists"
+      }
+
+      implicit val b = findRegistration(List.empty[IndividualRegistration]) { req: RegisterRequest => /* is not called */ }
+      implicit val c = addRegistration(Right(())) { req: RegisterRequest => /* is not called */ }
+
+      val response = RegistrationService.register(request)
+      response.futureValue should be(INCORRECT_KNOWN_FACTS)
     }
   }
 
-  "Registering an agent with a group id which is not present in repository" should {
-    "effect a new registration record and a 'registration ok' response" in {
-      val response = service.register(RegisterAgentRequest("3", "KARN9876543210123"))
-      response.futureValue shouldBe RESPONSE_OK
+  def verificationRepo[A](returnValue: List[A]): VerificationRepo[A] =
+    new VerificationRepo[A] {
+      def apply(groupId: GroupId, regimeId: RegimeId): Future[List[A]] =
+        Future.successful(returnValue)
+    }
+
+  val groupId = GroupId("group-id")
+  val registrationNumber = RegistrationNumber("123")
+  val regimeId = RegimeId("AL")
+  val arn = Arn("Arn")
+  val individualRegistration = IndividualRegistration(groupId, registrationNumber, regimeId)
+  val agentRegistration = AgentRegistration(groupId, arn)
+
+  "Verification of Individual" should {
+    "return false when no record is found in db" in {
+
+      implicit val a = verificationRepo(List.empty[IndividualRegistration])
+
+      val response = RegistrationService.verify[IndividualRegistration](groupId, regimeId)
+
+      response.futureValue should be(VerificationResponse(false))
+    }
+
+    "return true when exactly one record is found in db" in {
+
+      implicit val a = verificationRepo(List(individualRegistration))
+
+      val response = RegistrationService.verify[IndividualRegistration](groupId, regimeId)
+
+      response.futureValue should be(VerificationResponse(true))
+    }
+
+    "return false when more than one record is found in db" in {
+
+      implicit val a = verificationRepo(List(individualRegistration, individualRegistration))
+
+      val response = RegistrationService.verify[IndividualRegistration](groupId, regimeId)
+
+      response.futureValue should be(VerificationResponse(false))
     }
   }
 
-  "Registering an agent with a group id which is present in repository" should {
-    "return success if the group id is already registered" in {
-      val response = service.register(RegisterAgentRequest("5", "KARN9876543210123"))
-      response.futureValue shouldBe ALREADY_REGISTERED
+  "Verification of Agent" should {
+    "return false when no record is found in db" in {
+
+      implicit val a = verificationRepo(List.empty[AgentRegistration])
+
+      val response = RegistrationService.verify[AgentRegistration](groupId, regimeId)
+
+      response.futureValue should be(VerificationResponse(false))
     }
-    "return an error if try to register another agent" in {
-      val response = service.register(RegisterAgentRequest("5", "KARN9876543210125"))
-      response.futureValue shouldBe RESPONSE_OK
+
+    "return true when exactly one record is found in db" in {
+
+      implicit val a = verificationRepo(List(agentRegistration))
+
+      val response = RegistrationService.verify[AgentRegistration](groupId, regimeId)
+
+      response.futureValue should be(VerificationResponse(true))
     }
-    "return an error if already registered to an agent user" in {
-      val response = service.register(RegisterAgentRequest("1", "KARN9876543210123"))
-      response.futureValue shouldBe IS_NOT_AGENT
+
+    "return false when more than one record is found in db" in {
+
+      implicit val a = verificationRepo(List(agentRegistration, agentRegistration))
+
+      val response = RegistrationService.verify[AgentRegistration](groupId, regimeId)
+
+      response.futureValue should be(VerificationResponse(false))
     }
   }
 }

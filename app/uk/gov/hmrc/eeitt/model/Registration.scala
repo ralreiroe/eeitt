@@ -16,6 +16,7 @@ class RegimeId(val value: String) extends AnyVal
 class Arn(val value: String) extends AnyVal
 class RegistrationNumber(val value: String) extends AnyVal
 
+case class GroupIdWithRegimeId(groupId: GroupId, regimeId: RegimeId)
 case class IndividualRegistration(groupId: GroupId, registrationNumber: RegistrationNumber, regimeId: RegimeId)
 case class AgentRegistration(groupId: GroupId, arn: Arn)
 

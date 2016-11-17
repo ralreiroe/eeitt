@@ -1,11 +1,11 @@
 package uk.gov.hmrc.eeitt.controllers
 
 import play.Logger
-import play.api.libs.json.{ JsError, JsSuccess, Json }
+import play.api.libs.json.{ Format, JsError, JsSuccess, Json }
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model.{ AffinityGroup, Agent, AgentRegistration, IndividualRegistration, RegisterRequest }
 import uk.gov.hmrc.eeitt.model.RegisterAgentRequest
-import uk.gov.hmrc.eeitt.services.RegistrationService
+import uk.gov.hmrc.eeitt.services.{ RegistrationService, UserExists }
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.model.{ GroupId, RegimeId }
@@ -21,9 +21,10 @@ object RegistrationController extends RegistrationController {
 trait RegistrationController extends BaseController {
   val registrationService: RegistrationService
 
-  import uk.gov.hmrc.eeitt.services.implicits._
   implicit lazy val registrationRepository = uk.gov.hmrc.eeitt.repositories.registrationRepository
   implicit lazy val agentRegistrationRepository = uk.gov.hmrc.eeitt.repositories.agentRegistrationRepository
+  implicit lazy val etmpBusinessUserRepository = uk.gov.hmrc.eeitt.repositories.etmpBusinessUserRepository
+  implicit lazy val etmpAgentRepository = uk.gov.hmrc.eeitt.repositories.etmpAgentRepository
 
   def verification(groupId: String, regimeId: String, affinityGroup: AffinityGroup) = Action.async { request =>
     val gId = GroupId(groupId)
@@ -59,7 +60,7 @@ trait RegistrationController extends BaseController {
   def register() = Action.async(parse.json) { implicit request =>
     request.body.validate[RegisterRequest] match {
       case JsSuccess(req, _) =>
-        registrationService.register(req) map (response => Ok(Json.toJson(response)))
+        registrationService.register(req).map(response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: ${jsonErrors} ")
         Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors))))
@@ -69,11 +70,10 @@ trait RegistrationController extends BaseController {
   def registerAgent() = Action.async(parse.json) { implicit request =>
     request.body.validate[RegisterAgentRequest] match {
       case JsSuccess(req, _) =>
-        registrationService.register(req) map (response => Ok(Json.toJson(response)))
+        registrationService.register(req).map(response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: ${jsonErrors} ")
         Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors))))
     }
   }
-
 }

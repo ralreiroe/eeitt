@@ -4,7 +4,7 @@ import java.util.UUID
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import uk.gov.hmrc.eeitt.model.EtmpAgent
+import uk.gov.hmrc.eeitt.model.{ Arn, EtmpAgent }
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -14,13 +14,13 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   "Checking if agent exists in the db" should {
     "return `true` if at least one agent existed" in {
-      insert(EtmpAgent(arn = "arn"))
+      insert(EtmpAgent(arn = Arn("arn")))
 
-      repo.agentExists(EtmpAgent(arn = "arn")).futureValue shouldBe true
+      repo.agentExists(EtmpAgent(arn = Arn("arn"))).futureValue shouldBe true
     }
     "return `false` otherwise" in {
-      insert(EtmpAgent(arn = "otherArn"))
-      val agentToLookUp = EtmpAgent(arn = "arn")
+      insert(EtmpAgent(arn = Arn("otherArn")))
+      val agentToLookUp = EtmpAgent(arn = Arn("arn"))
 
       repo.agentExists(agentToLookUp).futureValue shouldBe false
     }
@@ -56,7 +56,7 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
   def testEtmpAgent() = {
     def randomize(s: String) = s + "-" + UUID.randomUUID()
 
-    EtmpAgent(randomize("arn"))
+    EtmpAgent(Arn(randomize("arn")))
   }
 
 }
