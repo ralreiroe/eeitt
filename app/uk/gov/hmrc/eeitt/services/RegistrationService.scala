@@ -28,7 +28,7 @@ trait RegistrationService {
           }
           case x :: xs => Future.successful(MULTIPLE_FOUND)
         }
-      case _ => Future.successful(INCORRECT_KNOWN_FACTS)
+      case _ => Future.successful(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
     }
   }
 
@@ -42,7 +42,7 @@ trait RegistrationService {
           case Registration(_, false, _, _, _) :: Nil => Future.successful(IS_NOT_AGENT)
           case x :: xs => Future.successful(MULTIPLE_FOUND)
         }
-      case _ => Future.successful(INCORRECT_KNOWN_FACTS)
+      case _ => Future.successful(INCORRECT_KNOWN_FACTS_AGENTS)
     }
   }
 

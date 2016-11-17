@@ -75,7 +75,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterRequest("1", "12LT009", Some("SE39EPX"))))
       val result = TestRegistrationController.register()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS)
+      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
     }
   }
 
@@ -84,7 +84,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val fakeRequest = FakeRequest(Helpers.POST, "/register-agent").withBody(toJson(RegisterAgentRequest("1", "KARN002", Some("SE39EPX"))))
       val result = TestRegistrationController.registerAgent()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS)
+      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_AGENTS)
     }
 
   }

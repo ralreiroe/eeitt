@@ -113,7 +113,7 @@ class RegistrationServiceSpec extends UnitSpec
     }
     "return an error if known facts do not agree with the request" in {
       val response = service.register(RegisterRequest("3", "ALLX9876543210123", Some("ME1 9ABX")))
-      response.futureValue shouldBe INCORRECT_KNOWN_FACTS
+      response.futureValue shouldBe INCORRECT_KNOWN_FACTS_BUSINESS_USERS
     }
     "affect an updated registration record if the requested regime is not present and known facts agree with the request" in {
       val response = service.register(RegisterRequest("1", "ALLX9876543210124", Some("ME1 9AB")))

@@ -8,7 +8,8 @@ case class RegistrationResponse(error: Option[String])
 object RegistrationResponse {
   implicit val registrationResponseFormat: Format[RegistrationResponse] = Json.format[RegistrationResponse]
   val RESPONSE_OK = this(None)
-  val INCORRECT_KNOWN_FACTS = this(Some(Messages("registration.incorrect.known.facts.msg")))
+  val INCORRECT_KNOWN_FACTS_BUSINESS_USERS = this(Some(Messages("registration.incorrect.known.facts.business.users.msg")))
+  val INCORRECT_KNOWN_FACTS_AGENTS = this(Some(Messages("registration.incorrect.known.facts.agents.msg")))
   val MULTIPLE_FOUND = this(Some(Messages("verification.response.multiple.found.msg")))
   val INCORRECT_POSTCODE = this(Some(Messages("verification.response.incorrect.postcode.msg")))
   val ALREADY_REGISTERED = this(Some(Messages("registration.already.registered")))
