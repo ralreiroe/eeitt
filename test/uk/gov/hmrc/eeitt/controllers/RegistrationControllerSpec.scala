@@ -88,7 +88,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
 
     "return 200 and error if submitted known facts are different than stored known facts" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("12LT009"), Some("SE39EPX"))))
-      val result = TestRegistrationController.register()(fakeRequest)
+      val result = TestRegistrationController.registerBusinessUser()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
     }
