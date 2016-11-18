@@ -4,7 +4,7 @@ import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
 import org.specs2.matcher.ExceptionMatchers
 import reactivemongo.core.errors.DatabaseException
-import uk.gov.hmrc.eeitt.model.{ GroupId, IndividualRegistration, RegimeId, RegistrationNumber }
+import uk.gov.hmrc.eeitt.model.{ GroupId, RegistrationBusinessUser, RegimeId, RegistrationNumber }
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,8 +16,8 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
     awaitRegistrationIndexCreation()
   }
 
-  private val registration1: IndividualRegistration = IndividualRegistration(GroupId("g1"), RegistrationNumber("12LT001"), RegimeId("LT"))
-  private val registration2: IndividualRegistration = IndividualRegistration(GroupId("g2"), RegistrationNumber("12LT002"), RegimeId("LT"))
+  private val registration1: RegistrationBusinessUser = RegistrationBusinessUser(GroupId("g1"), RegistrationNumber("12LT001"), RegimeId("LT"))
+  private val registration2: RegistrationBusinessUser = RegistrationBusinessUser(GroupId("g2"), RegistrationNumber("12LT002"), RegimeId("LT"))
 
   "query registrations with a group id" should {
 

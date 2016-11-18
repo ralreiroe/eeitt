@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt
 
-import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser }
+import uk.gov.hmrc.eeitt.model.{ Arn, EtmpAgent, EtmpBusinessUser, Postcode, RegistrationNumber }
 
 import scala.util.Random
 
@@ -8,7 +8,7 @@ trait EtmpFixtures {
   def testEtmpAgent() = {
     def randomize(s: String) = s + "-" + Random.alphanumeric.take(10).mkString
     EtmpAgent(
-      randomize("arn"),
+      Arn(randomize("arn")),
       randomize("identificationType"),
       randomize("identificationTypeDescription"),
       randomize("organisationType"),
@@ -17,7 +17,7 @@ trait EtmpFixtures {
       Some(randomize("title")),
       Some(randomize("name1")),
       Some(randomize("name2")),
-      Some(randomize("postcode")),
+      Some(Postcode(randomize("postcode"))),
       randomize("countryCode"),
       customers = Seq()
     )
@@ -26,7 +26,7 @@ trait EtmpFixtures {
   def testEtmpBusinessUser() = {
     def randomize(s: String) = s + "-" + Random.alphanumeric.take(10).mkString
     EtmpBusinessUser(
-      randomize("registrationNumber"),
+      RegistrationNumber(randomize("registrationNumber")),
       randomize("taxRegime"),
       randomize("taxRegimeDescription"),
       randomize("organisationType"),
@@ -35,7 +35,7 @@ trait EtmpFixtures {
       Some(randomize("customerTitle")),
       Some(randomize("customerName1")),
       Some(randomize("customerName2")),
-      Some(randomize("postcode")),
+      Some(Postcode(randomize("postcode"))),
       randomize("countryCode")
     )
   }

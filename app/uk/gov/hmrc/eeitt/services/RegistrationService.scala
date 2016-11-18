@@ -14,9 +14,9 @@ trait Verification[A] {
 }
 
 object Verification {
-  implicit val AgentVerification = new Verification[AgentRegistration] {}
+  implicit val AgentVerification = new Verification[RegistrationAgent] {}
 
-  implicit val IndividualVerification = new Verification[IndividualRegistration] {}
+  implicit val BusinessUserVerification = new Verification[RegistrationBusinessUser] {}
 }
 
 trait VerificationRepo[A] {
@@ -24,15 +24,17 @@ trait VerificationRepo[A] {
 }
 
 object VerificationRepo {
-  implicit def agentRepo(implicit regRepository: AgentRegistrationRepository) = {
-    new VerificationRepo[AgentRegistration] {
-      def apply(groupId: GroupId, regimeId: RegimeId): Future[List[AgentRegistration]] = regRepository.findRegistrations(groupId)
+  implicit def agentRepo(implicit regRepository: RegistrationAgentRepository) = {
+    new VerificationRepo[RegistrationAgent] {
+      def apply(groupId: GroupId, regimeId: RegimeId): Future[List[RegistrationAgent]] =
+        regRepository.findRegistrations(groupId) // we are ignoring RegimeId
     }
   }
 
-  implicit def individualRepo(implicit regRepository: RegistrationRepository) = {
-    new VerificationRepo[IndividualRegistration] {
-      def apply(groupId: GroupId, regimeId: RegimeId): Future[List[IndividualRegistration]] = regRepository.findRegistrations(groupId, regimeId)
+  implicit def businessUserRepo(implicit regRepository: RegistrationRepository) = {
+    new VerificationRepo[RegistrationBusinessUser] {
+      def apply(groupId: GroupId, regimeId: RegimeId): Future[List[RegistrationBusinessUser]] =
+        regRepository.findRegistrations(groupId, regimeId)
     }
   }
 }
@@ -42,32 +44,32 @@ trait FindRegistration[A, B] {
 }
 
 object FindRegistration {
-  implicit def individualRepo(implicit repository: RegistrationRepository) = {
-    new FindRegistration[RegisterBusinessUserRequest, IndividualRegistration] {
-      def apply(req: RegisterBusinessUserRequest): Future[List[IndividualRegistration]] =
+  implicit def businessUserRepo(implicit repository: RegistrationRepository) = {
+    new FindRegistration[RegisterBusinessUserRequest, RegistrationBusinessUser] {
+      def apply(req: RegisterBusinessUserRequest): Future[List[RegistrationBusinessUser]] =
         repository.findRegistrations(req.groupId, req.regimeId)
     }
   }
 
-  implicit def agentRepo(implicit repository: AgentRegistrationRepository) = {
-    new FindRegistration[RegisterAgentRequest, AgentRegistration] {
-      def apply(req: RegisterAgentRequest): Future[List[AgentRegistration]] =
+  implicit def agentRepo(implicit repository: RegistrationAgentRepository) = {
+    new FindRegistration[RegisterAgentRequest, RegistrationAgent] {
+      def apply(req: RegisterAgentRequest): Future[List[RegistrationAgent]] =
         repository.findRegistrations(req.groupId)
     }
   }
 }
 
-trait PostCode[A] {
-  def apply(a: A): Option[String]
+trait GetPostcode[A] {
+  def apply(a: A): Option[Postcode]
 }
 
-object PostCode {
-  implicit val businessUserPostCode = new PostCode[RegisterBusinessUserRequest] {
-    def apply(req: RegisterBusinessUserRequest): Option[String] = req.postcode
+object GetPostcode {
+  implicit val businessUserGetPostcode = new GetPostcode[RegisterBusinessUserRequest] {
+    def apply(req: RegisterBusinessUserRequest): Option[Postcode] = req.postcode
   }
 
-  implicit val agentPostCode = new PostCode[RegisterAgentRequest] {
-    def apply(req: RegisterAgentRequest): Option[String] = req.postcode
+  implicit val agentGetPostcode = new GetPostcode[RegisterAgentRequest] {
+    def apply(req: RegisterAgentRequest): Option[Postcode] = req.postcode
   }
 }
 
@@ -96,13 +98,13 @@ trait AddRegistration[A] {
 }
 
 object AddRegistration {
-  implicit def agentRepo(implicit repository: AgentRegistrationRepository) = {
+  implicit def agentRepo(implicit repository: RegistrationAgentRepository) = {
     new AddRegistration[RegisterAgentRequest] {
       def apply(req: RegisterAgentRequest): Future[Either[String, Unit]] = repository.register(req)
     }
   }
 
-  implicit def individualRepo(implicit repository: RegistrationRepository) = {
+  implicit def businessUserRepo(implicit repository: RegistrationRepository) = {
     new AddRegistration[RegisterBusinessUserRequest] {
       def apply(req: RegisterBusinessUserRequest): Future[Either[String, Unit]] = repository.register(req)
     }
@@ -118,10 +120,10 @@ trait RegistrationService {
     findRegistration: FindRegistration[A, B],
     addRegistration: AddRegistration[A],
     findUser: FindUser[A, C],
-    postCode: PostCode[A]
+    getPostCode: GetPostcode[A]
   ): Future[RegistrationResponse] = {
     findUser(registerRequest).flatMap {
-      case user :: maybeOtherUsers if postcodeValidOrNotNeeded(user, postCode(registerRequest)) =>
+      case user :: maybeOtherUsers if postcodeValidOrNotNeeded(user, getPostCode(registerRequest)) =>
         findRegistration(registerRequest).flatMap {
           case Nil => addRegistration(registerRequest).map {
             case Right(_) => RESPONSE_OK
@@ -132,8 +134,8 @@ trait RegistrationService {
         }
       case _ =>
         registerRequest match {
-          case x: RegisterAgentRequest => Future.successful(INCORRECT_KNOWN_FACTS_AGENTS)
-          case x: RegisterRequest => Future.successful(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
+          case _: RegisterAgentRequest => Future.successful(INCORRECT_KNOWN_FACTS_AGENTS)
+          case _: RegisterRequest => Future.successful(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
         }
     }
   }
@@ -149,8 +151,8 @@ trait RegistrationService {
     verification(groupId, regimeId)(vr.apply)
   }
 
-  def prepopulation(groupId: String, regimeId: String): Future[List[AgentRegistration]] = {
-    Future.successful(List.empty[AgentRegistration])
+  def prepopulation(groupId: String, regimeId: String): Future[List[RegistrationAgent]] = {
+    Future.successful(List.empty[RegistrationAgent])
   }
 }
 

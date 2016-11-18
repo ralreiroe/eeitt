@@ -5,20 +5,20 @@ import play.api.libs.json.Json
 import reactivemongo.api.DB
 import reactivemongo.api.indexes.{ Index, IndexType }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.{ AgentRegistration, GroupId, RegisterAgentRequest, RegisterBusinessUserRequest }
+import uk.gov.hmrc.eeitt.model.{ RegistrationAgent, GroupId, RegisterAgentRequest, RegisterBusinessUserRequest }
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait AgentRegistrationRepository {
-  def findRegistrations(groupId: GroupId): Future[List[AgentRegistration]]
+trait RegistrationAgentRepository {
+  def findRegistrations(groupId: GroupId): Future[List[RegistrationAgent]]
 
   def register(rr: RegisterAgentRequest): Future[Either[String, Unit]]
 }
 
-class MongoAgentRegistrationRepository(implicit mongo: () => DB)
-    extends ReactiveRepository[AgentRegistration, BSONObjectID]("registrationAgents", mongo, AgentRegistration.oFormat) with AgentRegistrationRepository {
+class MongoRegistrationAgentRepository(implicit mongo: () => DB)
+    extends ReactiveRepository[RegistrationAgent, BSONObjectID]("registrationAgents", mongo, RegistrationAgent.oFormat) with RegistrationAgentRepository {
 
   override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
     Future.sequence(Seq(
@@ -26,14 +26,14 @@ class MongoAgentRegistrationRepository(implicit mongo: () => DB)
     ))
   }
 
-  def findRegistrations(groupId: GroupId): Future[List[AgentRegistration]] = {
+  def findRegistrations(groupId: GroupId): Future[List[RegistrationAgent]] = {
     Logger.debug(s"lookup agent registration with group id '${groupId.value}' in database ${collection.db.name}")
     find(("groupId", groupId))
   }
 
   def register(rr: RegisterAgentRequest): Future[Either[String, Unit]] = {
 
-    val registration = AgentRegistration(rr.groupId, rr.arn)
+    val registration = RegistrationAgent(rr.groupId, rr.arn)
     insert(registration) map {
       case r if r.ok => Right((): Unit)
       case r => Left(r.message)

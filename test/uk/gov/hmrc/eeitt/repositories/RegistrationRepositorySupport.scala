@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.repositories
 
-import uk.gov.hmrc.eeitt.model.IndividualRegistration
+import uk.gov.hmrc.eeitt.model.RegistrationBusinessUser
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -9,9 +9,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 trait RegistrationRepositorySupport extends UnitSpec with MongoSpecSupport {
-  val regRepo = new MongoRegistrationRepository
+  val regRepo = new MongoRegistrationBusinessUserRepository
 
-  def insertRegistration(registration: IndividualRegistration): Unit = {
+  def insertRegistration(registration: RegistrationBusinessUser): Unit = {
     await(regRepo.collection.insert(registration))
   }
 

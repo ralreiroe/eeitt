@@ -15,16 +15,17 @@ class GroupId(val value: String) extends AnyVal
 class RegimeId(val value: String) extends AnyVal
 class Arn(val value: String) extends AnyVal
 class RegistrationNumber(val value: String) extends AnyVal
+class Postcode(val value: String) extends AnyVal
 
-case class IndividualRegistration(groupId: GroupId, registrationNumber: RegistrationNumber, regimeId: RegimeId)
-case class AgentRegistration(groupId: GroupId, arn: Arn)
+case class RegistrationBusinessUser(groupId: GroupId, registrationNumber: RegistrationNumber, regimeId: RegimeId)
+case class RegistrationAgent(groupId: GroupId, arn: Arn)
 
-object IndividualRegistration {
-  implicit val oFormat: OFormat[IndividualRegistration] = Json.format[IndividualRegistration]
+object RegistrationBusinessUser {
+  implicit val oFormat: OFormat[RegistrationBusinessUser] = Json.format[RegistrationBusinessUser]
 }
 
-object AgentRegistration {
-  implicit val oFormat: OFormat[AgentRegistration] = Json.format[AgentRegistration]
+object RegistrationAgent {
+  implicit val oFormat: OFormat[RegistrationAgent] = Json.format[RegistrationAgent]
 }
 
 object GroupId {
@@ -80,5 +81,19 @@ object RegistrationNumber {
       }
     }
     def writes(registrationNumber: RegistrationNumber): JsValue = JsString(registrationNumber.value)
+  }
+}
+
+object Postcode {
+  def apply(value: String) = new Postcode(value)
+
+  implicit val format: Format[Postcode] = new Format[Postcode] {
+    def reads(json: JsValue): JsResult[Postcode] = {
+      json match {
+        case JsString(postcode) => JsSuccess(Postcode(postcode))
+        case unknown => JsError(s"JsString value expected, got: $unknown")
+      }
+    }
+    def writes(postcode: Postcode): JsValue = JsString(postcode.value)
   }
 }

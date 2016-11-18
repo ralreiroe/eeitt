@@ -8,8 +8,8 @@ package object repositories {
     ReactiveMongoPlugin.mongoConnector.db
   }
 
-  lazy val registrationRepository = new MongoRegistrationRepository
-  lazy val agentRegistrationRepository = new MongoAgentRegistrationRepository
+  lazy val registrationRepository = new MongoRegistrationBusinessUserRepository
+  lazy val agentRegistrationRepository = new MongoRegistrationAgentRepository
   lazy val etmpBusinessUserRepository = new MongoEtmpBusinessUsersRepository
   lazy val etmpAgentRepository = new MongoEtmpAgentRepository
 }

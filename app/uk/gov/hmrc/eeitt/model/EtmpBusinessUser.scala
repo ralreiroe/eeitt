@@ -3,7 +3,7 @@ package uk.gov.hmrc.eeitt.model
 import play.api.libs.json._
 
 case class EtmpBusinessUser(
-  registrationNumber: String,
+  registrationNumber: RegistrationNumber,
   taxRegime: String,
   taxRegimeDescription: String,
   organisationType: String,
@@ -12,7 +12,7 @@ case class EtmpBusinessUser(
   customerTitle: Option[String],
   customerName1: Option[String],
   customerName2: Option[String],
-  postcode: Option[String],
+  postcode: Option[Postcode],
   countryCode: String
 )
 
@@ -21,7 +21,7 @@ object EtmpBusinessUser {
 }
 
 case class EtmpAgent(
-  arn: String,
+  arn: Arn,
   identificationType: String,
   identificationTypeDescription: String,
   organisationType: String,
@@ -30,7 +30,7 @@ case class EtmpAgent(
   title: Option[String],
   name1: Option[String],
   name2: Option[String],
-  postcode: Option[String],
+  postcode: Option[Postcode],
   countryCode: String,
   customers: Seq[EtmpBusinessUser]
 )

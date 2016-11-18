@@ -8,7 +8,7 @@ import play.api.test.{ FakeRequest, Helpers }
 import uk.gov.hmrc.eeitt.EtmpFixtures
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.model.{ VerificationResponse, _ }
-import uk.gov.hmrc.eeitt.repositories.{ MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationRepository }
+import uk.gov.hmrc.eeitt.repositories.{ MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationBusinessUserRepository }
 import uk.gov.hmrc.eeitt.services.RegistrationService
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 
@@ -17,22 +17,22 @@ import scala.concurrent.Future
 class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with MustExpectations with NumericMatchers with Mockito with EtmpFixtures {
 
   object TestRegistrationService extends RegistrationService {
-    val regRepository = mock[MongoRegistrationRepository]
-    regRepository.findRegistrations(GroupId("1"), RegimeId("LT")).returns(Future.successful(List(IndividualRegistration(GroupId("1"), RegistrationNumber("12LT001"), RegimeId("LT")))))
-    regRepository.findRegistrations(GroupId("2"), RegimeId("LT")).returns(Future.successful(List(IndividualRegistration(GroupId("2"), RegistrationNumber("12LT002"), RegimeId("LT")))))
+    val regRepository = mock[MongoRegistrationBusinessUserRepository]
+    regRepository.findRegistrations(GroupId("1"), RegimeId("LT")).returns(Future.successful(List(RegistrationBusinessUser(GroupId("1"), RegistrationNumber("12LT001"), RegimeId("LT")))))
+    regRepository.findRegistrations(GroupId("2"), RegimeId("LT")).returns(Future.successful(List(RegistrationBusinessUser(GroupId("2"), RegistrationNumber("12LT002"), RegimeId("LT")))))
     regRepository.findRegistrations(GroupId("3"), RegimeId("LT")).returns(Future.successful(List()))
     regRepository.findRegistrations(GroupId("4"), RegimeId("LT")).returns(
       Future.successful(
         List(
-          IndividualRegistration(GroupId("4"), RegistrationNumber("12LT004"), RegimeId("LT")),
-          IndividualRegistration(GroupId("4"), RegistrationNumber("12LT005"), RegimeId("LT"))
+          RegistrationBusinessUser(GroupId("4"), RegistrationNumber("12LT004"), RegimeId("LT")),
+          RegistrationBusinessUser(GroupId("4"), RegistrationNumber("12LT005"), RegimeId("LT"))
         )
       )
     )
     regRepository.findRegistrations(GroupId("5"), RegimeId("LT")).returns(
       Future.successful(
         List(
-          IndividualRegistration(GroupId("5"), RegistrationNumber("KARN001"), RegimeId("LT"))
+          RegistrationBusinessUser(GroupId("5"), RegistrationNumber("KARN001"), RegimeId("LT"))
         )
       )
     )
@@ -87,7 +87,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
   "POST /eeitt-auth/register" should {
 
     "return 200 and error if submitted known facts are different than stored known facts" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("12LT009"), Some("SE39EPX"))))
+      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("12LT009"), Some(Postcode("SE39EPX")))))
       val result = TestRegistrationController.registerBusinessUser()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
@@ -96,7 +96,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
 
   "POST /eeitt-auth/register-agent" should {
     "return 200 and error if submitted known facts are different than stored known facts" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/register/agent").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("KARN002"), Some("SE39EPX"))))
+      val fakeRequest = FakeRequest(Helpers.POST, "/register/agent").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("KARN002"), Some(Postcode("SE39EPX")))))
       val result = TestRegistrationController.registerAgent()(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_AGENTS)

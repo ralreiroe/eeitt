@@ -13,13 +13,13 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   "Checking if agent exists in the db" should {
     "return a nonempty list of agents if at least one agent existed" in {
-      insert(testEtmpAgent().copy(arn = "arn"))
+      insert(testEtmpAgent().copy(arn = Arn("arn")))
 
       assert(repo.findByArn(Arn("arn")).futureValue.nonEmpty)
     }
     "return empty list otherwise" in {
       val arnToLookup = Arn("arn")
-      insert(testEtmpAgent().copy(arn = "otherArn"))
+      insert(testEtmpAgent().copy(arn = Arn("otherArn")))
 
       assert(repo.findByArn(arnToLookup).futureValue.isEmpty)
     }
