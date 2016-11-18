@@ -3,9 +3,9 @@ package uk.gov.hmrc.eeitt.controllers
 import play.Logger
 import play.api.libs.json.{ Format, JsError, JsSuccess, Json }
 import play.api.mvc._
-import uk.gov.hmrc.eeitt.model.{ AffinityGroup, Agent, AgentRegistration, IndividualRegistration, RegisterRequest }
+import uk.gov.hmrc.eeitt.model.{ AffinityGroup, Agent, AgentRegistration, EtmpAgent, EtmpBusinessUser, IndividualRegistration, RegisterBusinessUserRequest }
 import uk.gov.hmrc.eeitt.model.RegisterAgentRequest
-import uk.gov.hmrc.eeitt.services.{ RegistrationService, UserExists }
+import uk.gov.hmrc.eeitt.services.{ RegistrationService, FindUser }
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.model.{ GroupId, RegimeId }
@@ -58,9 +58,9 @@ trait RegistrationController extends BaseController {
   }
 
   def register() = Action.async(parse.json) { implicit request =>
-    request.body.validate[RegisterRequest] match {
+    request.body.validate[RegisterBusinessUserRequest] match {
       case JsSuccess(req, _) =>
-        registrationService.register(req).map(response => Ok(Json.toJson(response)))
+        registrationService.register[RegisterBusinessUserRequest, IndividualRegistration, EtmpBusinessUser](req).map(response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: ${jsonErrors} ")
         Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors))))
@@ -70,7 +70,7 @@ trait RegistrationController extends BaseController {
   def registerAgent() = Action.async(parse.json) { implicit request =>
     request.body.validate[RegisterAgentRequest] match {
       case JsSuccess(req, _) =>
-        registrationService.register(req).map(response => Ok(Json.toJson(response)))
+        registrationService.register[RegisterAgentRequest, AgentRegistration, EtmpAgent](req).map(response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: ${jsonErrors} ")
         Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors))))

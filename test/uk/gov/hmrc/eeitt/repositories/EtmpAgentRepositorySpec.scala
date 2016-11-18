@@ -1,28 +1,27 @@
 package uk.gov.hmrc.eeitt.repositories
 
-import java.util.UUID
-
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
+import uk.gov.hmrc.eeitt.EtmpFixtures
 import uk.gov.hmrc.eeitt.model.{ Arn, EtmpAgent }
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures {
+class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures with EtmpFixtures {
 
   "Checking if agent exists in the db" should {
-    "return `true` if at least one agent existed" in {
-      insert(EtmpAgent(arn = Arn("arn")))
+    "return a nonempty list of agents if at least one agent existed" in {
+      insert(testEtmpAgent().copy(arn = "arn"))
 
-      repo.agentExists(EtmpAgent(arn = Arn("arn"))).futureValue shouldBe true
+      assert(repo.findByArn(Arn("arn")).futureValue.nonEmpty)
     }
-    "return `false` otherwise" in {
-      insert(EtmpAgent(arn = Arn("otherArn")))
-      val agentToLookUp = EtmpAgent(arn = Arn("arn"))
+    "return empty list otherwise" in {
+      val arnToLookup = Arn("arn")
+      insert(testEtmpAgent().copy(arn = "otherArn"))
 
-      repo.agentExists(agentToLookUp).futureValue shouldBe false
+      assert(repo.findByArn(arnToLookup).futureValue.isEmpty)
     }
   }
 
@@ -32,7 +31,7 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
       await(repo.replaceAll(expectedAgents))
 
-      repo.findAll().futureValue shouldBe expectedAgents
+      repo.findAll().futureValue should contain theSameElementsAs expectedAgents
     }
     "replace all existing agents with a new set of agents" in {
       val existingAgents = (1 to 10).map(_ => testEtmpAgent())
@@ -41,7 +40,7 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
       await(repo.replaceAll(newAgents))
 
-      repo.findAll().futureValue shouldBe newAgents
+      repo.findAll().futureValue should contain theSameElementsAs newAgents
     }
   }
 
@@ -52,11 +51,5 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
   }
 
   def insert(EtmpAgent: EtmpAgent) = await(repo.collection.insert(EtmpAgent))
-
-  def testEtmpAgent() = {
-    def randomize(s: String) = s + "-" + UUID.randomUUID()
-
-    EtmpAgent(Arn(randomize("arn")))
-  }
 
 }

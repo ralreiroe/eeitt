@@ -1,32 +1,28 @@
 package uk.gov.hmrc.eeitt.repositories
 
-import java.util.UUID
-
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
+import uk.gov.hmrc.eeitt.EtmpFixtures
 import uk.gov.hmrc.eeitt.model.{ EtmpBusinessUser, RegistrationNumber }
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures {
+class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures with EtmpFixtures {
 
   "Checking if user exists in the db" should {
-    "return `true` if at least one user existed" in {
-      insert(EtmpBusinessUser(registrationNumber = RegistrationNumber("regNum"), postcode = "postcode"))
+    "return a non empty list of users if at least one user existed with a given reg number exists" in {
+      insert(testEtmpBusinessUser().copy(registrationNumber = "regNumber"))
 
-      repo.userExists(EtmpBusinessUser(registrationNumber = RegistrationNumber("regNum"), postcode = "postcode")).futureValue shouldBe true
+      withClue("all users in db: " + await(repo.findAll())) {
+        assert(repo.findByRegistrationNumber(RegistrationNumber("regNumber")).futureValue.nonEmpty)
+      }
     }
-    "return `false` otherwise" in {
-      val existingUsersInDb = List(
-        EtmpBusinessUser(RegistrationNumber("regNum"), "otherPostcode"),
-        EtmpBusinessUser(RegistrationNumber("otherRegNum"), "postcode")
-      )
-      await(repo.bulkInsert(existingUsersInDb))
-      val userToLookUp = EtmpBusinessUser(registrationNumber = RegistrationNumber("regNum"), postcode = "postcode")
+    "return empty list otherwise" in {
+      await(insert(testEtmpBusinessUser().copy(registrationNumber = "otherRegNum")))
 
-      repo.userExists(userToLookUp).futureValue shouldBe false
+      assert(repo.findByRegistrationNumber(RegistrationNumber("regNumber")).futureValue.isEmpty)
     }
   }
 
@@ -36,7 +32,7 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
 
       await(repo.replaceAll(expectedUsers))
 
-      repo.findAll().futureValue shouldBe expectedUsers
+      repo.findAll().futureValue should contain theSameElementsAs expectedUsers
     }
     "replace all existing users with a new set of users" in {
       val existingUsers = (1 to 10).map(_ => testEtmpBusinessUser())
@@ -45,7 +41,7 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
 
       await(repo.replaceAll(newUsers))
 
-      repo.findAll().futureValue shouldBe newUsers
+      repo.findAll().futureValue should contain theSameElementsAs newUsers
     }
   }
 
@@ -56,11 +52,5 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
   }
 
   def insert(etmpBusinessUser: EtmpBusinessUser) = await(repo.collection.insert(etmpBusinessUser))
-
-  def testEtmpBusinessUser() = {
-    def randomize(s: String) = s + "-" + UUID.randomUUID()
-
-    EtmpBusinessUser(RegistrationNumber(randomize("regNumber")), randomize("postcode"))
-  }
 
 }

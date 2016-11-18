@@ -5,16 +5,16 @@ import org.specs2.mock.Mockito
 import play.api.http.Status
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
-import uk.gov.hmrc.eeitt.model._
+import uk.gov.hmrc.eeitt.EtmpFixtures
+import uk.gov.hmrc.eeitt.model.RegistrationResponse._
+import uk.gov.hmrc.eeitt.model.{ VerificationResponse, _ }
 import uk.gov.hmrc.eeitt.repositories.{ MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationRepository }
 import uk.gov.hmrc.eeitt.services.RegistrationService
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
-import uk.gov.hmrc.eeitt.model.VerificationResponse
-import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 
 import scala.concurrent.Future
 
-class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with MustExpectations with NumericMatchers with Mockito {
+class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with MustExpectations with NumericMatchers with Mockito with EtmpFixtures {
 
   object TestRegistrationService extends RegistrationService {
     val regRepository = mock[MongoRegistrationRepository]
@@ -37,11 +37,14 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       )
     )
     val userRepository = mock[MongoEtmpBusinessUsersRepository]
-    userRepository.userExists(EtmpBusinessUser(RegistrationNumber("12LT001"), "SE39EP")).returns(Future.successful(true))
-    userRepository.userExists(EtmpBusinessUser(RegistrationNumber("12LT009"), "SE39EPX")).returns(Future.successful(false))
+    userRepository.findByRegistrationNumber(RegistrationNumber("12LT001")).returns(Future.successful(List.empty))
+    userRepository.findByRegistrationNumber(RegistrationNumber("12LT009")).returns(Future.successful(List.empty))
     val agentRepository = mock[MongoEtmpAgentRepository]
-    agentRepository.agentExists(EtmpAgent(Arn("KARN001"))).returns(Future.successful(true))
-    agentRepository.agentExists(EtmpAgent(Arn("KARN002"))).returns(Future.successful(false))
+    agentRepository.findByArn(Arn("KARN001")).returns(Future.successful(List.empty))
+    agentRepository.findByArn(Arn("KARN002")).returns(Future.successful(List.empty))
+    //userRepository.findByRegistrationNumber("12LT009").returns(Future.successful(List()))
+    //val agentRepository = mock[MongoEtmpAgentRepository]
+    //agentRepository.findByArn("KARN002").returns(Future.successful(List()))
   }
 
   object TestRegistrationController extends RegistrationController {
@@ -84,19 +87,19 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
   "POST /eeitt-auth/register" should {
 
     "return 200 and error if submitted known facts are different than stored known facts" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterRequest(GroupId("1"), RegistrationNumber("12LT009"), "SE39EPX")))
+      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("12LT009"), Some("SE39EPX"))))
       val result = TestRegistrationController.register()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS)
+      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
     }
   }
 
   "POST /eeitt-auth/register-agent" should {
     "return 200 and error if submitted known facts are different than stored known facts" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/register/agent").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("KARN002"))))
+      val fakeRequest = FakeRequest(Helpers.POST, "/register/agent").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("KARN002"), Some("SE39EPX"))))
       val result = TestRegistrationController.registerAgent()(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS)
+      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_AGENTS)
     }
   }
 }

@@ -13,7 +13,8 @@ object RegistrationResponse {
     }
   }
   val RESPONSE_OK = this(None)
-  val INCORRECT_KNOWN_FACTS = this(Some("registration.incorrect.known.facts.msg"))
+  val INCORRECT_KNOWN_FACTS_BUSINESS_USERS = this(Some("registration.incorrect.known.facts.business.users.msg"))
+  val INCORRECT_KNOWN_FACTS_AGENTS = this(Some("registration.incorrect.known.facts.agents.msg"))
   val MULTIPLE_FOUND = this(Some("verification.response.multiple.found.msg"))
   val INCORRECT_POSTCODE = this(Some("verification.response.incorrect.postcode.msg"))
   val ALREADY_REGISTERED = this(Some("registration.already.registered"))

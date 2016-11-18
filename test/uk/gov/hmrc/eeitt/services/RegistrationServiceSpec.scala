@@ -5,15 +5,16 @@ import org.scalatest.AppendedClues
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
+import uk.gov.hmrc.eeitt.utils.CountryCodes
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedClues {
 
-  def userExists[A](returnValue: Boolean)(checks: A => Unit): UserExists[A] =
-    new UserExists[A] {
-      def apply(req: A): Future[Boolean] = {
+  def findUser[A, B](returnValue: List[B])(checks: A => Unit): FindUser[A, B] =
+    new FindUser[A, B] {
+      def apply(req: A): Future[List[B]] = {
         checks(req)
         Future.successful(returnValue)
       }
@@ -35,24 +36,38 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       }
     }
 
+  val businessUser = EtmpBusinessUser(
+    registrationNumber = "123",
+    taxRegime = "ZAGL",
+    taxRegimeDescription = "Aggregate Levy (AGL)",
+    organisationType = "7",
+    organisationTypeDescription = "Limited Company",
+    organisationName = Some("Organisation1"),
+    customerTitle = None,
+    customerName1 = None,
+    customerName2 = None,
+    postcode = Some("BN12 4XL"),
+    countryCode = "GB"
+  )
+
   "Registering a business user with a group id which is not present in repository" should {
     "affect a new registration record and a 'registration ok' response" in {
 
-      val request = RegisterRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), "ME1 9AB")
+      val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some("BN12 4XL"))
 
-      implicit val a = userExists(true) { req: RegisterRequest =>
-        req should be(request) withClue "in userExists"
+      implicit val a = findUser(List(businessUser)) { req: RegisterBusinessUserRequest =>
+        req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List.empty[IndividualRegistration]) { req: RegisterRequest =>
+      implicit val b = findRegistration(List.empty[IndividualRegistration]) { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterRequest =>
+      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in addRegistration"
       }
 
-      val response = RegistrationService.register(request)
+      val response = RegistrationService.register[RegisterBusinessUserRequest, IndividualRegistration, EtmpBusinessUser](request)
       response.futureValue should be(RESPONSE_OK)
     }
   }
@@ -60,36 +75,36 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
   "Registering a business user with a group id which is present in repository" should {
     "return an error if try to register another business user" in {
 
-      val request = RegisterRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), "ME1 9AB")
+      val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some("BN12 4XL"))
       val existingRegistration = IndividualRegistration(GroupId(""), RegistrationNumber(""), RegimeId(""))
 
-      implicit val a = userExists(true) { req: RegisterRequest =>
-        req should be(request) withClue "in userExists"
+      implicit val a = findUser(List(businessUser)) { req: RegisterBusinessUserRequest =>
+        req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List(existingRegistration)) { req: RegisterRequest =>
+      implicit val b = findRegistration(List(existingRegistration)) { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterRequest => /* is not called */ }
+      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
 
-      val response = RegistrationService.register(request)
+      val response = RegistrationService.register[RegisterBusinessUserRequest, IndividualRegistration, EtmpBusinessUser](request)
       response.futureValue should be(ALREADY_REGISTERED)
     }
 
     "return an error if known facts do not agree with the request" in {
 
-      val request = RegisterRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), "ME1 9AB")
+      val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some("ME1 9AB"))
 
-      implicit val a = userExists(false) { req: RegisterRequest =>
-        req should be(request) withClue "in userExists"
+      implicit val a = findUser(List.empty[EtmpBusinessUser]) { req: RegisterBusinessUserRequest =>
+        req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List.empty[IndividualRegistration]) { req: RegisterRequest => /* is not called */ }
-      implicit val c = addRegistration(Right(())) { req: RegisterRequest => /* is not called */ }
+      implicit val b = findRegistration(List.empty[IndividualRegistration]) { req: RegisterBusinessUserRequest => /* is not called */ }
+      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
 
-      val response = RegistrationService.register(request)
-      response.futureValue should be(INCORRECT_KNOWN_FACTS)
+      val response = RegistrationService.register[RegisterBusinessUserRequest, IndividualRegistration, EtmpBusinessUser](request)
+      response.futureValue should be(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
     }
   }
 

@@ -5,7 +5,7 @@ import play.api.libs.json.Json
 import reactivemongo.api.DB
 import reactivemongo.api.indexes.{ Index, IndexType }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.{ AgentRegistration, GroupId, RegisterAgentRequest, RegisterRequest }
+import uk.gov.hmrc.eeitt.model.{ AgentRegistration, GroupId, RegisterAgentRequest, RegisterBusinessUserRequest }
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -18,7 +18,7 @@ trait AgentRegistrationRepository {
 }
 
 class MongoAgentRegistrationRepository(implicit mongo: () => DB)
-    extends ReactiveRepository[AgentRegistration, BSONObjectID]("agentRegistrations", mongo, AgentRegistration.oFormat) with AgentRegistrationRepository {
+    extends ReactiveRepository[AgentRegistration, BSONObjectID]("registrationAgents", mongo, AgentRegistration.oFormat) with AgentRegistrationRepository {
 
   override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
     Future.sequence(Seq(
