@@ -2,26 +2,26 @@ package uk.gov.hmrc.eeitt.repositories
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
+import uk.gov.hmrc.eeitt.EtmpFixtures
 import uk.gov.hmrc.eeitt.model.EtmpAgent
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Random
 
-class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures {
+class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures with EtmpFixtures {
 
   "Checking if agent exists in the db" should {
-    "return `true` if at least one agent existed" in {
+    "return a nonempty list of agents if at least one agent existed" in {
       insert(testEtmpAgent().copy(arn = "arn"))
 
-      repo.agentExists("arn").futureValue shouldBe true
+      assert(repo.findByArn("arn").futureValue.nonEmpty)
     }
-    "return `false` otherwise" in {
+    "return empty list otherwise" in {
       val arnToLookup = "arn"
       insert(testEtmpAgent().copy(arn = "otherArn"))
 
-      repo.agentExists(arnToLookup).futureValue shouldBe false
+      assert(repo.findByArn(arnToLookup).futureValue.isEmpty)
     }
   }
 
@@ -51,23 +51,5 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
   }
 
   def insert(EtmpAgent: EtmpAgent) = await(repo.collection.insert(EtmpAgent))
-
-  def testEtmpAgent() = {
-    def randomize(s: String) = s + "-" + Random.alphanumeric.take(10).mkString
-    EtmpAgent(
-      randomize("arn"),
-      randomize("identificationType"),
-      randomize("identificationTypeDescription"),
-      randomize("organisationType"),
-      randomize("organisationTypeDescription"),
-      Some(randomize("organisationName")),
-      Some(randomize("title")),
-      Some(randomize("name1")),
-      Some(randomize("name2")),
-      Some(randomize("postcode")),
-      randomize("countryCode"),
-      customers = Seq()
-    )
-  }
 
 }

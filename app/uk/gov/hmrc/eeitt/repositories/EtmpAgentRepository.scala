@@ -12,8 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait EtmpAgentRepository {
-  def agentExists(arn: String): Future[Boolean]
-
+  def findByArn(arn: String): Future[List[EtmpAgent]]
   def replaceAll(users: Seq[EtmpAgent]): Future[MultiBulkWriteResult]
 }
 
@@ -31,13 +30,7 @@ class MongoEtmpAgentRepository(implicit mongo: () => DB)
     ).map(Seq(_))
   }
 
-  def agentExists(arn: String): Future[Boolean] = {
-    collection
-      .find(Json.obj("arn" -> arn))
-      .cursor[EtmpAgent](ReadPreference.secondaryPreferred)
-      .collect[List]()
-      .map(_.nonEmpty)
-  }
+  def findByArn(arn: String) = find("arn" -> arn)
 
   // todo: if this method fails EEITT may fail to work...
   // todo: use a correct WriteConcern
