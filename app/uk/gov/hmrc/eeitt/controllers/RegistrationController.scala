@@ -11,8 +11,6 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.model.{ GroupId, RegimeId, RegisterRequest }
 import uk.gov.hmrc.eeitt.repositories._
-import uk.gov.hmrc.eeitt.services.Verification
-import uk.gov.hmrc.eeitt.services.VerificationRepo
 
 import scala.concurrent.Future
 
@@ -32,16 +30,19 @@ trait RegistrationController extends BaseController {
     val gId = GroupId(groupId)
     val rId = RegimeId(regimeId)
     affinityGroup match {
-      case Agent => verify[RegistrationAgent](gId, rId, request)
-      case _ => verify[RegistrationBusinessUser](gId, rId, request)
+      case Agent => verify(gId, request)
+      case _ => verify((gId, rId), request)
     }
   }
 
-  private def verify[A: Verification: VerificationRepo](groupId: GroupId, regimeId: RegimeId, request: Request[AnyContent]) = {
+  private def verify[A](findParams: A, request: Request[AnyContent])(
+    implicit
+    findRegistration: FindRegistration[A]
+  ) = {
 
     implicit val r = request // we need to get ExecutionContext from request by MdcLoggingExecutionContext means
 
-    registrationService.verify(groupId, regimeId) map (response => Ok(Json.toJson(response)))
+    registrationService.verify(findParams) map (response => Ok(Json.toJson(response)))
   }
 
   def prepopulation(groupId: String, regimeId: String, affinityGroup: AffinityGroup) = Action.async { implicit request =>
@@ -59,14 +60,14 @@ trait RegistrationController extends BaseController {
     }
   }
 
-  def registerBusinessUser() = register[RegisterBusinessUserRequest, RegistrationBusinessUser, EtmpBusinessUser]
+  def registerBusinessUser() = register[RegisterBusinessUserRequest, EtmpBusinessUser]
 
-  def registerAgent() = register[RegisterAgentRequest, RegistrationAgent, EtmpAgent]
+  def registerAgent() = register[RegisterAgentRequest, EtmpAgent]
 
-  private def register[A <: RegisterRequest: Reads: AddRegistration: GetPostcode, B, C: PostcodeValidator](
+  private def register[A <: RegisterRequest: Reads: AddRegistration: GetPostcode, B: PostcodeValidator](
     implicit
-    findRegistration: FindRegistration[A, B],
-    findUser: FindUser[A, C]
+    findRegistration: FindRegistration[A],
+    findUser: FindUser[A, B]
   ) = Action.async(parse.json) { implicit request =>
     request.body.validate match {
       case JsSuccess(req, _) =>

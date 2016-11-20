@@ -20,8 +20,9 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       }
     }
 
-  def findRegistration[A, B](returnValue: List[B])(checks: A => Unit): FindRegistration[A, B] =
-    new FindRegistration[A, B] {
+  def findRegistration[A, B](returnValue: List[B])(checks: A => Unit): FindRegistration[A] =
+    new FindRegistration[A] {
+      type Out = B
       def apply(req: A): Future[List[B]] = {
         checks(req)
         Future.successful(returnValue)
@@ -67,7 +68,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
         req should be(request) withClue "in addRegistration"
       }
 
-      val response = RegistrationService.register[RegisterBusinessUserRequest, RegistrationBusinessUser, EtmpBusinessUser](request)
+      val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(RESPONSE_OK)
     }
   }
@@ -88,7 +89,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
 
       implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
 
-      val response = RegistrationService.register[RegisterBusinessUserRequest, RegistrationBusinessUser, EtmpBusinessUser](request)
+      val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(ALREADY_REGISTERED)
     }
 
@@ -103,16 +104,10 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       implicit val b = findRegistration(List.empty[RegistrationBusinessUser]) { req: RegisterBusinessUserRequest => /* is not called */ }
       implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
 
-      val response = RegistrationService.register[RegisterBusinessUserRequest, RegistrationBusinessUser, EtmpBusinessUser](request)
+      val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
     }
   }
-
-  def verificationRepo[A](returnValue: List[A]): VerificationRepo[A] =
-    new VerificationRepo[A] {
-      def apply(groupId: GroupId, regimeId: RegimeId): Future[List[A]] =
-        Future.successful(returnValue)
-    }
 
   val groupId = GroupId("group-id")
   val registrationNumber = RegistrationNumber("123")
@@ -124,27 +119,27 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
   "Verification of business user" should {
     "return false when no record is found in db" in {
 
-      implicit val a = verificationRepo(List.empty[RegistrationBusinessUser])
+      implicit val a = findRegistration(List.empty[RegistrationBusinessUser]) { req: (GroupId, RegimeId) => }
 
-      val response = RegistrationService.verify[RegistrationBusinessUser](groupId, regimeId)
+      val response = RegistrationService.verify((groupId, regimeId))
 
       response.futureValue should be(VerificationResponse(false))
     }
 
     "return true when exactly one record is found in db" in {
 
-      implicit val a = verificationRepo(List(businessUserRegistration))
+      implicit val a = findRegistration(List(businessUserRegistration)) { req: (GroupId, RegimeId) => }
 
-      val response = RegistrationService.verify[RegistrationBusinessUser](groupId, regimeId)
+      val response = RegistrationService.verify((groupId, regimeId))
 
       response.futureValue should be(VerificationResponse(true))
     }
 
     "return false when more than one record is found in db" in {
 
-      implicit val a = verificationRepo(List(businessUserRegistration, businessUserRegistration))
+      implicit val a = findRegistration(List(businessUserRegistration, businessUserRegistration)) { req: (GroupId, RegimeId) => }
 
-      val response = RegistrationService.verify[RegistrationBusinessUser](groupId, regimeId)
+      val response = RegistrationService.verify((groupId, regimeId))
 
       response.futureValue should be(VerificationResponse(false))
     }
@@ -153,27 +148,27 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
   "Verification of Agent" should {
     "return false when no record is found in db" in {
 
-      implicit val a = verificationRepo(List.empty[RegistrationAgent])
+      implicit val a = findRegistration(List.empty[RegistrationAgent]) { req: GroupId => }
 
-      val response = RegistrationService.verify[RegistrationAgent](groupId, regimeId)
+      val response = RegistrationService.verify(groupId)
 
       response.futureValue should be(VerificationResponse(false))
     }
 
     "return true when exactly one record is found in db" in {
 
-      implicit val a = verificationRepo(List(agentRegistration))
+      implicit val a = findRegistration(List(agentRegistration)) { req: GroupId => }
 
-      val response = RegistrationService.verify[RegistrationAgent](groupId, regimeId)
+      val response = RegistrationService.verify(groupId)
 
       response.futureValue should be(VerificationResponse(true))
     }
 
     "return false when more than one record is found in db" in {
 
-      implicit val a = verificationRepo(List(agentRegistration, agentRegistration))
+      implicit val a = findRegistration(List(agentRegistration, agentRegistration)) { req: GroupId => }
 
-      val response = RegistrationService.verify[RegistrationAgent](groupId, regimeId)
+      val response = RegistrationService.verify(groupId)
 
       response.futureValue should be(VerificationResponse(false))
     }

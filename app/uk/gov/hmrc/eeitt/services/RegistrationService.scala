@@ -8,53 +8,43 @@ import uk.gov.hmrc.eeitt.services.PostcodeValidator._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait Verification[A] {
-  def apply(groupId: GroupId, regimeId: RegimeId): ((GroupId, RegimeId) => Future[List[A]]) => Future[VerificationResponse] =
-    findRegistrations => findRegistrations(groupId, regimeId).map(_.size == 1).map(VerificationResponse.apply)
-}
-
-object Verification {
-  implicit val AgentVerification = new Verification[RegistrationAgent] {}
-
-  implicit val BusinessUserVerification = new Verification[RegistrationBusinessUser] {}
-}
-
-trait VerificationRepo[A] {
-  def apply(groupId: GroupId, regimeId: RegimeId): Future[List[A]]
-}
-
-object VerificationRepo {
-  implicit def agentRepo(implicit regRepository: RegistrationAgentRepository) = {
-    new VerificationRepo[RegistrationAgent] {
-      def apply(groupId: GroupId, regimeId: RegimeId): Future[List[RegistrationAgent]] =
-        regRepository.findRegistrations(groupId) // we are ignoring RegimeId
-    }
-  }
-
-  implicit def businessUserRepo(implicit regRepository: RegistrationRepository) = {
-    new VerificationRepo[RegistrationBusinessUser] {
-      def apply(groupId: GroupId, regimeId: RegimeId): Future[List[RegistrationBusinessUser]] =
-        regRepository.findRegistrations(groupId, regimeId)
-    }
-  }
-}
-
-trait FindRegistration[A, B] {
-  def apply(a: A): Future[List[B]]
+trait FindRegistration[A] {
+  type Out
+  def apply(a: A): Future[List[Out]]
 }
 
 object FindRegistration {
-  implicit def businessUserRepo(implicit repository: RegistrationRepository) = {
-    new FindRegistration[RegisterBusinessUserRequest, RegistrationBusinessUser] {
+  implicit def businessUserByRequest(implicit repository: RegistrationRepository) = {
+    new FindRegistration[RegisterBusinessUserRequest] {
+      type Out = RegistrationBusinessUser
       def apply(req: RegisterBusinessUserRequest): Future[List[RegistrationBusinessUser]] =
         repository.findRegistrations(req.groupId, req.regimeId)
     }
   }
 
-  implicit def agentRepo(implicit repository: RegistrationAgentRepository) = {
-    new FindRegistration[RegisterAgentRequest, RegistrationAgent] {
+  implicit def businessUserByGroupIdAndRegimeId(implicit regRepository: RegistrationRepository) = {
+    new FindRegistration[(GroupId, RegimeId)] {
+      type Out = RegistrationBusinessUser
+      def apply(groupIdAndRegimeId: (GroupId, RegimeId)): Future[List[RegistrationBusinessUser]] = {
+        val (groupId, regimeId) = groupIdAndRegimeId
+        regRepository.findRegistrations(groupId, regimeId)
+      }
+    }
+  }
+
+  implicit def agentByRequest(implicit repository: RegistrationAgentRepository) = {
+    new FindRegistration[RegisterAgentRequest] {
+      type Out = RegistrationAgent
       def apply(req: RegisterAgentRequest): Future[List[RegistrationAgent]] =
         repository.findRegistrations(req.groupId)
+    }
+  }
+
+  implicit def agentByGroupId(implicit regRepository: RegistrationAgentRepository) = {
+    new FindRegistration[GroupId] {
+      type Out = RegistrationAgent
+      def apply(groupId: GroupId): Future[List[RegistrationAgent]] =
+        regRepository.findRegistrations(groupId)
     }
   }
 }
@@ -113,13 +103,13 @@ object AddRegistration {
 
 trait RegistrationService {
 
-  def register[A <: RegisterRequest, B, C: PostcodeValidator](
+  def register[A <: RegisterRequest, B: PostcodeValidator](
     registerRequest: A
   )(
     implicit
-    findRegistration: FindRegistration[A, B],
+    findRegistration: FindRegistration[A],
     addRegistration: AddRegistration[A],
-    findUser: FindUser[A, C],
+    findUser: FindUser[A, B],
     getPostCode: GetPostcode[A]
   ): Future[RegistrationResponse] = {
     findUser(registerRequest).flatMap {
@@ -141,14 +131,12 @@ trait RegistrationService {
   }
 
   def verify[A](
-    groupId: GroupId,
-    regimeId: RegimeId
+    findParams: A
   )(
     implicit
-    verification: Verification[A],
-    vr: VerificationRepo[A]
+    findRegistration: FindRegistration[A]
   ): Future[VerificationResponse] = {
-    verification(groupId, regimeId)(vr.apply)
+    findRegistration(findParams).map(_.size == 1).map(VerificationResponse.apply)
   }
 
   def prepopulation(groupId: String, regimeId: String): Future[List[RegistrationAgent]] = {
