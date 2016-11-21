@@ -31,69 +31,43 @@ object RegistrationAgent {
 object GroupId {
   def apply(value: String) = new GroupId(value)
 
-  implicit val format: Format[GroupId] = new Format[GroupId] {
-    def reads(json: JsValue): JsResult[GroupId] = {
-      json match {
-        case JsString(groupId) => JsSuccess(GroupId(groupId))
-        case unknown => JsError(s"JsString value expected, got: $unknown")
-      }
-    }
-    def writes(groupId: GroupId): JsValue = JsString(groupId.value)
-  }
+  implicit val format: Format[GroupId] = ValueClassFormat.format(GroupId.apply)(_.value)
 }
 
 object RegimeId {
   def apply(value: String) = new RegimeId(value)
 
-  implicit val format: Format[RegimeId] = new Format[RegimeId] {
-    def reads(json: JsValue): JsResult[RegimeId] = {
-      json match {
-        case JsString(regimeId) => JsSuccess(RegimeId(regimeId))
-        case unknown => JsError(s"JsString value expected, got: $unknown")
-      }
-    }
-    def writes(regimeId: RegimeId): JsValue = JsString(regimeId.value)
-  }
+  implicit val format: Format[RegimeId] = ValueClassFormat.format(RegimeId.apply)(_.value)
 }
 
 object Arn {
   def apply(value: String) = new Arn(value)
 
-  implicit val format: Format[Arn] = new Format[Arn] {
-    def reads(json: JsValue): JsResult[Arn] = {
-      json match {
-        case JsString(arn) => JsSuccess(Arn(arn))
-        case unknown => JsError(s"JsString value expected, got: $unknown")
-      }
-    }
-    def writes(arn: Arn): JsValue = JsString(arn.value)
-  }
+  implicit val format: Format[Arn] = ValueClassFormat.format(Arn.apply)(_.value)
 }
 
 object RegistrationNumber {
   def apply(value: String) = new RegistrationNumber(value)
 
-  implicit val format: Format[RegistrationNumber] = new Format[RegistrationNumber] {
-    def reads(json: JsValue): JsResult[RegistrationNumber] = {
-      json match {
-        case JsString(registrationNumber) => JsSuccess(RegistrationNumber(registrationNumber))
-        case unknown => JsError(s"JsString value expected, got: $unknown")
-      }
-    }
-    def writes(registrationNumber: RegistrationNumber): JsValue = JsString(registrationNumber.value)
-  }
+  implicit val format: Format[RegistrationNumber] = ValueClassFormat.format(RegistrationNumber.apply)(_.value)
 }
 
 object Postcode {
   def apply(value: String) = new Postcode(value)
 
-  implicit val format: Format[Postcode] = new Format[Postcode] {
-    def reads(json: JsValue): JsResult[Postcode] = {
-      json match {
-        case JsString(postcode) => JsSuccess(Postcode(postcode))
-        case unknown => JsError(s"JsString value expected, got: $unknown")
+  implicit val format: Format[Postcode] = ValueClassFormat.format(Postcode.apply)(_.value)
+}
+
+object ValueClassFormat {
+  def format[A: Format](fromStringToA: String => A)(fromAToString: A => String) = {
+    new Format[A] {
+      def reads(json: JsValue): JsResult[A] = {
+        json match {
+          case JsString(str) => JsSuccess(fromStringToA(str))
+          case unknown => JsError(s"JsString value expected, got: $unknown")
+        }
       }
+      def writes(a: A): JsValue = JsString(fromAToString(a))
     }
-    def writes(postcode: Postcode): JsValue = JsString(postcode.value)
   }
 }
