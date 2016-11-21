@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser }
+import uk.gov.hmrc.eeitt.model.{ Arn, EtmpAgent, EtmpBusinessUser, Postcode, RegistrationNumber }
 import uk.gov.hmrc.eeitt.utils.CountryCodes
 
 object EtmpDataParser {
@@ -30,7 +30,7 @@ object EtmpDataParser {
         ) => {
         val mandatory = mandatoryValue(line) _
         EtmpBusinessUser(
-          mandatory("registrationNumber", registrationNumber),
+          RegistrationNumber(mandatory("registrationNumber", registrationNumber)),
           customerTaxRegime,
           customerTaxRegimeDescription,
           customerOrganisationType,
@@ -39,7 +39,7 @@ object EtmpDataParser {
           optional(customerTitle),
           optional(customerName1),
           optional(customerName2),
-          mandatoryPostcodeIfFromTheUk(line, countryCode, postcode),
+          mandatoryPostcodeIfFromTheUk(line, countryCode, Postcode(postcode)),
           mandatory("countryCode", countryCode)
         )
       }
@@ -76,7 +76,7 @@ object EtmpDataParser {
           ), userTokens: Tokens) => {
           val mandatory = mandatoryValue(line) _
           EtmpAgentRecord(
-            mandatory("arn", arn),
+            Arn(mandatory("arn", arn)),
             agentIdentificationType,
             agentIdentificationTypeDescription,
             agentOrganisationType,
@@ -85,7 +85,7 @@ object EtmpDataParser {
             optional(agentTitle),
             optional(agentName1),
             optional(agentName2),
-            mandatoryPostcodeIfFromTheUk(line, agentCountryCode, agentPostcode),
+            mandatoryPostcodeIfFromTheUk(line, agentCountryCode, Postcode(agentPostcode)),
             mandatory("agentCountryCode", agentCountryCode),
             customer = parseBusinessUserLine {
               // reusing customer parser but had to add a file type prefix which it expects
@@ -136,11 +136,11 @@ object EtmpDataParser {
     if (fieldValue.trim.nonEmpty) fieldValue else throw LineParsingException(s"Missing $fieldName in line: $line")
   }
 
-  def mandatoryPostcodeIfFromTheUk(line: String, countryCode: String, postcode: String): Option[String] = {
-    if (countryCode == CountryCodes.GB && postcode.trim.isEmpty) {
+  def mandatoryPostcodeIfFromTheUk(line: String, countryCode: String, postcode: Postcode): Option[Postcode] = {
+    if (countryCode == CountryCodes.GB && postcode.value.trim.isEmpty) {
       throw LineParsingException(s"Missing postcode for a UK entity in line: $line")
     } else {
-      optional(postcode)
+      optional(postcode.value).map(Postcode.apply)
     }
   }
 
@@ -152,7 +152,7 @@ object EtmpDataParser {
   // further interactions are done with EtmpAgent class which represents an agent and all their customers
   // in one class
   private[services] case class EtmpAgentRecord(
-    arn: String,
+    arn: Arn,
     identificationType: String,
     identificationTypeDescription: String,
     organisationType: String,
@@ -161,7 +161,7 @@ object EtmpDataParser {
     title: Option[String],
     name1: Option[String],
     name2: Option[String],
-    postcode: Option[String],
+    postcode: Option[Postcode],
     countryCode: String,
     customer: EtmpBusinessUser
   )
@@ -169,4 +169,3 @@ object EtmpDataParser {
 }
 
 case class LineParsingException(msg: String) extends Exception(msg)
-

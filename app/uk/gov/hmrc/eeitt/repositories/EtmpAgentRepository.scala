@@ -5,14 +5,14 @@ import reactivemongo.api.commands.MultiBulkWriteResult
 import reactivemongo.api.indexes.{ Index, IndexType }
 import reactivemongo.api.{ DB, ReadPreference }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.EtmpAgent
+import uk.gov.hmrc.eeitt.model.{ EtmpAgent, Arn }
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait EtmpAgentRepository {
-  def findByArn(arn: String): Future[List[EtmpAgent]]
+  def findByArn(arn: Arn): Future[List[EtmpAgent]]
   def replaceAll(users: Seq[EtmpAgent]): Future[MultiBulkWriteResult]
 }
 
@@ -30,7 +30,7 @@ class MongoEtmpAgentRepository(implicit mongo: () => DB)
     ).map(Seq(_))
   }
 
-  def findByArn(arn: String) = find("arn" -> arn)
+  def findByArn(arn: Arn) = find("arn" -> arn)
 
   // todo: if this method fails EEITT may fail to work...
   // todo: use a correct WriteConcern

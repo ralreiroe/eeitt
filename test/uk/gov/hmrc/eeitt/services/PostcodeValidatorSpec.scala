@@ -1,6 +1,7 @@
 package uk.gov.hmrc.eeitt.services
 
 import org.scalatest.{ FreeSpec, Matchers }
+import uk.gov.hmrc.eeitt.model.Postcode
 import uk.gov.hmrc.eeitt.services.PostcodeValidator.postcodeValidOrNotNeeded
 import uk.gov.hmrc.eeitt.utils.CountryCodes
 
@@ -10,12 +11,12 @@ class PostcodeValidatorSpec extends FreeSpec with Matchers {
 
   implicit val postcodeValidator = new PostcodeValidator[Person] {
     def countryCode(a: Person): String = a.countryCode
-    def postcode(a: Person): Option[String] = a.postcode
+    def postcode(a: Person): Option[Postcode] = a.postcode
   }
 
   "Postcode should be considered" - {
     "valid if it matches a reference postcode for someone from the UK (whitespace and case shouldn't matter)" in {
-      val postcodesToCompare = List("E4 9RT", "E4 9RT", "e4 9rt", " E4 9RT ", "E4 9rt").map(Some.apply)
+      val postcodesToCompare = List("E4 9RT", "E4 9RT", "e4 9rt", " E4 9RT ", "E4 9rt").map(Postcode.apply).map(Some.apply)
       val p = Person(postcodesToCompare.head, CountryCodes.GB)
 
       postcodesToCompare.foreach { postcode =>
@@ -35,13 +36,12 @@ class PostcodeValidatorSpec extends FreeSpec with Matchers {
     "invalid if it doesn't match a reference postcode for someone from the UK" in {
       val p = Person(randomPostcode(), CountryCodes.GB)
 
-      postcodeValidOrNotNeeded(p, Some("some_other_non_matching_postcode")) shouldBe false
+      postcodeValidOrNotNeeded(p, Some(Postcode("some_other_non_matching_postcode"))) shouldBe false
     }
   }
 
-  case class Person(postcode: Option[String], countryCode: String)
+  case class Person(postcode: Option[Postcode], countryCode: String)
 
-  def randomPostcode() = Some(Random.alphanumeric.take(10).mkString)
+  def randomPostcode() = Some(Postcode(Random.alphanumeric.take(10).mkString))
 
 }
-

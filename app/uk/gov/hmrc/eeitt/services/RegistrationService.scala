@@ -8,84 +8,140 @@ import uk.gov.hmrc.eeitt.services.PostcodeValidator._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+trait FindRegistration[A] {
+  type Out
+  def apply(a: A): Future[List[Out]]
+}
+
+object FindRegistration {
+  implicit def businessUserByRequest(implicit repository: RegistrationRepository) = {
+    new FindRegistration[RegisterBusinessUserRequest] {
+      type Out = RegistrationBusinessUser
+      def apply(req: RegisterBusinessUserRequest): Future[List[RegistrationBusinessUser]] =
+        repository.findRegistrations(req.groupId, req.regimeId)
+    }
+  }
+
+  implicit def businessUserByGroupIdAndRegimeId(implicit regRepository: RegistrationRepository) = {
+    new FindRegistration[(GroupId, RegimeId)] {
+      type Out = RegistrationBusinessUser
+      def apply(groupIdAndRegimeId: (GroupId, RegimeId)): Future[List[RegistrationBusinessUser]] = {
+        val (groupId, regimeId) = groupIdAndRegimeId
+        regRepository.findRegistrations(groupId, regimeId)
+      }
+    }
+  }
+
+  implicit def agentByRequest(implicit repository: RegistrationAgentRepository) = {
+    new FindRegistration[RegisterAgentRequest] {
+      type Out = RegistrationAgent
+      def apply(req: RegisterAgentRequest): Future[List[RegistrationAgent]] =
+        repository.findRegistrations(req.groupId)
+    }
+  }
+
+  implicit def agentByGroupId(implicit regRepository: RegistrationAgentRepository) = {
+    new FindRegistration[GroupId] {
+      type Out = RegistrationAgent
+      def apply(groupId: GroupId): Future[List[RegistrationAgent]] =
+        regRepository.findRegistrations(groupId)
+    }
+  }
+}
+
+trait GetPostcode[A] {
+  def apply(a: A): Option[Postcode]
+}
+
+object GetPostcode {
+  implicit val businessUserGetPostcode = new GetPostcode[RegisterBusinessUserRequest] {
+    def apply(req: RegisterBusinessUserRequest): Option[Postcode] = req.postcode
+  }
+
+  implicit val agentGetPostcode = new GetPostcode[RegisterAgentRequest] {
+    def apply(req: RegisterAgentRequest): Option[Postcode] = req.postcode
+  }
+}
+
+trait FindUser[A, B] {
+  def apply(a: A): Future[List[B]]
+}
+
+object FindUser {
+  implicit def agentExists(implicit repository: EtmpAgentRepository) = {
+    new FindUser[RegisterAgentRequest, EtmpAgent] {
+      def apply(req: RegisterAgentRequest): Future[List[EtmpAgent]] =
+        repository.findByArn(req.arn)
+    }
+  }
+
+  implicit def indivitualExists(implicit repository: EtmpBusinessUsersRepository) = {
+    new FindUser[RegisterBusinessUserRequest, EtmpBusinessUser] {
+      def apply(req: RegisterBusinessUserRequest): Future[List[EtmpBusinessUser]] =
+        repository.findByRegistrationNumber(req.registrationNumber)
+    }
+  }
+}
+
+trait AddRegistration[A] {
+  def apply(a: A): Future[Either[String, Unit]]
+}
+
+object AddRegistration {
+  implicit def agentRepo(implicit repository: RegistrationAgentRepository) = {
+    new AddRegistration[RegisterAgentRequest] {
+      def apply(req: RegisterAgentRequest): Future[Either[String, Unit]] = repository.register(req)
+    }
+  }
+
+  implicit def businessUserRepo(implicit repository: RegistrationRepository) = {
+    new AddRegistration[RegisterBusinessUserRequest] {
+      def apply(req: RegisterBusinessUserRequest): Future[Either[String, Unit]] = repository.register(req)
+    }
+  }
+}
+
 trait RegistrationService {
 
-  def regRepository: RegistrationRepository
-
-  def userRepository: EtmpBusinessUsersRepository
-
-  def agentRepository: EtmpAgentRepository
-
-  def register(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
-    userRepository.findByRegistrationNumber(registerRequest.registrationNumber).flatMap {
-      case user :: maybeOtherUsers if postcodeValidOrNotNeeded(user, registerRequest.postcode) =>
-        regRepository.findRegistrations(registerRequest.groupId).flatMap {
-          case Nil => addRegistration(registerRequest)
-          case x :: Nil => x match {
-            case Registration(_, false, registerRequest.registrationNumber, _, _) => Future.successful(ALREADY_REGISTERED)
-            case Registration(_, false, _, _, _) => updateRegistration(registerRequest, x)
-            case Registration(_, true, _, _, _) => Future.successful(IS_AGENT)
+  def register[A <: RegisterRequest, B: PostcodeValidator](
+    registerRequest: A
+  )(
+    implicit
+    findRegistration: FindRegistration[A],
+    addRegistration: AddRegistration[A],
+    findUser: FindUser[A, B],
+    getPostCode: GetPostcode[A]
+  ): Future[RegistrationResponse] = {
+    findUser(registerRequest).flatMap {
+      case user :: maybeOtherUsers if postcodeValidOrNotNeeded(user, getPostCode(registerRequest)) =>
+        findRegistration(registerRequest).flatMap {
+          case Nil => addRegistration(registerRequest).map {
+            case Right(_) => RESPONSE_OK
+            case Left(x) => RegistrationResponse(Some(x))
           }
+          case x :: Nil => Future.successful(ALREADY_REGISTERED)
           case x :: xs => Future.successful(MULTIPLE_FOUND)
         }
-      case _ => Future.successful(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
-    }
-  }
-
-  def register(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
-    agentRepository.findByArn(registerAgentRequest.arn).flatMap {
-      case agent :: maybeOtherAgents if postcodeValidOrNotNeeded(agent, registerAgentRequest.postcode) =>
-        regRepository.findRegistrations(registerAgentRequest.groupId).flatMap {
-          case Nil => addRegistration(registerAgentRequest)
-          case Registration(_, true, _, registerAgentRequest.arn, _) :: Nil => Future.successful(ALREADY_REGISTERED)
-          case Registration(_, true, _, _, _) :: Nil => Future.successful(RESPONSE_OK)
-          case Registration(_, false, _, _, _) :: Nil => Future.successful(IS_NOT_AGENT)
-          case x :: xs => Future.successful(MULTIPLE_FOUND)
+      case _ =>
+        registerRequest match {
+          case _: RegisterAgentRequest => Future.successful(INCORRECT_KNOWN_FACTS_AGENTS)
+          case _: RegisterRequest => Future.successful(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
         }
-      case _ => Future.successful(INCORRECT_KNOWN_FACTS_AGENTS)
     }
   }
 
-  def verification(groupId: String, regimeId: String): Future[VerificationResponse] = {
-    regRepository.findRegistrations(groupId).map {
-      case Nil => false
-      case Registration(_, false, _, _, y) :: Nil => y.contains(regimeId)
-      case Registration(_, true, _, _, _) :: Nil => true
-      case x :: xs => false
-    }.map(VerificationResponse.apply)
+  def verify[A](
+    findParams: A
+  )(
+    implicit
+    findRegistration: FindRegistration[A]
+  ): Future[VerificationResponse] = {
+    findRegistration(findParams).map(_.size == 1).map(VerificationResponse.apply)
   }
 
-  def prepopulation(groupId: String, regimeId: String): Future[List[Registration]] = {
-    regRepository.findRegistrations(groupId)
-  }
-
-  private def addRegistration(registerRequest: RegisterRequest): Future[RegistrationResponse] = {
-    regRepository.register(registerRequest).map {
-      case Right(_) => RESPONSE_OK
-      case Left(x) => RegistrationResponse(Some(x))
-    }
-  }
-
-  private def addRegistration(registerAgentRequest: RegisterAgentRequest): Future[RegistrationResponse] = {
-    regRepository.register(registerAgentRequest).map {
-      case Right(_) => RESPONSE_OK
-      case Left(x) => RegistrationResponse(Some(x))
-    }
-  }
-
-  private def updateRegistration(registerRequest: RegisterRequest, registration: Registration): Future[RegistrationResponse] = {
-    if (registration.regimeIds.contains(registerRequest.regimeId))
-      Future.successful(RESPONSE_OK)
-    else
-      regRepository.addRegime(registration, registerRequest.regimeId).map {
-        case Right(_) => RESPONSE_OK
-        case Left(x) => RegistrationResponse(Some(x))
-      }
+  def prepopulation(groupId: String, regimeId: String): Future[List[RegistrationAgent]] = {
+    Future.successful(List.empty[RegistrationAgent])
   }
 }
 
-object RegistrationService extends RegistrationService {
-  lazy val regRepository = registrationRepository
-  lazy val userRepository = etmpBusinessUserRepository
-  lazy val agentRepository = etmpAgentRepository
-}
+object RegistrationService extends RegistrationService

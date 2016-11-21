@@ -3,7 +3,7 @@
 GET        /group-id/:groupId/regime/:regimeId/affinityGroup/:affinityGroup/verification     uk.gov.hmrc.eeitt.controllers.RegistrationController.verification(groupId, regimeId, affinityGroup: AffinityGroup)
 GET        /group-id/:groupId/regime/:regimeId/affinityGroup/:affinityGroup/prepopulation    uk.gov.hmrc.eeitt.controllers.RegistrationController.prepopulation(groupId, regimeId, affinityGroup: AffinityGroup)
 
-POST       /register                                            uk.gov.hmrc.eeitt.controllers.RegistrationController.register
+POST       /register                                            uk.gov.hmrc.eeitt.controllers.RegistrationController.registerBusinessUser
 POST       /register-agent                                      uk.gov.hmrc.eeitt.controllers.RegistrationController.registerAgent
 
 POST       /etmp-data/business-users                            uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadBusinessUsers

@@ -3,7 +3,7 @@ package uk.gov.hmrc.eeitt.repositories
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import uk.gov.hmrc.eeitt.EtmpFixtures
-import uk.gov.hmrc.eeitt.model.EtmpAgent
+import uk.gov.hmrc.eeitt.model.{ Arn, EtmpAgent }
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -13,13 +13,13 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
 
   "Checking if agent exists in the db" should {
     "return a nonempty list of agents if at least one agent existed" in {
-      insert(testEtmpAgent().copy(arn = "arn"))
+      insert(testEtmpAgent().copy(arn = Arn("arn")))
 
-      assert(repo.findByArn("arn").futureValue.nonEmpty)
+      assert(repo.findByArn(Arn("arn")).futureValue.nonEmpty)
     }
     "return empty list otherwise" in {
-      val arnToLookup = "arn"
-      insert(testEtmpAgent().copy(arn = "otherArn"))
+      val arnToLookup = Arn("arn")
+      insert(testEtmpAgent().copy(arn = Arn("otherArn")))
 
       assert(repo.findByArn(arnToLookup).futureValue.isEmpty)
     }

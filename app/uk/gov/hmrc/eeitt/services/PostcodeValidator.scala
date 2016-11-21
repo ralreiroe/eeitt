@@ -1,11 +1,11 @@
 package uk.gov.hmrc.eeitt.services
 
-import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser }
+import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser, Postcode }
 import uk.gov.hmrc.eeitt.utils.CountryCodes
 
 trait PostcodeValidator[A] {
   def countryCode(a: A): String
-  def postcode(a: A): Option[String]
+  def postcode(a: A): Option[Postcode]
 }
 
 object PostcodeValidator {
@@ -21,9 +21,9 @@ object PostcodeValidator {
 
   private def isFromTheUk(countryCode: String): Boolean = countryCode == CountryCodes.GB
 
-  private def normalize(s: String) = s.replaceAll("\\s", "").toLowerCase
+  private def normalize(s: Postcode) = s.value.replaceAll("\\s", "").toLowerCase
 
-  def postcodeValidOrNotNeeded[A](a: A, postcodeFromRequest: Option[String])(implicit validator: PostcodeValidator[A]): Boolean = {
+  def postcodeValidOrNotNeeded[A](a: A, postcodeFromRequest: Option[Postcode])(implicit validator: PostcodeValidator[A]): Boolean = {
     if (isFromTheUk(validator.countryCode(a))) {
       validator.postcode(a).map(normalize) == postcodeFromRequest.map(normalize)
     } else {

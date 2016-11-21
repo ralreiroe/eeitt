@@ -2,11 +2,18 @@ package uk.gov.hmrc.eeitt.model
 
 import play.api.libs.json._
 
-case class RegisterRequest(groupId: String, registrationNumber: String, postcode: Option[String]) {
-  val regimeId = registrationNumber.substring(2, 4)
+sealed trait RegisterRequest
+
+case class RegisterBusinessUserRequest(groupId: GroupId, registrationNumber: RegistrationNumber, postcode: Option[Postcode]) extends RegisterRequest {
+  val regimeId = RegimeId(registrationNumber.value.substring(2, 4))
 }
 
-object RegisterRequest {
-  implicit val registerRequestFormat: Format[RegisterRequest] = Json.format[RegisterRequest]
+object RegisterBusinessUserRequest {
+  implicit val registerRequestFormat: Format[RegisterBusinessUserRequest] = Json.format[RegisterBusinessUserRequest]
 }
 
+case class RegisterAgentRequest(groupId: GroupId, arn: Arn, postcode: Option[Postcode]) extends RegisterRequest
+
+object RegisterAgentRequest {
+  implicit val registerAgentRequestFormat: Format[RegisterAgentRequest] = Json.format[RegisterAgentRequest]
+}
