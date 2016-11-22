@@ -1,105 +1,128 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import org.specs2.matcher.{ MustExpectations, NumericMatchers }
-import org.specs2.mock.Mockito
+import org.scalatest.{ AppendedClues, Inside }
 import play.api.http.Status
+import play.api.libs.json.{ JsObject, Json }
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
-import uk.gov.hmrc.eeitt.EtmpFixtures
+import uk.gov.hmrc.eeitt.services.PrepopulationData
+import uk.gov.hmrc.eeitt.{ EtmpFixtures, RegistrationFixtures, TypeclassFixtures }
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.model.{ VerificationResponse, _ }
 import uk.gov.hmrc.eeitt.repositories.{ MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationBusinessUserRepository }
-import uk.gov.hmrc.eeitt.services.RegistrationService
+import uk.gov.hmrc.eeitt.services.{ FindRegistration, RegistrationService }
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 
 import scala.concurrent.Future
 
-class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with MustExpectations with NumericMatchers with Mockito with EtmpFixtures {
+class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with AppendedClues with Inside with EtmpFixtures with RegistrationFixtures with TypeclassFixtures {
 
-  object TestRegistrationService extends RegistrationService {
-    val regRepository = mock[MongoRegistrationBusinessUserRepository]
-    regRepository.findRegistrations(GroupId("1"), RegimeId("LT")).returns(Future.successful(List(RegistrationBusinessUser(GroupId("1"), RegistrationNumber("12LT001"), RegimeId("LT")))))
-    regRepository.findRegistrations(GroupId("2"), RegimeId("LT")).returns(Future.successful(List(RegistrationBusinessUser(GroupId("2"), RegistrationNumber("12LT002"), RegimeId("LT")))))
-    regRepository.findRegistrations(GroupId("3"), RegimeId("LT")).returns(Future.successful(List()))
-    regRepository.findRegistrations(GroupId("4"), RegimeId("LT")).returns(
-      Future.successful(
-        List(
-          RegistrationBusinessUser(GroupId("4"), RegistrationNumber("12LT004"), RegimeId("LT")),
-          RegistrationBusinessUser(GroupId("4"), RegistrationNumber("12LT005"), RegimeId("LT"))
-        )
-      )
-    )
-    regRepository.findRegistrations(GroupId("5"), RegimeId("LT")).returns(
-      Future.successful(
-        List(
-          RegistrationBusinessUser(GroupId("5"), RegistrationNumber("KARN001"), RegimeId("LT"))
-        )
-      )
-    )
-    val userRepository = mock[MongoEtmpBusinessUsersRepository]
-    userRepository.findByRegistrationNumber(RegistrationNumber("12LT001")).returns(Future.successful(List.empty))
-    userRepository.findByRegistrationNumber(RegistrationNumber("12LT009")).returns(Future.successful(List.empty))
-    val agentRepository = mock[MongoEtmpAgentRepository]
-    agentRepository.findByArn(Arn("KARN001")).returns(Future.successful(List.empty))
-    agentRepository.findByArn(Arn("KARN002")).returns(Future.successful(List.empty))
-    //userRepository.findByRegistrationNumber("12LT009").returns(Future.successful(List()))
-    //val agentRepository = mock[MongoEtmpAgentRepository]
-    //agentRepository.findByArn("KARN002").returns(Future.successful(List()))
-  }
-
-  object TestRegistrationController extends RegistrationController {
-    val registrationService = TestRegistrationService
-  }
+  object TestRegistrationController extends RegistrationController {}
 
   "GET /group-identifier/:gid/regimes/:regimeid/verification" should {
-    /* "return 200 and is allowed for successful registration lookup where regime is authorised" in {
-     *   val fakeRequest = FakeRequest()
-     *   val result = TestRegistrationController.verification("1", "LT", Individual)(fakeRequest)
-     *   status(result) shouldBe Status.OK
-     *   jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(true))
-     * } */
+    "return 200 and is allowed for successful registration lookup where regime is authorised" in {
+      val fakeRequest = FakeRequest()
+      implicit val a = findRegistration(List(testRegistrationBusinessUser())) { req: (GroupId, RegimeId) => }
+      val action = TestRegistrationController.verify((GroupId("1"), RegimeId("ZZ")))
+      val result = action(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(true))
+    }
+
     "return 200 and is not allowed for successful registration lookup where regime is not authorised" in {
       val fakeRequest = FakeRequest()
-      val result = TestRegistrationController.verification("1", "ZZ", Individual)(fakeRequest)
+      implicit val a = findRegistration(List.empty[RegistrationBusinessUser]) { req: (GroupId, RegimeId) => }
+      val action = TestRegistrationController.verify((GroupId("1"), RegimeId("ZZ")))
+      val result = action(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
     }
-    "return 200 and is not allowed for an unsuccessful registration lookup" in {
-      val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
-      val result = TestRegistrationController.verification("3", "LT", Individual)(fakeRequest)
-      status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
-    }
+
     "return 200 and is not allowed for a lookup which returned multiple registration instances" in {
-      val fakeRequest = FakeRequest(Helpers.GET, "/regimes")
-      val result = TestRegistrationController.verification("4", "LT", Individual)(fakeRequest)
+      val fakeRequest = FakeRequest()
+      implicit val a = findRegistration(List(testRegistrationBusinessUser(), testRegistrationBusinessUser())) { req: (GroupId, RegimeId) => }
+
+      val action = TestRegistrationController.verify((GroupId("1"), RegimeId("ZZ")))
+      val result = action(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(false))
     }
-    /* "return 200 and is allowed for successful registration lookup of agent" in {
-     *   val fakeRequest = FakeRequest()
-     *   val result = TestRegistrationController.verification("5", "LT", Individual)(fakeRequest)
-     *   status(result) shouldBe Status.OK
-     *   jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(true))
-     * } */
+
+    "return 200 and is allowed for successful registration lookup of agent" in {
+      val fakeRequest = FakeRequest()
+      implicit val a = findRegistration(List(testRegistrationAgent())) { req: GroupId => }
+      val action = TestRegistrationController.verify(GroupId("1"))
+      val result = action(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe toJson(VerificationResponse(true))
+    }
   }
 
   "POST /eeitt-auth/register" should {
 
-    "return 200 and error if submitted known facts are different than stored known facts" in {
+    "return 200 and error if submitted known facts are different than stored known facts about business user" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("12LT009"), Some(Postcode("SE39EPX")))))
-      val result = TestRegistrationController.registerBusinessUser()(fakeRequest)
+
+      implicit val a = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
+      implicit val b = findRegistration(List.empty[RegisterBusinessUserRequest]) { req: RegisterBusinessUserRequest => /* is not called */ }
+
+      implicit val c = findUser(List.empty[EtmpBusinessUser]) { req: RegisterBusinessUserRequest =>
+        inside(req) {
+          case RegisterBusinessUserRequest(groupId, registrationNumber, postcode) =>
+            groupId.value should be("1")
+            registrationNumber.value should be("12LT009")
+            convertOptionToValuable(postcode).value.value should be("SE39EPX")
+        }
+      }
+
+      val action = TestRegistrationController.register[RegisterBusinessUserRequest, EtmpBusinessUser]
+      val result = action(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
     }
-  }
 
-  "POST /eeitt-auth/register-agent" should {
-    "return 200 and error if submitted known facts are different than stored known facts" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/register/agent").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("KARN002"), Some(Postcode("SE39EPX")))))
-      val result = TestRegistrationController.registerAgent()(fakeRequest)
+    "return 200 and error if submitted known facts are different than stored known facts about agent" in {
+      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("12LT009"), Some(Postcode("SE39EPX")))))
+
+      implicit val a = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val b = findRegistration(List.empty[RegisterAgentRequest]) { req: RegisterAgentRequest => /* is not called */ }
+
+      implicit val c = findUser(List.empty[EtmpAgent]) { req: RegisterAgentRequest =>
+        inside(req) {
+          case RegisterAgentRequest(groupId, arn, postcode) =>
+            groupId.value should be("1")
+            arn.value should be("12LT009")
+            convertOptionToValuable(postcode).value.value should be("SE39EPX")
+        }
+      }
+
+      val action = TestRegistrationController.register[RegisterAgentRequest, EtmpAgent]
+      val result = action(fakeRequest)
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_AGENTS)
+    }
+  }
+
+  "Prepopulation" should {
+    "return arn for agent" in {
+      val fakeRequest = FakeRequest()
+      val agent = testRegistrationAgent()
+      implicit val a = findRegistration(List(agent)) { req: GroupId => }
+      val action = TestRegistrationController.prepopulate[GroupId, RegistrationAgent](GroupId("1"))
+      val result = action(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe Json.obj("arn" -> agent.arn.value)
+    }
+
+    "return registrationNumber for business user" in {
+
+      val fakeRequest = FakeRequest()
+      val businessUser = testRegistrationBusinessUser()
+      implicit val a = findRegistration(List(businessUser)) { req: (GroupId, RegimeId) => }
+      val action = TestRegistrationController.prepopulate[(GroupId, RegimeId), RegistrationBusinessUser]((GroupId("1"), RegimeId("ZZ")))
+      val result = action(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe Json.obj("registrationNumber" -> businessUser.registrationNumber.value)
     }
   }
 }

@@ -1,5 +1,6 @@
 package uk.gov.hmrc.eeitt.services
 
+import play.api.libs.json.{ Json, JsObject }
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories._
@@ -8,12 +9,46 @@ import uk.gov.hmrc.eeitt.services.PostcodeValidator._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+trait Show[A] {
+  def apply(a: A): String
+}
+
+object Show {
+  implicit val groupIdShow = new Show[GroupId] {
+    def apply(groupId: GroupId): String = s"GroupId(${groupId.value})"
+  }
+
+  implicit val groupIdAndRegimeIdShow = new Show[(GroupId, RegimeId)] {
+    def apply(groupIdAndRegimeId: (GroupId, RegimeId)): String = {
+      val (groupId, regimeId) = groupIdAndRegimeId
+      s"(GroupId(${groupId.value}), RegimeId(${regimeId.value})"
+    }
+  }
+}
+
+trait PrepopulationData[A] {
+  def apply(a: A): JsObject
+}
+
+object PrepopulationData {
+  implicit val prepopBusinessUser = new PrepopulationData[RegistrationBusinessUser] {
+    def apply(businessUser: RegistrationBusinessUser): JsObject = Json.obj("registrationNumber" -> businessUser.registrationNumber.value)
+  }
+
+  implicit val prepopAgent = new PrepopulationData[RegistrationAgent] {
+    def apply(agent: RegistrationAgent): JsObject = Json.obj("arn" -> agent.arn.value)
+  }
+}
+
 trait FindRegistration[A] {
   type Out
   def apply(a: A): Future[List[Out]]
 }
 
 object FindRegistration {
+
+  type Aux[A, Out0] = FindRegistration[A] { type Out = Out0 }
+
   implicit def businessUserByRequest(implicit repository: RegistrationRepository) = {
     new FindRegistration[RegisterBusinessUserRequest] {
       type Out = RegistrationBusinessUser
@@ -101,7 +136,7 @@ object AddRegistration {
   }
 }
 
-trait RegistrationService {
+object RegistrationService {
 
   def register[A <: RegisterRequest, B: PostcodeValidator](
     registerRequest: A
@@ -130,18 +165,10 @@ trait RegistrationService {
     }
   }
 
-  def verify[A](
-    findParams: A
-  )(
+  def findRegistration[A](findParams: A)(
     implicit
     findRegistration: FindRegistration[A]
-  ): Future[VerificationResponse] = {
-    findRegistration(findParams).map(_.size == 1).map(VerificationResponse.apply)
-  }
-
-  def prepopulation(groupId: String, regimeId: String): Future[List[RegistrationAgent]] = {
-    Future.successful(List.empty[RegistrationAgent])
+  ): Future[List[findRegistration.Out]] = {
+    findRegistration(findParams)
   }
 }
-
-object RegistrationService extends RegistrationService

@@ -2,6 +2,7 @@ package uk.gov.hmrc.eeitt.services
 
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.AppendedClues
+import uk.gov.hmrc.eeitt.{ EtmpFixtures, TypeclassFixtures }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
@@ -10,53 +11,14 @@ import uk.gov.hmrc.eeitt.utils.CountryCodes
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedClues {
-
-  def findUser[A, B](returnValue: List[B])(checks: A => Unit): FindUser[A, B] =
-    new FindUser[A, B] {
-      def apply(req: A): Future[List[B]] = {
-        checks(req)
-        Future.successful(returnValue)
-      }
-    }
-
-  def findRegistration[A, B](returnValue: List[B])(checks: A => Unit): FindRegistration[A] =
-    new FindRegistration[A] {
-      type Out = B
-      def apply(req: A): Future[List[B]] = {
-        checks(req)
-        Future.successful(returnValue)
-      }
-    }
-
-  def addRegistration[A](returnValue: Either[String, Unit])(checks: A => Unit): AddRegistration[A] =
-    new AddRegistration[A] {
-      def apply(req: A): Future[Either[String, Unit]] = {
-        checks(req)
-        Future.successful(returnValue)
-      }
-    }
-
-  val businessUser = EtmpBusinessUser(
-    registrationNumber = RegistrationNumber("123"),
-    taxRegime = "ZAGL",
-    taxRegimeDescription = "Aggregate Levy (AGL)",
-    organisationType = "7",
-    organisationTypeDescription = "Limited Company",
-    organisationName = Some("Organisation1"),
-    customerTitle = None,
-    customerName1 = None,
-    customerName2 = None,
-    postcode = Some(Postcode("BN12 4XL")),
-    countryCode = "GB"
-  )
+class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedClues with EtmpFixtures with TypeclassFixtures {
 
   "Registering a business user with a group id which is not present in repository" should {
     "affect a new registration record and a 'registration ok' response" in {
 
       val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
 
-      implicit val a = findUser(List(businessUser)) { req: RegisterBusinessUserRequest =>
+      implicit val a = findUser(List(testEtmpBusinessUser())) { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findUser"
       }
 
@@ -79,7 +41,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
       val existingRegistration = RegistrationBusinessUser(GroupId(""), RegistrationNumber(""), RegimeId(""))
 
-      implicit val a = findUser(List(businessUser)) { req: RegisterBusinessUserRequest =>
+      implicit val a = findUser(List(testEtmpBusinessUser())) { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findUser"
       }
 
@@ -106,71 +68,6 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
 
       val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
-    }
-  }
-
-  val groupId = GroupId("group-id")
-  val registrationNumber = RegistrationNumber("123")
-  val regimeId = RegimeId("AL")
-  val arn = Arn("Arn")
-  val businessUserRegistration = RegistrationBusinessUser(groupId, registrationNumber, regimeId)
-  val agentRegistration = RegistrationAgent(groupId, arn)
-
-  "Verification of business user" should {
-    "return false when no record is found in db" in {
-
-      implicit val a = findRegistration(List.empty[RegistrationBusinessUser]) { req: (GroupId, RegimeId) => }
-
-      val response = RegistrationService.verify((groupId, regimeId))
-
-      response.futureValue should be(VerificationResponse(false))
-    }
-
-    "return true when exactly one record is found in db" in {
-
-      implicit val a = findRegistration(List(businessUserRegistration)) { req: (GroupId, RegimeId) => }
-
-      val response = RegistrationService.verify((groupId, regimeId))
-
-      response.futureValue should be(VerificationResponse(true))
-    }
-
-    "return false when more than one record is found in db" in {
-
-      implicit val a = findRegistration(List(businessUserRegistration, businessUserRegistration)) { req: (GroupId, RegimeId) => }
-
-      val response = RegistrationService.verify((groupId, regimeId))
-
-      response.futureValue should be(VerificationResponse(false))
-    }
-  }
-
-  "Verification of Agent" should {
-    "return false when no record is found in db" in {
-
-      implicit val a = findRegistration(List.empty[RegistrationAgent]) { req: GroupId => }
-
-      val response = RegistrationService.verify(groupId)
-
-      response.futureValue should be(VerificationResponse(false))
-    }
-
-    "return true when exactly one record is found in db" in {
-
-      implicit val a = findRegistration(List(agentRegistration)) { req: GroupId => }
-
-      val response = RegistrationService.verify(groupId)
-
-      response.futureValue should be(VerificationResponse(true))
-    }
-
-    "return false when more than one record is found in db" in {
-
-      implicit val a = findRegistration(List(agentRegistration, agentRegistration)) { req: GroupId => }
-
-      val response = RegistrationService.verify(groupId)
-
-      response.futureValue should be(VerificationResponse(false))
     }
   }
 }
