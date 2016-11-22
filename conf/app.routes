@@ -1,7 +1,8 @@
 # microservice specific routes
 
-GET        /group-id/:groupId/regime/:regimeId/affinityGroup/:affinityGroup/verification     uk.gov.hmrc.eeitt.controllers.RegistrationController.verification(groupId, regimeId, affinityGroup: AffinityGroup)
-GET        /group-id/:groupId/regime/:regimeId/affinityGroup/:affinityGroup/prepopulation    uk.gov.hmrc.eeitt.controllers.RegistrationController.prepopulation(groupId, regimeId, affinityGroup: AffinityGroup)
+GET        /group-id/:groupId/regime/:regimeId/affinityGroup/:affinityGroup/verification     uk.gov.hmrc.eeitt.controllers.RegistrationController.verification(groupId: GroupId, regimeId: RegimeId, affinityGroup: AffinityGroup)
+GET        /group-id/:groupId/regime/:regimeId/prepopulation    uk.gov.hmrc.eeitt.controllers.RegistrationController.prepopulationBusinessUser(groupId: GroupId, regimeId: RegimeId)
+GET        /group-id/:groupId/prepopulation                     uk.gov.hmrc.eeitt.controllers.RegistrationController.prepopulationAgent(groupId: GroupId)
 
 POST       /register                                            uk.gov.hmrc.eeitt.controllers.RegistrationController.registerBusinessUser
 POST       /register-agent                                      uk.gov.hmrc.eeitt.controllers.RegistrationController.registerAgent

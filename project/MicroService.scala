@@ -32,7 +32,10 @@ trait MicroService {
     .settings(defaultSettings(): _*)
     .settings(play.PlayImport.PlayKeys.routesImport ++= Seq(
                 "uk.gov.hmrc.eeitt.binders.AffinityGroupBinder._",
-                "uk.gov.hmrc.eeitt.model.AffinityGroup"
+                "uk.gov.hmrc.eeitt.binders.ValueClassBinder._",
+                "uk.gov.hmrc.eeitt.model.AffinityGroup",
+                "uk.gov.hmrc.eeitt.model.RegimeId",
+                "uk.gov.hmrc.eeitt.model.GroupId"
               ))
     .settings(
       libraryDependencies ++= appDependencies,
