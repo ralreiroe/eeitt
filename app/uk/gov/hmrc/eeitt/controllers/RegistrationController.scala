@@ -3,13 +3,10 @@ package uk.gov.hmrc.eeitt.controllers
 import play.Logger
 import play.api.libs.json.{ Format, JsError, JsSuccess, Json, Reads, Writes }
 import play.api.mvc._
-import uk.gov.hmrc.eeitt.model.{ AffinityGroup, Agent, EtmpAgent, EtmpBusinessUser, RegisterBusinessUserRequest, RegistrationAgent, RegistrationBusinessUser, VerificationResponse }
-import uk.gov.hmrc.eeitt.model.RegisterAgentRequest
-import uk.gov.hmrc.eeitt.services.PostcodeValidator
-import uk.gov.hmrc.eeitt.services.{ RegistrationService, FindUser, FindRegistration, AddRegistration, GetPostcode, PrepopulationData, Show }
+import uk.gov.hmrc.eeitt.model._
+import uk.gov.hmrc.eeitt.services._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
-import uk.gov.hmrc.eeitt.model.{ GroupId, RegimeId, RegisterRequest }
 import uk.gov.hmrc.eeitt.repositories._
 
 import scala.concurrent.Future
@@ -64,7 +61,7 @@ trait RegistrationController extends BaseController {
     }
   }
 
-  def register[A <: RegisterRequest: Reads: AddRegistration: GetPostcode, B: PostcodeValidator](
+  def register[A <: RegisterRequest: Reads: AddRegistration, B: PostcodeValidator](
     implicit
     findRegistration: FindRegistration[A],
     findUser: FindUser[A, B]

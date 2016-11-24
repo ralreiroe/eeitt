@@ -84,20 +84,6 @@ object FindRegistration {
   }
 }
 
-trait GetPostcode[A] {
-  def apply(a: A): Option[Postcode]
-}
-
-object GetPostcode {
-  implicit val businessUserGetPostcode = new GetPostcode[RegisterBusinessUserRequest] {
-    def apply(req: RegisterBusinessUserRequest): Option[Postcode] = req.postcode
-  }
-
-  implicit val agentGetPostcode = new GetPostcode[RegisterAgentRequest] {
-    def apply(req: RegisterAgentRequest): Option[Postcode] = req.postcode
-  }
-}
-
 trait FindUser[A, B] {
   def apply(a: A): Future[List[B]]
 }
@@ -144,11 +130,10 @@ object RegistrationService {
     implicit
     findRegistration: FindRegistration[A],
     addRegistration: AddRegistration[A],
-    findUser: FindUser[A, B],
-    getPostCode: GetPostcode[A]
+    findUser: FindUser[A, B]
   ): Future[RegistrationResponse] = {
     findUser(registerRequest).flatMap {
-      case user :: maybeOtherUsers if postcodeValidOrNotNeeded(user, getPostCode(registerRequest)) =>
+      case user :: maybeOtherUsers if postcodeValidOrNotNeeded(user, registerRequest.postcode) =>
         findRegistration(registerRequest).flatMap {
           case Nil => addRegistration(registerRequest).map {
             case Right(_) => RESPONSE_OK
