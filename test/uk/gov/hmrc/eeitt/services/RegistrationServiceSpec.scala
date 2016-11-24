@@ -17,7 +17,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
   implicit override val patienceConfig = PatienceConfig(timeout = scaled(Span(500, Millis)), interval = scaled(Span(150, Millis)))
 
   "Registering a business user with a group id which is not present in repository" should {
-    "affect a new registration record and a 'registration ok' response" in {
+    "return a 'registration ok' response" in {
 
       val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
 
