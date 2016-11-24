@@ -64,8 +64,7 @@ trait RegistrationController extends BaseController {
   def register[A <: RegisterRequest: Reads: AddRegistration, B: PostcodeValidator](
     implicit
     findRegistration: FindRegistration[A],
-    findUser: FindUser[A, B],
-    getPostcode: GetPostcode[RegisterRequest]
+    findUser: FindUser[A, B]
   ) = Action.async(parse.json) { implicit request =>
     request.body.validate match {
       case JsSuccess(req, _) =>

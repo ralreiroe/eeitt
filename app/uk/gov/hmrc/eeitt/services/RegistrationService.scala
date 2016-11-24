@@ -130,11 +130,10 @@ object RegistrationService {
     implicit
     findRegistration: FindRegistration[A],
     addRegistration: AddRegistration[A],
-    findUser: FindUser[A, B],
-    getPostCode: GetPostcode[RegisterRequest]
+    findUser: FindUser[A, B]
   ): Future[RegistrationResponse] = {
     findUser(registerRequest).flatMap {
-      case user :: maybeOtherUsers if postcodeValidOrNotNeeded(user, getPostCode(registerRequest)) =>
+      case user :: maybeOtherUsers if postcodeValidOrNotNeeded(user, registerRequest.postcode) =>
         findRegistration(registerRequest).flatMap {
           case Nil => addRegistration(registerRequest).map {
             case Right(_) => RESPONSE_OK
