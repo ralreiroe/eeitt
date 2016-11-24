@@ -1,13 +1,14 @@
 package uk.gov.hmrc.eeitt.services
 
 import org.scalatest.{ FreeSpec, Matchers }
+import uk.gov.hmrc.eeitt.EtmpFixtures
 import uk.gov.hmrc.eeitt.model.Postcode
 import uk.gov.hmrc.eeitt.services.PostcodeValidator.postcodeValidOrNotNeeded
 import uk.gov.hmrc.eeitt.utils.CountryCodes
 
 import scala.util.Random
 
-class PostcodeValidatorSpec extends FreeSpec with Matchers {
+class PostcodeValidatorSpec extends FreeSpec with Matchers with EtmpFixtures {
 
   implicit val postcodeValidator = new PostcodeValidator[Person] {
     def countryCode(a: Person): String = a.countryCode
@@ -37,6 +38,16 @@ class PostcodeValidatorSpec extends FreeSpec with Matchers {
       val p = Person(randomPostcode(), CountryCodes.GB)
 
       postcodeValidOrNotNeeded(p, Some(Postcode("some_other_non_matching_postcode"))) shouldBe false
+    }
+
+    "valid for agent from UK" in {
+      val agent = testEtmpAgent().copy(postcode = Some(Postcode("12345")), countryCode = CountryCodes.GB)
+      postcodeValidOrNotNeeded(agent, Some(Postcode("12345"))) shouldBe true
+    }
+
+    "valid for business user from UK" in {
+      val businessUser = testEtmpBusinessUser().copy(postcode = Some(Postcode("12345")), countryCode = CountryCodes.GB)
+      postcodeValidOrNotNeeded(businessUser, Some(Postcode("12345"))) shouldBe true
     }
   }
 
