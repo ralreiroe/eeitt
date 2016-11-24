@@ -21,7 +21,7 @@ object Show {
   implicit val groupIdAndRegimeIdShow = new Show[(GroupId, RegimeId)] {
     def apply(groupIdAndRegimeId: (GroupId, RegimeId)): String = {
       val (groupId, regimeId) = groupIdAndRegimeId
-      s"(GroupId(${groupId.value}), RegimeId(${regimeId.value})"
+      s"(GroupId(${groupId.value}), RegimeId(${regimeId.value}))"
     }
   }
 }

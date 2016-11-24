@@ -1,9 +1,7 @@
 package uk.gov.hmrc.eeitt
 
-import uk.gov.hmrc.eeitt.model.Postcode
-import uk.gov.hmrc.eeitt.services.{ GetPostcode, AddRegistration, FindRegistration, FindUser }
-
 import scala.concurrent.Future
+import uk.gov.hmrc.eeitt.services.{ AddRegistration, FindRegistration, FindUser }
 
 trait TypeclassFixtures {
   def findRegistration[A, B](returnValue: List[B])(checks: A => Unit) =
@@ -31,11 +29,4 @@ trait TypeclassFixtures {
       }
     }
 
-  def getPostcode[A](returnValue: Option[Postcode])(checks: A => Unit): GetPostcode[A] =
-    new GetPostcode[A] {
-      def apply(req: A): Option[Postcode] = {
-        checks(req)
-        returnValue
-      }
-    }
 }

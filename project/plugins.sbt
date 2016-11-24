@@ -11,3 +11,5 @@ addSbtPlugin("uk.gov.hmrc" % "sbt-distributables" % "0.12.0")
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.10")
 
 addSbtPlugin("org.scalariform"  % "sbt-scalariform" % "1.6.0")
+
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.4.0")

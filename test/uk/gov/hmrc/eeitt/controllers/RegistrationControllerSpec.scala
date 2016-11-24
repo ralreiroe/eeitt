@@ -9,7 +9,6 @@ import uk.gov.hmrc.eeitt.services.PrepopulationData
 import uk.gov.hmrc.eeitt.{ EtmpFixtures, RegistrationFixtures, TypeclassFixtures }
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.model.{ VerificationResponse, _ }
-import uk.gov.hmrc.eeitt.repositories.{ MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationBusinessUserRepository }
 import uk.gov.hmrc.eeitt.services.{ FindRegistration, RegistrationService }
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 
@@ -101,6 +100,18 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       status(result) shouldBe Status.OK
       jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_AGENTS)
     }
+
+    "return 400 and error if submitted known facts are different than stored known facts about agent" in {
+      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(Json.obj("invalid-request-json" -> "dummy"))
+
+      implicit val a = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val b = findRegistration(List.empty[RegisterAgentRequest]) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val c = findUser(List.empty[EtmpAgent]) { req: RegisterAgentRequest => /* is not called */ }
+
+      val action = TestRegistrationController.register[RegisterAgentRequest, EtmpAgent]
+      val result = action(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
+    }
   }
 
   "Prepopulation" should {
@@ -114,8 +125,27 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       jsonBodyOf(await(result)) shouldBe Json.obj("arn" -> agent.arn.value)
     }
 
-    "return registrationNumber for business user" in {
+    "return 404 where arn for agent is not found in db" in {
+      val fakeRequest = FakeRequest()
+      implicit val a = findRegistration(List.empty[RegistrationAgent]) { req: GroupId => }
+      val action = TestRegistrationController.prepopulate[GroupId, RegistrationAgent](GroupId("1"))
+      val result = action(fakeRequest)
+      status(result) shouldBe Status.NOT_FOUND
+      bodyOf(await(result)) shouldBe ""
+    }
 
+    "return first arn of first agent if there are more agents in db" in {
+      val fakeRequest = FakeRequest()
+      val agent1 = testRegistrationAgent()
+      val agent2 = testRegistrationAgent()
+      implicit val a = findRegistration(List(agent1, agent2)) { req: GroupId => }
+      val action = TestRegistrationController.prepopulate[GroupId, RegistrationAgent](GroupId("1"))
+      val result = action(fakeRequest)
+      status(result) shouldBe Status.OK
+      jsonBodyOf(await(result)) shouldBe Json.obj("arn" -> agent1.arn.value)
+    }
+
+    "return registrationNumber for business user" in {
       val fakeRequest = FakeRequest()
       val businessUser = testRegistrationBusinessUser()
       implicit val a = findRegistration(List(businessUser)) { req: (GroupId, RegimeId) => }

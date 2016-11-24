@@ -3,7 +3,7 @@ import sbt.Keys._
 import sbt.Tests.{SubProcess, Group}
 import sbt._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-
+import scoverage.ScoverageKeys
 
 trait MicroService {
 
@@ -40,7 +40,8 @@ trait MicroService {
     .settings(
       libraryDependencies ++= appDependencies,
       retrieveManaged := true,
-      evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
+      evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
+      ScoverageKeys.coverageExcludedFiles := Seq(".*(classes|src)_managed.*", ".*twirl/.*", ".*ReverseRoutes.*", ".*routes.*").mkString(";")
     )
     .configs(IntegrationTest)
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
