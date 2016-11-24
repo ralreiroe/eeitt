@@ -1,10 +1,9 @@
 package uk.gov.hmrc.eeitt
 
-import scala.concurrent.Future
-import uk.gov.hmrc.eeitt.model.{ Arn, EtmpAgent, EtmpBusinessUser, Postcode, RegistrationNumber }
+import uk.gov.hmrc.eeitt.model.Postcode
+import uk.gov.hmrc.eeitt.services.{ GetPostcode, AddRegistration, FindRegistration, FindUser }
 
-import scala.util.Random
-import uk.gov.hmrc.eeitt.services.{ AddRegistration, FindRegistration, FindUser, GetPostcode }
+import scala.concurrent.Future
 
 trait TypeclassFixtures {
   def findRegistration[A, B](returnValue: List[B])(checks: A => Unit) =

@@ -2,7 +2,9 @@ package uk.gov.hmrc.eeitt.model
 
 import play.api.libs.json._
 
-sealed trait RegisterRequest
+sealed trait RegisterRequest {
+  def postcode: Option[Postcode]
+}
 
 case class RegisterBusinessUserRequest(groupId: GroupId, registrationNumber: RegistrationNumber, postcode: Option[Postcode]) extends RegisterRequest {
   val regimeId = RegimeId(registrationNumber.value.substring(2, 4))
