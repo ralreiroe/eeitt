@@ -2,6 +2,7 @@ package uk.gov.hmrc.eeitt.services
 
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.AppendedClues
+import org.scalatest.time.{ Span, Millis }
 import uk.gov.hmrc.eeitt.{ EtmpFixtures, TypeclassFixtures }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.play.test.UnitSpec
@@ -12,6 +13,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedClues with EtmpFixtures with TypeclassFixtures {
+
+  implicit override val patienceConfig = PatienceConfig(timeout = scaled(Span(500, Millis)), interval = scaled(Span(150, Millis)))
 
   "Registering a business user with a group id which is not present in repository" should {
     "affect a new registration record and a 'registration ok' response" in {
