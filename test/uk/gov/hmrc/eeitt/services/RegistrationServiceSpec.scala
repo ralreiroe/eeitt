@@ -14,7 +14,7 @@ import scala.concurrent.Future
 class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedClues with EtmpFixtures with TypeclassFixtures {
 
   "Registering a business user with a group id which is not present in repository" should {
-    "affect a new registration record and a 'registration ok' response" in {
+    "return a 'registration ok' response" in {
 
       val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
 
