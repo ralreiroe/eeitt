@@ -16,8 +16,8 @@ class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with Re
     awaitRegistrationIndexCreation()
   }
 
-  private val registration1: RegistrationBusinessUser = RegistrationBusinessUser(GroupId("g1"), RegistrationNumber("12LT001"), RegimeId("LT"))
-  private val registration2: RegistrationBusinessUser = RegistrationBusinessUser(GroupId("g2"), RegistrationNumber("12LT002"), RegimeId("LT"))
+  private val registration1: RegistrationBusinessUser = RegistrationBusinessUser(GroupId("g1"), RegistrationNumber("1234567890ABCDE"), RegimeId("LT"))
+  private val registration2: RegistrationBusinessUser = RegistrationBusinessUser(GroupId("g2"), RegistrationNumber("2234567890ABCDE"), RegimeId("LT"))
 
   "query registrations with a group id" should {
 

@@ -24,9 +24,10 @@ trait EtmpFixtures {
   }
 
   def testEtmpBusinessUser() = {
-    def randomize(s: String) = s + "-" + Random.alphanumeric.take(10).mkString
+    def randomizeGen(s: String)(i: Int) = s + "-" + Random.alphanumeric.take(i).mkString
+    def randomize(s: String) = randomizeGen(s)(10)
     EtmpBusinessUser(
-      RegistrationNumber(randomize("registrationNumber")),
+      RegistrationNumber(randomizeGen("regNum")(8)),
       randomize("taxRegime"),
       randomize("taxRegimeDescription"),
       randomize("organisationType"),

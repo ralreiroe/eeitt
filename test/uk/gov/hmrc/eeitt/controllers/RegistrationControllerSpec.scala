@@ -60,7 +60,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
   "POST /eeitt-auth/register" should {
 
     "return 200 and error if submitted known facts are different than stored known facts about business user" in {
-      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("12LT009"), Some(Postcode("SE39EPX")))))
+      val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("1234567890ABCDE"), Some(Postcode("SE39EPX")))))
 
       implicit val a = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
       implicit val b = findRegistration(List.empty[RegisterBusinessUserRequest]) { req: RegisterBusinessUserRequest => /* is not called */ }
@@ -69,7 +69,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
         inside(req) {
           case RegisterBusinessUserRequest(groupId, registrationNumber, postcode) =>
             groupId.value should be("1")
-            registrationNumber.value should be("12LT009")
+            registrationNumber.value should be("1234567890ABCDE")
             convertOptionToValuable(postcode).value.value should be("SE39EPX")
         }
       }
