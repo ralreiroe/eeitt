@@ -21,9 +21,18 @@ class MongoRegistrationBusinessUserRepository(implicit mongo: () => DB)
     extends ReactiveRepository[RegistrationBusinessUser, BSONObjectID]("registrationBusinessUsers", mongo, RegistrationBusinessUser.oFormat) with RegistrationRepository {
 
   override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
-    Future.sequence(Seq(
-      collection.indexesManager.ensure(Index(Seq("groupId" -> IndexType.Ascending), name = Some("groupId"), unique = true, sparse = false))
-    ))
+    Future.sequence(
+      Seq(
+        collection.indexesManager.ensure(
+          Index(
+            key = List("groupId" -> IndexType.Ascending, "regimeId" -> IndexType.Ascending),
+            name = Some("groupIdAndRegimeId"),
+            unique = true,
+            sparse = false
+          )
+        )
+      )
+    )
   }
 
   def findRegistrations(groupId: GroupId, regimeId: RegimeId): Future[List[RegistrationBusinessUser]] = {
