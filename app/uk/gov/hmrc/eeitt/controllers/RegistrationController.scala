@@ -1,13 +1,14 @@
 package uk.gov.hmrc.eeitt.controllers
 
 import play.Logger
-import play.api.libs.json.{ Format, JsError, JsSuccess, Json, Reads, Writes }
+import play.api.libs.json.{ JsError, JsPath, JsSuccess, Json, KeyPathNode, Reads }
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.services._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.repositories._
+import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 
 import scala.concurrent.Future
 
@@ -61,9 +62,8 @@ trait RegistrationController extends BaseController {
     }
   }
 
-  def register[A <: RegisterRequest: Reads: AddRegistration, B: PostcodeValidator](
+  def register[A <: RegisterRequest: Reads: AddRegistration: FindRegistration, B: PostcodeValidator](
     implicit
-    findRegistration: FindRegistration[A],
     findUser: FindUser[A, B]
   ) = Action.async(parse.json) { implicit request =>
     request.body.validate match {
@@ -71,7 +71,16 @@ trait RegistrationController extends BaseController {
         RegistrationService.register(req).map(response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: $jsonErrors ")
-        Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors))))
+
+        val response = jsonErrors match {
+          // This occurs when registrationNumber is less that 15 characters. We want in such a case
+          // return proper response (200) to the client.
+          case (JsPath(KeyPathNode("registrationNumber") :: _), _) :: _ => Ok(Json.toJson(INCORRECT_KNOWN_FACTS_BUSINESS_USERS))
+          case _ => BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors)))
+        }
+
+        Future.successful(response)
+
     }
   }
 }

@@ -13,16 +13,16 @@ class EtmpBusinessUsersRepositorySpec extends UnitSpec with MongoSpecSupport wit
 
   "Checking if user exists in the db" should {
     "return a non empty list of users if at least one user existed with a given reg number exists" in {
-      insert(testEtmpBusinessUser().copy(registrationNumber = RegistrationNumber("regNumber")))
+      insert(testEtmpBusinessUser().copy(registrationNumber = RegistrationNumber("regNumber-12345")))
 
       withClue("all users in db: " + await(repo.findAll())) {
-        assert(repo.findByRegistrationNumber(RegistrationNumber("regNumber")).futureValue.nonEmpty)
+        assert(repo.findByRegistrationNumber(RegistrationNumber("regNumber-12345")).futureValue.nonEmpty)
       }
     }
     "return empty list otherwise" in {
-      await(insert(testEtmpBusinessUser().copy(registrationNumber = RegistrationNumber("otherRegNum"))))
+      await(insert(testEtmpBusinessUser().copy(registrationNumber = RegistrationNumber("otherRegNum-123"))))
 
-      assert(repo.findByRegistrationNumber(RegistrationNumber("regNumber")).futureValue.isEmpty)
+      assert(repo.findByRegistrationNumber(RegistrationNumber("regNumber-12345")).futureValue.isEmpty)
     }
   }
 
