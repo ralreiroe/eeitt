@@ -2,15 +2,15 @@ package uk.gov.hmrc.eeitt.controllers
 
 import play.api.libs.json.Json
 import play.api.mvc.Action
-import reactivemongo.api.commands.MultiBulkWriteResult
+import reactivemongo.api.commands.{MultiBulkWriteResult, Upserted, WriteError}
 import uk.gov.hmrc.eeitt.repositories._
-import uk.gov.hmrc.eeitt.services.{ EtmpDataParser, LineParsingException }
+import uk.gov.hmrc.eeitt.services.{EtmpDataParser, LineParsingException}
 import uk.gov.hmrc.eeitt.utils.NonFatalWithLogging
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 trait EtmpDataLoaderController extends BaseController {
 
@@ -21,6 +21,10 @@ trait EtmpDataLoaderController extends BaseController {
   def loadBusinessUsers = load(EtmpDataParser.parseFileWithBusinessUsers, businessUserRepo.replaceAll)
 
   def loadAgents = load(EtmpDataParser.parseFileWithAgents, agentRepo.replaceAll)
+
+  def loadBusinessUsersDryRun = load(EtmpDataParser.parseFileWithBusinessUsers, dryRun)
+
+  def loadAgentsDryRun = load(EtmpDataParser.parseFileWithAgents, dryRun)
 
   def load[A](parseFile: String => Seq[A], replaceAll: Seq[A] => Future[MultiBulkWriteResult]) =
     Action.async(parse.tolerantText) { implicit request =>
@@ -47,6 +51,11 @@ trait EtmpDataLoaderController extends BaseController {
           Future.successful(InternalServerError(Json.obj("message" -> e.getMessage)))
       }
     }
+
+
+  def dryRun[A] (records: Seq[A]) : Future[MultiBulkWriteResult] =
+      Future.successful(MultiBulkWriteResult(true, records.size, 0, Seq.empty[Upserted], Seq.empty[WriteError],
+        None, None, Some("hello"), 0))
 
 }
 
