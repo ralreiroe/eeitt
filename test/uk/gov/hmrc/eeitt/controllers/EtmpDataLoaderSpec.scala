@@ -14,7 +14,7 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
     val res = EtmpDataLoader.load("")(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
     res.futureValue should be(ParsingFailure(
       Json.obj(
-        "message" -> "No single line was parsed from request body.",
+        "message" -> "Not a single input line was parsed correctly.",
         "body" -> ""
       )
     ))
@@ -24,7 +24,7 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
     val res = EtmpDataLoader.load("invalidInput")(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
     res.futureValue should be(ParsingFailure(
       Json.obj(
-        "message" -> "No single line was parsed from request body.",
+        "message" -> "Not a single input line was parsed correctly.",
         "body" -> "invalidInput"
       )
     ))
@@ -78,15 +78,18 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
     val businessUsersData =
       """|00|CUSTOMER_DATA|ETMP|MDTP|20161103|141116
          |001|XTAL00000100044|ZAGL|Aggregate Levy (AGL)|7|Limited Company|Organisation1||||BN12 4XL|GB
+         |001|XRIP00000100053|ZIPT|Insurance premium tax (IPT)|1|Sole Proprietor||Mr|Name11|Name21||IT
+         |001|XSBD00440000020|ZBD|Bingo Duty (BD)|7|Limited Company|Organisation3||||BN12 4XL|GB
+         |001|XTAL00000100044|ZAGL|Aggregate Levy (AGL)|7|Limited Company|Organisation1||||BN12 4XL|GB
          |99|CUSTOMER_DATA|000000007""".stripMargin
 
     val updateZeroRecords: Seq[EtmpBusinessUser] => Future[MultiBulkWriteResult] = _ =>
-      Future.successful(MultiBulkWriteResult(true, 0, 0, Seq.empty[Upserted], Seq.empty[WriteError], None, None, None, 0))
+      Future.successful(MultiBulkWriteResult(true, 2, 0, Seq.empty[Upserted], Seq.empty[WriteError], None, None, None, 0))
 
     val res = EtmpDataLoader.load(businessUsersData)(EtmpDataParser.parseFileWithBusinessUsers, updateZeroRecords)
     res.futureValue should be(ServerFailure(Json.obj(
-      "message" -> "Failed to replace existing records with 1 new ones",
-      "details" -> "MultiBulkWriteResult(true,0,0,List(),List(),None,None,None,0)"
+      "message" -> "Replaced existing records but failed to insert 2 records out of 4 in input",
+      "details" -> "MultiBulkWriteResult(true,2,0,List(),List(),None,None,None,0)"
     )))
   }
 }

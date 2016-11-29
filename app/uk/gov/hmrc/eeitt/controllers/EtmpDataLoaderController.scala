@@ -77,7 +77,7 @@ object EtmpDataLoader {
           } else {
             ServerFailure(
               Json.obj(
-                "message" -> s"Failed to replace existing records with $expectedNumberOfInserts new ones",
+                "message" -> s"Replaced existing records but failed to insert ${expectedNumberOfInserts - writeResult.n} records out of ${expectedNumberOfInserts} in input",
                 "details" -> writeResult.toString
               )
             )
@@ -85,7 +85,7 @@ object EtmpDataLoader {
         }
       case Success(Nil) =>
         Future.successful(ParsingFailure(Json.obj(
-          "message" -> "No single line was parsed from request body.",
+          "message" -> "Not a single input line was parsed correctly.",
           "body" -> requestBody.take(100)
         )))
       case Failure(LineParsingException(msg)) =>
