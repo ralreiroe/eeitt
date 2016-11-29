@@ -7,5 +7,8 @@ GET        /group-id/:groupId/prepopulation                     uk.gov.hmrc.eeit
 POST       /register                                            uk.gov.hmrc.eeitt.controllers.RegistrationController.registerBusinessUser
 POST       /register-agent                                      uk.gov.hmrc.eeitt.controllers.RegistrationController.registerAgent
 
-POST       /etmp-data/business-users                            uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadBusinessUsers
-POST       /etmp-data/agents                                    uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadAgents
+POST       /etmp-data/live/business-users                       uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadBusinessUsers
+POST       /etmp-data/live/agents                               uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadAgents
+
+POST       /etmp-data/dry-run/business-users                    uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadBusinessUsersDryRun
+POST       /etmp-data/dry-run/agents                            uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadAgentsDryRun
