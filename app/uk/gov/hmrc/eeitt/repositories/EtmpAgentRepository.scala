@@ -1,5 +1,6 @@
 package uk.gov.hmrc.eeitt.repositories
 
+import play.api.Logger
 import play.api.libs.json.Json
 import reactivemongo.api.commands.MultiBulkWriteResult
 import reactivemongo.api.indexes.{ Index, IndexType }
@@ -30,7 +31,10 @@ class MongoEtmpAgentRepository(implicit mongo: () => DB)
     ).map(Seq(_))
   }
 
-  def findByArn(arn: Arn) = find("arn" -> arn)
+  def findByArn(arn: Arn) = {
+    Logger.debug(s"lookup etmp agent by arn '${arn.value}' in database ${collection.db.name}")
+    find("arn" -> arn)
+  }
 
   // todo: if this method fails EEITT may fail to work...
   // todo: use a correct WriteConcern

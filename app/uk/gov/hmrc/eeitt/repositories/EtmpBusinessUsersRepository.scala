@@ -1,5 +1,6 @@
 package uk.gov.hmrc.eeitt.repositories
 
+import play.api.Logger
 import play.api.libs.json.Json
 import reactivemongo.api.DB
 import reactivemongo.api.commands.MultiBulkWriteResult
@@ -30,8 +31,10 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
     ).map(Seq(_))
   }
 
-  def findByRegistrationNumber(registrationNumber: RegistrationNumber) =
+  def findByRegistrationNumber(registrationNumber: RegistrationNumber) = {
+    Logger.debug(s"lookup etmp business user by registration number '${registrationNumber.value}' in database ${collection.db.name}")
     find("registrationNumber" -> registrationNumber.value)
+  }
 
   // todo: if this method fails EEITT may fail to work...
   // todo: use a correct WriteConcern

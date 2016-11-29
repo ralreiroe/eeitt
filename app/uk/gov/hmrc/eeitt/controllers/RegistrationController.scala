@@ -1,6 +1,6 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import play.Logger
+import play.api.Logger
 import play.api.libs.json.{ JsError, JsPath, JsSuccess, Json, KeyPathNode, Reads }
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model._
