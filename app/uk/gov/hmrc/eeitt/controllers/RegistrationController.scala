@@ -1,7 +1,7 @@
 package uk.gov.hmrc.eeitt.controllers
 
 import play.api.Logger
-import play.api.libs.json.{ JsError, JsPath, JsSuccess, Json, KeyPathNode, Reads }
+import play.api.libs.json._
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.services._
@@ -9,6 +9,7 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.repositories._
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -45,6 +46,8 @@ object RegistrationController extends RegistrationController {
 
 trait RegistrationController extends BaseController {
 
+  lazy val auditService = new HmrcAuditService
+
   def verify[A: FindRegistration](findParams: A) = Action.async { implicit request =>
     RegistrationService.findRegistration(findParams)
       .map(_.size == 1)
@@ -75,7 +78,14 @@ trait RegistrationController extends BaseController {
   ) = Action.async(parse.json) { implicit request =>
     request.body.validate match {
       case JsSuccess(req, _) =>
-        RegistrationService.register(req).map(response => Ok(Json.toJson(response)))
+        val registerationResponse: Future[RegistrationResponse] = RegistrationService.register(req)
+        registerationResponse.map {
+          case RESPONSE_OK => {
+            sendRegisteredEvent(request, req)
+            RESPONSE_OK
+          }
+          case r => r
+        }.map(response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: $jsonErrors ")
 
@@ -88,6 +98,16 @@ trait RegistrationController extends BaseController {
 
         Future.successful(response)
 
+    }
+  }
+
+  private def sendRegisteredEvent[B: PostcodeValidator, A <: RegisterRequest: Reads: AddRegistration: FindRegistration](request: Request[JsValue], req: A)(implicit hc: HeaderCarrier) = {
+    req match {
+      case r: RegisterAgentRequest =>
+        auditService.sendRegisteredAgentEvent(request.path, r, Map("user-type" -> "agent"))
+      case r: RegisterBusinessUserRequest =>
+        auditService.sendRegisteredBusinessUserEvent(request.path, r, Map("user-type" -> "business-user"))
+      case _ =>
     }
   }
 }
