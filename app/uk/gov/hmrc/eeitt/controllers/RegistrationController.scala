@@ -19,13 +19,23 @@ object RegistrationController extends RegistrationController {
   implicit lazy val etmpAgentRepo = etmpAgentRepository
 
   def verification(groupId: GroupId, regimeId: RegimeId, affinityGroup: AffinityGroup) = affinityGroup match {
-    case Agent => verify(groupId)
-    case _ => verify((groupId, regimeId))
+    case Agent =>
+      Logger.info(s"verification - agent - groupId '${groupId.value}'")
+      verify(groupId)
+    case _ =>
+      Logger.info(s"verification - business user - groupId '${groupId.value}', regimeId '${regimeId.value}'")
+      verify((groupId, regimeId))
   }
 
-  def prepopulationAgent(groupId: GroupId) = prepopulate[GroupId, RegistrationAgent](groupId)
+  def prepopulationAgent(groupId: GroupId) = {
+    Logger.info(s"prepopulation - agent - groupId '${groupId.value}'")
+    prepopulate[GroupId, RegistrationAgent](groupId)
+  }
 
-  def prepopulationBusinessUser(groupId: GroupId, regimeId: RegimeId) = prepopulate[(GroupId, RegimeId), RegistrationBusinessUser]((groupId, regimeId))
+  def prepopulationBusinessUser(groupId: GroupId, regimeId: RegimeId) = {
+    Logger.info(s"prepopulation - business user - groupId '${groupId.value}', regimeId '${regimeId.value}'")
+    prepopulate[(GroupId, RegimeId), RegistrationBusinessUser]((groupId, regimeId))
+  }
 
   def registerBusinessUser = register[RegisterBusinessUserRequest, EtmpBusinessUser]
 
