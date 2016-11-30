@@ -36,7 +36,7 @@ class MongoRegistrationBusinessUserRepository(implicit mongo: () => DB)
   }
 
   def findRegistrations(groupId: GroupId, regimeId: RegimeId): Future[List[RegistrationBusinessUser]] = {
-    Logger.debug(s"lookup business user registration with group id '${groupId.value}' and regime id ${regimeId.value} in database ${collection.db.name}")
+    Logger.info(s"lookup business user registration with group id '${groupId.value}' and regime id ${regimeId.value} in database ${collection.db.name}")
     find(
       "groupId" -> groupId,
       "regimeId" -> regimeId
@@ -46,8 +46,12 @@ class MongoRegistrationBusinessUserRepository(implicit mongo: () => DB)
   def register(rr: RegisterBusinessUserRequest): Future[Either[String, Unit]] = {
     val registration = RegistrationBusinessUser(rr.groupId, rr.registrationNumber, rr.regimeId)
     insert(registration) map {
-      case r if r.ok => Right(())
-      case r => Left(r.message)
+      case r if r.ok =>
+        Logger.info(s"registration of business user groupId ${rr.groupId.value} for regime ${rr.regimeId.value} successful. Registration number ${rr.registrationNumber.value}, postcode: ${rr.postcode}")
+        Right(())
+      case r =>
+        Logger.error(s"registration of business user groupId ${rr.groupId.value} for regime ${rr.regimeId.value} failed. Registration number ${rr.registrationNumber.value}, postcode: ${rr.postcode}. Reason: ${r.message}.")
+        Left(r.message)
     }
   }
 }

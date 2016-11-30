@@ -32,7 +32,7 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
   }
 
   def findByRegistrationNumber(registrationNumber: RegistrationNumber) = {
-    Logger.debug(s"lookup etmp business user by registration number '${registrationNumber.value}' in database ${collection.db.name}")
+    Logger.info(s"lookup etmp business user by registration number '${registrationNumber.value}' in database ${collection.db.name}")
     find("registrationNumber" -> registrationNumber.value)
   }
 

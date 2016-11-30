@@ -96,7 +96,7 @@ object FindUser {
     }
   }
 
-  implicit def indivitualExists(implicit repository: EtmpBusinessUsersRepository) = {
+  implicit def businessUserExists(implicit repository: EtmpBusinessUsersRepository) = {
     new FindUser[RegisterBusinessUserRequest, EtmpBusinessUser] {
       def apply(req: RegisterBusinessUserRequest): Future[List[EtmpBusinessUser]] =
         repository.findByRegistrationNumber(req.registrationNumber)
