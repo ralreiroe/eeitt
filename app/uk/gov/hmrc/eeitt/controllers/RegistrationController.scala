@@ -35,10 +35,7 @@ object RegistrationController extends RegistrationController {
 
 trait RegistrationController extends BaseController {
 
-  def verify[A](findParams: A)(
-    implicit
-    findRegistration: FindRegistration[A]
-  ) = Action.async { implicit request =>
+  def verify[A: FindRegistration](findParams: A) = Action.async { implicit request =>
     RegistrationService.findRegistration(findParams)
       .map(_.size == 1)
       .map(response => Ok(Json.toJson(VerificationResponse(response))))

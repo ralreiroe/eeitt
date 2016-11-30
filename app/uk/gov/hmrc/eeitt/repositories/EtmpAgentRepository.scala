@@ -32,7 +32,7 @@ class MongoEtmpAgentRepository(implicit mongo: () => DB)
   }
 
   def findByArn(arn: Arn) = {
-    Logger.debug(s"lookup etmp agent by arn '${arn.value}' in database ${collection.db.name}")
+    Logger.info(s"lookup etmp agent by arn '${arn.value}' in database ${collection.db.name}")
     find("arn" -> arn)
   }
 

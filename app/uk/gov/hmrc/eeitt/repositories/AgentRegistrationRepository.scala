@@ -27,7 +27,7 @@ class MongoRegistrationAgentRepository(implicit mongo: () => DB)
   }
 
   def findRegistrations(groupId: GroupId): Future[List[RegistrationAgent]] = {
-    Logger.debug(s"lookup agent registration with group id '${groupId.value}' in database ${collection.db.name}")
+    Logger.info(s"lookup agent registration with group id '${groupId.value}' in database ${collection.db.name}")
     find(("groupId", groupId))
   }
 
@@ -35,8 +35,12 @@ class MongoRegistrationAgentRepository(implicit mongo: () => DB)
 
     val registration = RegistrationAgent(rr.groupId, rr.arn)
     insert(registration) map {
-      case r if r.ok => Right((): Unit)
-      case r => Left(r.message)
+      case r if r.ok =>
+        Logger.info(s"registration of agent groupId ${rr.groupId.value} successful. Arn ${rr.arn.value}, postcode: ${rr.postcode}")
+        Right(())
+      case r =>
+        Logger.error(s"registration of agent groupId ${rr.groupId.value} failed. Arn ${rr.arn.value}, postcode: ${rr.postcode}}. Reason: ${r.message}.")
+        Left(r.message)
     }
   }
 
