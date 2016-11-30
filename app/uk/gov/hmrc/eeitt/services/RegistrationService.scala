@@ -49,38 +49,27 @@ object FindRegistration {
 
   type Aux[A, Out0] = FindRegistration[A] { type Out = Out0 }
 
-  implicit def businessUserByRequest(implicit repository: RegistrationRepository) = {
-    new FindRegistration[RegisterBusinessUserRequest] {
-      type Out = RegistrationBusinessUser
-      def apply(req: RegisterBusinessUserRequest): Future[List[RegistrationBusinessUser]] =
-        repository.findRegistrations(req.groupId, req.regimeId)
+  private def getFindRegistration[A, B](f: A => Future[List[B]]): FindRegistration.Aux[A, B] = {
+    new FindRegistration[A] {
+      type Out = B
+      def apply(params: A): Future[List[B]] = f(params)
     }
   }
 
-  implicit def businessUserByGroupIdAndRegimeId(implicit regRepository: RegistrationRepository) = {
-    new FindRegistration[(GroupId, RegimeId)] {
-      type Out = RegistrationBusinessUser
-      def apply(groupIdAndRegimeId: (GroupId, RegimeId)): Future[List[RegistrationBusinessUser]] = {
-        val (groupId, regimeId) = groupIdAndRegimeId
-        regRepository.findRegistrations(groupId, regimeId)
-      }
-    }
+  implicit def businessUserByRequest(implicit repository: RegistrationRepository) = {
+    getFindRegistration((r: RegisterBusinessUserRequest) => repository.findRegistrations(r.groupId, r.regimeId))
+  }
+
+  implicit def businessUserByGroupIdAndRegimeId(implicit repository: RegistrationRepository) = {
+    getFindRegistration((t: (GroupId, RegimeId)) => repository.findRegistrations(t._1, t._2))
   }
 
   implicit def agentByRequest(implicit repository: RegistrationAgentRepository) = {
-    new FindRegistration[RegisterAgentRequest] {
-      type Out = RegistrationAgent
-      def apply(req: RegisterAgentRequest): Future[List[RegistrationAgent]] =
-        repository.findRegistrations(req.groupId)
-    }
+    getFindRegistration((r: RegisterAgentRequest) => repository.findRegistrations(r.groupId))
   }
 
-  implicit def agentByGroupId(implicit regRepository: RegistrationAgentRepository) = {
-    new FindRegistration[GroupId] {
-      type Out = RegistrationAgent
-      def apply(groupId: GroupId): Future[List[RegistrationAgent]] =
-        regRepository.findRegistrations(groupId)
-    }
+  implicit def agentByGroupId(implicit repository: RegistrationAgentRepository) = {
+    getFindRegistration((g: GroupId) => repository.findRegistrations(g))
   }
 }
 
@@ -89,18 +78,19 @@ trait FindUser[A, B] {
 }
 
 object FindUser {
-  implicit def agentExists(implicit repository: EtmpAgentRepository) = {
-    new FindUser[RegisterAgentRequest, EtmpAgent] {
-      def apply(req: RegisterAgentRequest): Future[List[EtmpAgent]] =
-        repository.findByArn(req.arn)
+
+  private def getFindUser[A, B](f: A => Future[List[B]]): FindUser[A, B] = {
+    new FindUser[A, B] {
+      def apply(params: A): Future[List[B]] = f(params)
     }
   }
 
+  implicit def agentExists(implicit repository: EtmpAgentRepository) = {
+    getFindUser((r: RegisterAgentRequest) => repository.findByArn(r.arn))
+  }
+
   implicit def businessUserExists(implicit repository: EtmpBusinessUsersRepository) = {
-    new FindUser[RegisterBusinessUserRequest, EtmpBusinessUser] {
-      def apply(req: RegisterBusinessUserRequest): Future[List[EtmpBusinessUser]] =
-        repository.findByRegistrationNumber(req.registrationNumber)
-    }
+    getFindUser((r: RegisterBusinessUserRequest) => repository.findByRegistrationNumber(r.registrationNumber))
   }
 }
 
@@ -109,16 +99,19 @@ trait AddRegistration[A] {
 }
 
 object AddRegistration {
-  implicit def agentRepo(implicit repository: RegistrationAgentRepository) = {
-    new AddRegistration[RegisterAgentRequest] {
-      def apply(req: RegisterAgentRequest): Future[Either[String, Unit]] = repository.register(req)
+
+  private def getAddRegistration[A](f: A => Future[Either[String, Unit]]): AddRegistration[A] = {
+    new AddRegistration[A] {
+      def apply(params: A): Future[Either[String, Unit]] = f(params)
     }
   }
 
+  implicit def agentRepo(implicit repository: RegistrationAgentRepository) = {
+    getAddRegistration((r: RegisterAgentRequest) => repository.register(r))
+  }
+
   implicit def businessUserRepo(implicit repository: RegistrationRepository) = {
-    new AddRegistration[RegisterBusinessUserRequest] {
-      def apply(req: RegisterBusinessUserRequest): Future[Either[String, Unit]] = repository.register(req)
-    }
+    getAddRegistration((r: RegisterBusinessUserRequest) => repository.register(r))
   }
 }
 
