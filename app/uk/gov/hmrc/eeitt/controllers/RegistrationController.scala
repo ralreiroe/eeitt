@@ -9,7 +9,7 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.repositories._
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
-
+import uk.gov.hmrc.eeitt.utils.AuditEvent._
 import scala.concurrent.Future
 
 object RegistrationController extends RegistrationController {
@@ -68,7 +68,16 @@ trait RegistrationController extends BaseController {
   ) = Action.async(parse.json) { implicit request =>
     request.body.validate match {
       case JsSuccess(req, _) =>
-        RegistrationService.register(req).map(response => Ok(Json.toJson(response)))
+        RegistrationService.register(req).map {
+          case RESPONSE_OK => {
+            sendDataEvent("register", "", Map.empty, Map(
+              "A" -> req.postcode.map( _.value).getOrElse(""),
+              "C" -> "D"
+            ))
+            RESPONSE_OK
+          }
+          case x => x
+        }.map(response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: $jsonErrors ")
 

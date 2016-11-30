@@ -8,7 +8,7 @@ import scala.concurrent.Future
 import uk.gov.hmrc.eeitt.model.EtmpBusinessUser
 import uk.gov.hmrc.eeitt.services.EtmpDataParser
 
-class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
+class qEtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
 
   "EtmpDataLoader" should "fail to parse empty input" in {
     val res = EtmpDataLoader.load("")(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)

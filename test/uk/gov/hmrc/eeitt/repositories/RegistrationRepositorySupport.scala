@@ -19,7 +19,7 @@ trait RegistrationRepositorySupport extends UnitSpec with MongoSpecSupport {
     var keepChecking = true
     while (keepChecking) {
       val indexes = Await.result(regRepo.collection.indexesManager.list(), 5.seconds)
-      if (indexes.exists(_.eventualName == "groupId")) {
+      if (indexes.exists(_.eventualName == "groupIdAndRegimeId")) {
         keepChecking = false
       }
     }
