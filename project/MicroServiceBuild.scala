@@ -17,17 +17,18 @@ private object AppDependencies {
   import play.core.PlayVersion
 
   private val microserviceBootstrapVersion = "4.4.0"
-  private val playAuthVersion = "3.4.0"
+  private val playAuthVersion = "4.2.0"
   private val playHealthVersion = "1.1.0"
   private val playJsonLoggerVersion = "2.1.1"
-  private val playUrlBindersVersion = "1.1.0"
-  private val playConfigVersion = "2.1.0"
-  private val domainVersion = "3.7.0"
-  private val hmrcTestVersion = "1.8.0"
+  private val playUrlBindersVersion = "2.0.0"
+  private val playConfigVersion = "3.0.0"
+  private val domainVersion = "4.0.0"
+  private val hmrcTestVersion = "1.9.0"
   private val scalaTestVersion = "2.2.6"
   private val pegdownVersion = "1.6.0"
 
   private val playReactivemongoVersion = "4.8.0"
+  private val reactiveMongoTestVersion = "1.6.0"
 
   val compile = Seq(
     "uk.gov.hmrc" %% "play-reactivemongo" % playReactivemongoVersion,
@@ -54,7 +55,7 @@ private object AppDependencies {
         "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-        "uk.gov.hmrc" %% "reactivemongo-test" % "1.6.0" % scope,
+        "uk.gov.hmrc" %% "reactivemongo-test" % reactiveMongoTestVersion % scope,
         "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
         "org.mockito" % "mockito-all" % "1.9.5" % "test"
       )
@@ -71,7 +72,7 @@ private object AppDependencies {
         "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-        "uk.gov.hmrc" %% "reactivemongo-test" % "1.6.0" % scope
+        "uk.gov.hmrc" %% "reactivemongo-test" % reactiveMongoTestVersion % scope
       )
     }.test
   }
