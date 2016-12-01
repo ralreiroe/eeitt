@@ -4,9 +4,11 @@ import play.api.Logger
 import play.api.libs.json.{ JsObject, Json }
 import play.api.mvc.Action
 import reactivemongo.api.commands.{ MultiBulkWriteResult, Upserted, WriteError }
+import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser }
 import uk.gov.hmrc.eeitt.repositories._
-import uk.gov.hmrc.eeitt.services.{ EtmpDataParser, LineParsingException }
+import uk.gov.hmrc.eeitt.services.{ AuditService, EtmpDataParser, LineParsingException }
 import uk.gov.hmrc.eeitt.utils.NonFatalWithLogging
+import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,7 +42,7 @@ trait EtmpDataLoaderController extends BaseController {
   }
 
   def load[A](parseFile: String => Seq[A], replaceAll: Seq[A] => Future[MultiBulkWriteResult]) =
-    Action.async(parse.tolerantText) { request =>
+    Action.async(parse.tolerantText) { implicit request =>
       EtmpDataLoader.load(request.body)(parseFile, replaceAll).map {
         case LoadOk(json) => Ok(json)
         case ServerFailure(json) => InternalServerError(json)
@@ -67,12 +69,26 @@ object EtmpDataLoader {
   def dryRun[A](records: Seq[A]): Future[MultiBulkWriteResult] =
     Future.successful(MultiBulkWriteResult(true, records.size, 0, Seq.empty[Upserted], Seq.empty[WriteError], None, None, None, 0))
 
-  def load[A](requestBody: String)(parseFile: String => Seq[A], replaceAll: Seq[A] => Future[MultiBulkWriteResult]): Future[EtmpDataLoaderResult] = {
+  def load[A](requestBody: String)(parseFile: String => Seq[A], replaceAll: Seq[A] => Future[MultiBulkWriteResult])(implicit hc: HeaderCarrier): Future[EtmpDataLoaderResult] = {
     Try(parseFile(requestBody)) match {
       case Success(records @ _ :: _) =>
         replaceAll(records).map { writeResult =>
           val expectedNumberOfInserts = records.size
           if (writeResult.ok && writeResult.n == expectedNumberOfInserts) {
+            val recordCount = writeResult.n.toString
+            records.headOption.map(r => r match {
+              case e: EtmpAgent =>
+                AuditService.sendDataLoadEvent("/etmp-data/live", Map {
+                  "user-type" -> "agent"
+                  "record-count" -> recordCount
+                })
+              case e: EtmpBusinessUser =>
+                AuditService.sendDataLoadEvent("/etmp-data/live", Map {
+                  "user-type" -> "business-user"
+                  "record-count" -> recordCount
+                })
+              case _ =>
+            })
             LoadOk(Json.obj("message" -> s"$expectedNumberOfInserts unique objects imported successfully"))
           } else {
             ServerFailure(

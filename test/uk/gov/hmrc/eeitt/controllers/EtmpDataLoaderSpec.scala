@@ -4,11 +4,14 @@ import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
 import reactivemongo.api.commands.{ MultiBulkWriteResult, Upserted, WriteError }
+
 import scala.concurrent.Future
 import uk.gov.hmrc.eeitt.model.EtmpBusinessUser
 import uk.gov.hmrc.eeitt.services.EtmpDataParser
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
+  implicit val hc = new HeaderCarrier()
 
   "EtmpDataLoader" should "fail to parse empty input" in {
     val res = EtmpDataLoader.load("")(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
