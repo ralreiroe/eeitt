@@ -1,27 +1,25 @@
 package uk.gov.hmrc.eeitt.utils
 
+import uk.gov.hmrc.eeitt.MicroserviceAuditConnector
+import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.config.RunMode
+import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.AuditExtensions._
+import uk.gov.hmrc.play.audit.model.{ Audit, DataEvent, EventTypes }
+
 object AuditEvent {
-  import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
-  import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-  import uk.gov.hmrc.play.config.RunMode
-  import uk.gov.hmrc.play.http.HeaderCarrier
-  import uk.gov.hmrc.play.audit.AuditExtensions._
-  import uk.gov.hmrc.play.audit.model.{ Audit, DataEvent, EventTypes }
 
   val appName = "eeitt"
-  val audit = Audit(
-    appName,
-    new AuditConnector with RunMode {
-      override lazy val auditingConfig = LoadAuditingConfig(s"$env.auditing")
-    }
-  )
+  val audit = Audit(appName, MicroserviceAuditConnector)
 
   def sendDataEvent(transactionName: String, path: String = "N/A", tags: Map[String, String] = Map.empty,
     detail: Map[String, String])(implicit hc: HeaderCarrier): Unit = {
 
-    audit.sendDataEvent(DataEvent(appName, EventTypes.Succeeded,
+    val event = DataEvent(appName, EventTypes.Succeeded,
       tags = hc.toAuditTags(transactionName, path) ++ tags,
-      detail = hc.toAuditDetails(detail.toSeq: _*)))
+      detail = hc.toAuditDetails(detail.toSeq: _*))
+    audit.sendDataEvent(event)
 
   }
 

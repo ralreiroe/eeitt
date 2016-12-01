@@ -1,7 +1,10 @@
 package uk.gov.hmrc.eeitt.controllers
 
+import java.net.URL
+
 import play.api.Logger
 import play.api.libs.json.{ JsError, JsPath, JsSuccess, Json, KeyPathNode, Reads }
+import play.api.libs.ws.WSRequestHolder
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.services._
@@ -10,6 +13,8 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.repositories._
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.utils.AuditEvent._
+import uk.gov.hmrc.play.http.HeaderCarrier
+
 import scala.concurrent.Future
 
 object RegistrationController extends RegistrationController {
@@ -68,15 +73,19 @@ trait RegistrationController extends BaseController {
   ) = Action.async(parse.json) { implicit request =>
     request.body.validate match {
       case JsSuccess(req, _) =>
-        RegistrationService.register(req).map {
+        val registerationResponse: Future[RegistrationResponse] = RegistrationService.register(req)
+        registerationResponse.map {
           case RESPONSE_OK => {
-            sendDataEvent("register", "", Map.empty, Map(
-              "A" -> req.postcode.map( _.value).getOrElse(""),
+            //          case _ => {
+            val path = "/register-mumble"
+            val tags: Map[String, String] = Map(
+              "A" -> req.postcode.map(_.value).getOrElse(""),
               "C" -> "D"
-            ))
+            )
+            val detail: Map[String, String] = Map.empty
+            sendDataEvent(path, path, tags, detail)
             RESPONSE_OK
           }
-          case x => x
         }.map(response => Ok(Json.toJson(response)))
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: $jsonErrors ")
