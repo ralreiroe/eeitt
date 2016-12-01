@@ -1,10 +1,7 @@
 package uk.gov.hmrc.eeitt.controllers
 
-import java.net.URL
-
 import play.api.Logger
 import play.api.libs.json.{ JsError, JsPath, JsSuccess, Json, KeyPathNode, Reads }
-import play.api.libs.ws.WSRequestHolder
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.services._
@@ -12,8 +9,6 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.repositories._
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
-import uk.gov.hmrc.eeitt.utils.AuditEvent._
-import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -76,14 +71,12 @@ trait RegistrationController extends BaseController {
         val registerationResponse: Future[RegistrationResponse] = RegistrationService.register(req)
         registerationResponse.map {
           case RESPONSE_OK => {
-            //          case _ => {
-            val path = "/register-mumble"
-            val tags: Map[String, String] = Map(
-              "A" -> req.postcode.map(_.value).getOrElse(""),
-              "C" -> "D"
-            )
-            val detail: Map[String, String] = Map.empty
-            sendDataEvent(path, path, tags, detail)
+            req match {
+              case r: RegisterAgentRequest =>
+                AuditService.sendRegisteredAgentEvent(request.path, r, Map("user-type" -> "agent"))
+              case r: RegisterBusinessUserRequest =>
+                AuditService.sendRegisteredBusinessUserEvent(request.path, r, Map("user-type" -> "business-user"))
+            }
             RESPONSE_OK
           }
         }.map(response => Ok(Json.toJson(response)))
