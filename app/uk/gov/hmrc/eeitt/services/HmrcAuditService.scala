@@ -6,7 +6,17 @@ import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.model.{ Audit, DataEvent, EventTypes }
 import uk.gov.hmrc.play.http.HeaderCarrier
 
-object AuditService {
+trait AuditService {
+
+  def sendRegisteredBusinessUserEvent(path: String, request: RegisterBusinessUserRequest, tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit
+
+  def sendRegisteredAgentEvent(path: String, request: RegisterAgentRequest, tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit
+
+  def sendDataLoadEvent(path: String, tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit
+
+}
+
+class HmrcAuditService extends AuditService {
 
   val appName = "eeitt"
   val audit = Audit(appName, MicroserviceAuditConnector)
@@ -28,7 +38,7 @@ object AuditService {
     sendRegisteredEvent(path, request.postcode, tags ++ requestTags)
   }
 
-  def sendRegisteredEvent(path: String, postcode: Option[Postcode], tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit = {
+  private def sendRegisteredEvent(path: String, postcode: Option[Postcode], tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit = {
     val postcodeTag = postcode.map {
       case p => ("postcode", p.value)
     }

@@ -36,6 +36,8 @@ object RegistrationController extends RegistrationController {
 
 trait RegistrationController extends BaseController {
 
+  lazy val auditService = new HmrcAuditService
+
   def verify[A](findParams: A)(
     implicit
     findRegistration: FindRegistration[A]
@@ -95,9 +97,9 @@ trait RegistrationController extends BaseController {
   private def sendRegisteredEvent[B: PostcodeValidator, A <: RegisterRequest: Reads: AddRegistration: FindRegistration](request: Request[JsValue], req: A)(implicit hc: HeaderCarrier) = {
     req match {
       case r: RegisterAgentRequest =>
-        AuditService.sendRegisteredAgentEvent(request.path, r, Map("user-type" -> "agent"))
+        auditService.sendRegisteredAgentEvent(request.path, r, Map("user-type" -> "agent"))
       case r: RegisterBusinessUserRequest =>
-        AuditService.sendRegisteredBusinessUserEvent(request.path, r, Map("user-type" -> "business-user"))
+        auditService.sendRegisteredBusinessUserEvent(request.path, r, Map("user-type" -> "business-user"))
       case _ =>
     }
   }
