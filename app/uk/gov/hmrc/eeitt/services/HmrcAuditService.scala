@@ -1,16 +1,14 @@
 package uk.gov.hmrc.eeitt.services
 
 import uk.gov.hmrc.eeitt.MicroserviceAuditConnector
-import uk.gov.hmrc.eeitt.model.{ Postcode, RegisterAgentRequest, RegisterBusinessUserRequest, RegisterRequest }
+import uk.gov.hmrc.eeitt.model.Postcode
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.model.{ Audit, DataEvent, EventTypes }
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 trait AuditService {
 
-  def sendRegisteredBusinessUserEvent(path: String, request: RegisterBusinessUserRequest, tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit
-
-  def sendRegisteredAgentEvent(path: String, request: RegisterAgentRequest, tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit
+  def sendRegisteredEvent(path: String, postcode: Option[Postcode], tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit
 
   def sendDataLoadEvent(path: String, tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit
 
@@ -21,27 +19,8 @@ class HmrcAuditService extends AuditService {
   val appName = "eeitt"
   val audit = Audit(appName, MicroserviceAuditConnector)
 
-  def sendRegisteredBusinessUserEvent(path: String, request: RegisterBusinessUserRequest, tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit = {
-    val requestTags = Map {
-      "registration-number" -> request.registrationNumber.value
-      "group-id" -> request.groupId.value
-      "regime-id" -> request.regimeId.value
-    }
-    sendRegisteredEvent(path, request.postcode, tags ++ requestTags)
-  }
-
-  def sendRegisteredAgentEvent(path: String, request: RegisterAgentRequest, tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit = {
-    val requestTags = Map[String, String] {
-      "arn" -> request.arn.value
-      "group-id" -> request.groupId.value
-    }
-    sendRegisteredEvent(path, request.postcode, tags ++ requestTags)
-  }
-
-  private def sendRegisteredEvent(path: String, postcode: Option[Postcode], tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit = {
-    val postcodeTag = postcode.map {
-      case p => ("postcode", p.value)
-    }
+  def sendRegisteredEvent(path: String, postcode: Option[Postcode], tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit = {
+    val postcodeTag = postcode.map(p => ("postcode", p.value))
     sendDataEvent("registered", path, tags ++ postcodeTag, Map.empty)
   }
 

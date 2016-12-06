@@ -4,7 +4,7 @@ import play.api.Logger
 import play.api.libs.json.{ JsObject, Json }
 import play.api.mvc.Action
 import reactivemongo.api.commands.{ MultiBulkWriteResult, Upserted, WriteError }
-import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser }
+import uk.gov.hmrc.eeitt.typeclasses.SendDataLoadEvent
 import uk.gov.hmrc.eeitt.repositories._
 import uk.gov.hmrc.eeitt.services.{ AuditService, EtmpDataParser, HmrcAuditService, LineParsingException }
 import uk.gov.hmrc.eeitt.utils.NonFatalWithLogging
@@ -21,7 +21,7 @@ trait EtmpDataLoaderController extends BaseController {
 
   def agentRepo: EtmpAgentRepository
 
-  val etmpDataLoader = new EtmpDataLoader(new HmrcAuditService)
+  def auditService: AuditService = new HmrcAuditService
 
   def loadBusinessUsers = {
     Logger.info("Import business users - live")
@@ -35,18 +35,20 @@ trait EtmpDataLoaderController extends BaseController {
 
   def loadBusinessUsersDryRun = {
     Logger.info("Import business users - dry-run")
-    load(EtmpDataParser.parseFileWithBusinessUsers, etmpDataLoader.dryRun)
+    load(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
   }
 
   def loadAgentsDryRun = {
     Logger.info("Import agents - dry-run")
-    load(EtmpDataParser.parseFileWithAgents, etmpDataLoader.dryRun)
+    load(EtmpDataParser.parseFileWithAgents, EtmpDataLoader.dryRun)
   }
 
-  def load[A](parseFile: String => Seq[A], replaceAll: Seq[A] => Future[MultiBulkWriteResult]) =
+  def load[A](parseFile: String => Seq[A], replaceAll: Seq[A] => Future[MultiBulkWriteResult])(implicit sendData: SendDataLoadEvent[A]) =
     Action.async(parse.tolerantText) { implicit request =>
-      etmpDataLoader.load(request.body)(parseFile, replaceAll).map {
-        case LoadOk(json) => Ok(json)
+      EtmpDataLoader.load(request.body)(parseFile, replaceAll).map {
+        case LoadOk(json, numberOfRecords) =>
+          auditService.sendDataLoadEvent("/etmp-data/live", sendData(numberOfRecords))
+          Ok(json)
         case ServerFailure(json) => InternalServerError(json)
         case ParsingFailure(json) => BadRequest(json)
       }
@@ -62,11 +64,11 @@ sealed trait EtmpDataLoaderResult {
   def json: JsObject
 }
 
-case class LoadOk(json: JsObject) extends EtmpDataLoaderResult
+case class LoadOk(json: JsObject, nOfRecords: Int) extends EtmpDataLoaderResult
 case class ServerFailure(json: JsObject) extends EtmpDataLoaderResult
 case class ParsingFailure(json: JsObject) extends EtmpDataLoaderResult
 
-class EtmpDataLoader(auditService: AuditService) {
+object EtmpDataLoader {
 
   def dryRun[A](records: Seq[A]): Future[MultiBulkWriteResult] =
     Future.successful(MultiBulkWriteResult(true, records.size, 0, Seq.empty[Upserted], Seq.empty[WriteError], None, None, None, 0))
@@ -77,21 +79,7 @@ class EtmpDataLoader(auditService: AuditService) {
         replaceAll(records).map { writeResult =>
           val expectedNumberOfInserts = records.size
           if (writeResult.ok && writeResult.n == expectedNumberOfInserts) {
-            val recordCount = writeResult.n.toString
-            records.headOption.map(r => r match {
-              case e: EtmpAgent =>
-                auditService.sendDataLoadEvent("/etmp-data/live", Map {
-                  "user-type" -> "agent"
-                  "record-count" -> recordCount
-                })
-              case e: EtmpBusinessUser =>
-                auditService.sendDataLoadEvent("/etmp-data/live", Map {
-                  "user-type" -> "business-user"
-                  "record-count" -> recordCount
-                })
-              case _ =>
-            })
-            LoadOk(Json.obj("message" -> s"$expectedNumberOfInserts unique objects imported successfully"))
+            LoadOk(Json.obj("message" -> s"$expectedNumberOfInserts unique objects imported successfully"), expectedNumberOfInserts)
           } else {
             ServerFailure(
               Json.obj(

@@ -6,25 +6,15 @@ import play.api.libs.json.Json
 import reactivemongo.api.commands.{ MultiBulkWriteResult, Upserted, WriteError }
 
 import scala.concurrent.Future
-import uk.gov.hmrc.eeitt.model.{ EtmpBusinessUser, RegisterAgentRequest, RegisterBusinessUserRequest }
-import uk.gov.hmrc.eeitt.services.{ AuditService, EtmpDataParser }
+import uk.gov.hmrc.eeitt.model.EtmpBusinessUser
+import uk.gov.hmrc.eeitt.services.EtmpDataParser
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
   implicit val hc = new HeaderCarrier()
 
-  val auditServiceStub = new AuditService {
-    override def sendRegisteredBusinessUserEvent(path: String, request: RegisterBusinessUserRequest, tags: Map[String, String])(implicit hc: HeaderCarrier): Unit = {}
-
-    override def sendRegisteredAgentEvent(path: String, request: RegisterAgentRequest, tags: Map[String, String])(implicit hc: HeaderCarrier): Unit = {}
-
-    override def sendDataLoadEvent(path: String, tags: Map[String, String])(implicit hc: HeaderCarrier): Unit = {}
-  }
-
-  val etmpDataLoader = new EtmpDataLoader(auditServiceStub)
-
   "EtmpDataLoader" should "fail to parse empty input" in {
-    val res = etmpDataLoader.load("")(EtmpDataParser.parseFileWithBusinessUsers, etmpDataLoader.dryRun)
+    val res = EtmpDataLoader.load("")(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
     res.futureValue should be(ParsingFailure(
       Json.obj(
         "message" -> "Not a single input line was parsed correctly.",
@@ -34,7 +24,7 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
   }
 
   it should "fail to parse invalid input" in {
-    val res = etmpDataLoader.load("invalidInput")(EtmpDataParser.parseFileWithBusinessUsers, etmpDataLoader.dryRun)
+    val res = EtmpDataLoader.load("invalidInput")(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
     res.futureValue should be(ParsingFailure(
       Json.obj(
         "message" -> "Not a single input line was parsed correctly.",
@@ -54,8 +44,8 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
          |002|KARN0000088|ARN|Agent Reference Number(ARN)|1|Sole proprietor||Mr|AGName1|AGName2||RO|XDLD00000100001|ZLD|Lottery Duty (LD)|1|Sole Proprietor||Mr|Name12|Name22||RO
          |99|AGENT_DATA|000000006""".stripMargin
 
-    val res = etmpDataLoader.load(agentData)(EtmpDataParser.parseFileWithAgents, etmpDataLoader.dryRun)
-    res.futureValue should be(LoadOk(Json.obj("message" -> "3 unique objects imported successfully")))
+    val res = EtmpDataLoader.load(agentData)(EtmpDataParser.parseFileWithAgents, EtmpDataLoader.dryRun)
+    res.futureValue should be(LoadOk(Json.obj("message" -> "3 unique objects imported successfully"), 3))
   }
 
   it should "parse Business Users payload" in {
@@ -71,8 +61,8 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
          |001|XDLD00000100001|ZLD|Lottery Duty (LD)|1|Sole Proprietor||Mr|Name12|Name22||RO
          |99|CUSTOMER_DATA|000000007""".stripMargin
 
-    val res = etmpDataLoader.load(businessUsersData)(EtmpDataParser.parseFileWithBusinessUsers, etmpDataLoader.dryRun)
-    res.futureValue should be(LoadOk(Json.obj("message" -> "7 unique objects imported successfully")))
+    val res = EtmpDataLoader.load(businessUsersData)(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
+    res.futureValue should be(LoadOk(Json.obj("message" -> "7 unique objects imported successfully"), 7))
   }
 
   it should "fail if input payload is corrupted" in {
@@ -82,7 +72,7 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
          |001|XTAL00000100
          |99|CUSTOMER_DATA|000000007""".stripMargin
 
-    val res = etmpDataLoader.load(corruptedData)(EtmpDataParser.parseFileWithBusinessUsers, etmpDataLoader.dryRun)
+    val res = EtmpDataLoader.load(corruptedData)(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
     res.futureValue should be(ParsingFailure(Json.obj("message" -> "Failed to parse due to unexpected format of line: 001|XTAL00000100")))
   }
 
@@ -99,7 +89,7 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
     val updateZeroRecords: Seq[EtmpBusinessUser] => Future[MultiBulkWriteResult] = _ =>
       Future.successful(MultiBulkWriteResult(true, 2, 0, Seq.empty[Upserted], Seq.empty[WriteError], None, None, None, 0))
 
-    val res = etmpDataLoader.load(businessUsersData)(EtmpDataParser.parseFileWithBusinessUsers, updateZeroRecords)
+    val res = EtmpDataLoader.load(businessUsersData)(EtmpDataParser.parseFileWithBusinessUsers, updateZeroRecords)
     res.futureValue should be(ServerFailure(Json.obj(
       "message" -> "Replaced existing records but failed to insert 2 records out of 4 in input",
       "details" -> "MultiBulkWriteResult(true,2,0,List(),List(),None,None,None,0)"

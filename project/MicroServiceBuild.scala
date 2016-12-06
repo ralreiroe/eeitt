@@ -57,7 +57,7 @@ private object AppDependencies {
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "uk.gov.hmrc" %% "reactivemongo-test" % reactiveMongoTestVersion % scope,
         "com.typesafe.akka" %% "akka-testkit" % "2.3.2" % "test",
-        "org.mockito" % "mockito-all" % "1.9.5" % "test"
+        "org.scalamock" %% "scalamock-scalatest-support" % "3.4.2" % "test"
       )
     }.test
   }
