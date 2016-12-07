@@ -4,7 +4,7 @@ import uk.gov.hmrc.eeitt.model.{ EtmpAgent, EtmpBusinessUser, Postcode }
 import uk.gov.hmrc.eeitt.utils.CountryCodes
 
 trait PostcodeValidator[A] {
-  def countryCode(a: A): String
+  def countryCode(a: A): Option[String]
   def postcode(a: A): Option[Postcode]
 }
 
@@ -19,7 +19,7 @@ object PostcodeValidator {
     def postcode(a: EtmpAgent) = a.postcode
   }
 
-  private def isFromTheUk(countryCode: String): Boolean = countryCode == CountryCodes.GB
+  private def isFromTheUk(countryCode: Option[String]): Boolean = countryCode.contains(CountryCodes.GB)
 
   private def normalize(s: Postcode) = s.value.replaceAll("\\s", "").toLowerCase
 

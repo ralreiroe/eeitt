@@ -8,8 +8,18 @@ class EtmpDataParserSpec extends UnitSpec {
   // there are more rules that are tested here but they relate to fields we don't really care about for now
 
   "Parsing individual lines of a flat file containing ETMP business users" should {
-    "succeed if line matches expected format" in {
-      val validLine = "001|regNum|taxReg|taxRegDesc|orgType|orgTypeDesc|orgName|title|name1|name2|postcode|countryCode"
+    "succeed if line matches expected format for UK" in {
+      val validLine = "001|regNum|taxReg|taxRegDesc|orgType|orgTypeDesc|orgName|title|name1|name2|postcode|GB"
+      noException should be thrownBy EtmpDataParser.parseBusinessUserLine(validLine)
+    }
+
+    "succeed if line matches expected format including no country code" in {
+      val validLine = "001|regNum|taxReg|taxRegDesc|orgType|orgTypeDesc|orgName|title|name1|name2|postcode|"
+      noException should be thrownBy EtmpDataParser.parseBusinessUserLine(validLine)
+    }
+
+    "succeed if line matches expected format including no postcode outside UK" in {
+      val validLine = "001|regNum|taxReg|taxRegDesc|orgType|orgTypeDesc|orgName|title|name1|name2||IT"
       noException should be thrownBy EtmpDataParser.parseBusinessUserLine(validLine)
     }
 
@@ -70,8 +80,28 @@ class EtmpDataParserSpec extends UnitSpec {
   }
 
   "Parsing individual lines of a flat file containing ETMP agents" should {
-    "succeed if line matches expected format" in {
-      val validLine = "fileType|arn|AgentIdType|AgentIdTypeDesc|AgentOrgType|AgentOrgTypeDesc|AgentOrgName|AgentTitle|AgentName1|AgentName2|AgentPostcode|AgentCountryCode|CustRegNum|CustTaxReg|CustTaxRegDesc|CustOrgType|CustOrgTypeDesc|CustOrgName|CustTitle|CustName1|CustName2|CustPostcode|CustCountryCode"
+    "succeed if line matches expected format for UK" in {
+      val validLine = "fileType|arn|AgentIdType|AgentIdTypeDesc|AgentOrgType|AgentOrgTypeDesc|AgentOrgName|AgentTitle|AgentName1|AgentName2|AgentPostcode|GB|CustRegNum|CustTaxReg|CustTaxRegDesc|CustOrgType|CustOrgTypeDesc|CustOrgName|CustTitle|CustName1|CustName2|CustPostcode|GB"
+      noException should be thrownBy EtmpDataParser.parseAgentLine(validLine)
+    }
+
+    "succeed if line matches expected format including no agent country code" in {
+      val validLine = "fileType|arn|AgentIdType|AgentIdTypeDesc|AgentOrgType|AgentOrgTypeDesc|AgentOrgName|AgentTitle|AgentName1|AgentName2|AgentPostcode||CustRegNum|CustTaxReg|CustTaxRegDesc|CustOrgType|CustOrgTypeDesc|CustOrgName|CustTitle|CustName1|CustName2|CustPostcode|GB"
+      noException should be thrownBy EtmpDataParser.parseAgentLine(validLine)
+    }
+
+    "succeed if line matches expected format including no agent postcode code from abroad" in {
+      val validLine = "fileType|arn|AgentIdType|AgentIdTypeDesc|AgentOrgType|AgentOrgTypeDesc|AgentOrgName|AgentTitle|AgentName1|AgentName2|AgentPostcode|IT|CustRegNum|CustTaxReg|CustTaxRegDesc|CustOrgType|CustOrgTypeDesc|CustOrgName|CustTitle|CustName1|CustName2|CustPostcode|GB"
+      noException should be thrownBy EtmpDataParser.parseAgentLine(validLine)
+    }
+
+    "succeed if line matches expected format including no customer country code" in {
+      val validLine = "fileType|arn|AgentIdType|AgentIdTypeDesc|AgentOrgType|AgentOrgTypeDesc|AgentOrgName|AgentTitle|AgentName1|AgentName2|AgentPostcode|GB|CustRegNum|CustTaxReg|CustTaxRegDesc|CustOrgType|CustOrgTypeDesc|CustOrgName|CustTitle|CustName1|CustName2|CustPostcode|"
+      noException should be thrownBy EtmpDataParser.parseAgentLine(validLine)
+    }
+
+    "succeed if line matches expected format including no customer postcode code from abroad" in {
+      val validLine = "fileType|arn|AgentIdType|AgentIdTypeDesc|AgentOrgType|AgentOrgTypeDesc|AgentOrgName|AgentTitle|AgentName1|AgentName2|AgentPostcode|GB|CustRegNum|CustTaxReg|CustTaxRegDesc|CustOrgType|CustOrgTypeDesc|CustOrgName|CustTitle|CustName1|CustName2||IT"
       noException should be thrownBy EtmpDataParser.parseAgentLine(validLine)
     }
 
