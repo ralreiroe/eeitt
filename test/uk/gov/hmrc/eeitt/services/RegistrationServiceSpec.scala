@@ -34,9 +34,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest =>
-        req should be(request) withClue "in addRegistration"
-      }
+      implicit val addRegistration = (_: RegisterBusinessUserRequest) => Future.successful(Right(()))
 
       val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(RESPONSE_OK)
@@ -56,8 +54,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       implicit val b = findRegistration(List(existingRegistration)) { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findRegistration"
       }
-
-      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
+      implicit val addRegistration = (_: RegisterBusinessUserRequest) => Future.successful(Right(()))
 
       val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(ALREADY_REGISTERED)
@@ -72,7 +69,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       }
 
       implicit val b = findRegistration(List.empty[RegistrationBusinessUser]) { req: RegisterBusinessUserRequest => /* is not called */ }
-      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
+      implicit val addRegistration = (_: RegisterBusinessUserRequest) => Future.successful(Right(()))
 
       val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
@@ -93,7 +90,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val addRegistration = (_: RegisterAgentRequest) => Future.successful(Right(()))
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
       response.futureValue should be(ALREADY_REGISTERED)
@@ -108,7 +105,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       }
 
       implicit val b = findRegistration(List.empty[RegistrationAgent]) { req: RegisterAgentRequest => /* is not called */ }
-      implicit val c = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val addRegistration = (_: RegisterAgentRequest) => Future.successful(Right(()))
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
       response.futureValue should be(INCORRECT_KNOWN_FACTS_AGENTS)
@@ -126,9 +123,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Left("failed-to-add-registration")) { req: RegisterAgentRequest =>
-        req should be(request) withClue "in addRegistration"
-      }
+      implicit val addRegistration = (_: RegisterAgentRequest) => Future.successful(Left("failed-to-add-registration"))
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
       response.futureValue should be(RegistrationResponse(Some("failed-to-add-registration")))
@@ -148,7 +143,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterAgentRequest => }
+      implicit val addRegistration = (_: RegisterAgentRequest) => Future.successful(Right(()))
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
       response.futureValue should be(MULTIPLE_FOUND)
@@ -166,20 +161,19 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
     }
   }
 
-  "AddRegistration type class" should {
+  "the addRegistration function" should {
 
-    "be defined for RegisterAgentRequest if there exists implicit value of RegistrationAgentRepository" in {
+    "be defined for RegisterAgentRequest, and should return the register method in the implicit  RegistrationAgentRepository returns" in {
       implicit val registrationAgentRepo = new RegistrationAgentRepository {
         def findRegistrations(groupId: GroupId): Future[List[RegistrationAgent]] = ???
-        def register(rr: RegisterAgentRequest): Future[Either[String, Unit]] = Future.successful(Right(()))
+        def register(rr: RegisterAgentRequest): Future[Either[String, Unit]] = Future.successful(Left("something returned by RegistrationAgentRepository"))
       }
-      val addRegistration = implicitly[AddRegistration[RegisterAgentRequest]]
-
       val request = RegisterAgentRequest(GroupId(""), Arn(""), Some(Postcode("")))
-      addRegistration(request).futureValue should be(Right(()))
+      uk.gov.hmrc.eeitt.implicits.addReg(request).futureValue should be(Left("something returned by RegistrationAgentRepository"))
     }
 
-    "be defined for RegisterBusinessUserRequest if there exists implicit value of RegistrationRepository" in {
+    "be defined for RegisterBusinessUserRequest, and should return the register method in the implicit RegistrationRepository returns" in {
+    "be defined for RegisterBusinessUserRequest, and should return the register method in the implicit RegistrationRepository returns" in {
       implicit val registrationRepo = new RegistrationRepository {
         def findRegistrations(groupId: GroupId, regimeId: RegimeId): Future[List[RegistrationBusinessUser]] = ???
         def register(rr: RegisterBusinessUserRequest): Future[Either[String, Unit]] = Future.successful(Right(()))

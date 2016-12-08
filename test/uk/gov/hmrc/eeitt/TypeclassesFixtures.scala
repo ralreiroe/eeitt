@@ -21,12 +21,4 @@ trait TypeclassFixtures {
       }
     }
 
-  def addRegistration[A](returnValue: Either[String, Unit])(checks: A => Unit): AddRegistration[A] =
-    new AddRegistration[A] {
-      def apply(req: A): Future[Either[String, Unit]] = {
-        checks(req)
-        Future.successful(returnValue)
-      }
-    }
-
 }

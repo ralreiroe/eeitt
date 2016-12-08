@@ -5,6 +5,7 @@ import play.api.http.Status
 import play.api.libs.json.{ JsObject, Json }
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
+import uk.gov.hmrc.eeitt.repositories.{ RegistrationRepository, RegistrationAgentRepository }
 import uk.gov.hmrc.eeitt.services.PrepopulationData
 import uk.gov.hmrc.eeitt.{ EtmpFixtures, RegistrationFixtures, TypeclassFixtures }
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
@@ -62,7 +63,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
     "return 200 and error if submitted known facts are different than stored known facts about business user" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("12LT009"), Some(Postcode("SE39EPX")))))
 
-      implicit val a = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
+      implicit val addRegistration = (_: RegisterBusinessUserRequest) => Future.successful(Right(()))
       implicit val b = findRegistration(List.empty[RegisterBusinessUserRequest]) { req: RegisterBusinessUserRequest => /* is not called */ }
 
       implicit val c = findUser(List.empty[EtmpBusinessUser]) { req: RegisterBusinessUserRequest =>
@@ -83,7 +84,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
     "return 200 and error if submitted known facts are different than stored known facts about agent" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("12LT009"), Some(Postcode("SE39EPX")))))
 
-      implicit val a = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val addRegistration = (_: RegisterAgentRequest) => Future.successful(Right(()))
       implicit val b = findRegistration(List.empty[RegisterAgentRequest]) { req: RegisterAgentRequest => /* is not called */ }
 
       implicit val c = findUser(List.empty[EtmpAgent]) { req: RegisterAgentRequest =>
@@ -104,7 +105,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
     "return 400 and error if submitted known facts are different than stored known facts about agent" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(Json.obj("invalid-request-json" -> "dummy"))
 
-      implicit val a = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val addRegistration = (_: RegisterAgentRequest) => Future.successful(Right(()))
       implicit val b = findRegistration(List.empty[RegisterAgentRequest]) { req: RegisterAgentRequest => /* is not called */ }
       implicit val c = findUser(List.empty[EtmpAgent]) { req: RegisterAgentRequest => /* is not called */ }
 

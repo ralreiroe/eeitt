@@ -12,10 +12,8 @@ import uk.gov.hmrc.eeitt.repositories._
 import scala.concurrent.Future
 
 object RegistrationController extends RegistrationController {
-  implicit lazy val registrationRepo = registrationRepository
-  implicit lazy val agentRegistrationRepo = agentRegistrationRepository
-  implicit lazy val etmpBusinessUserRepo = etmpBusinessUserRepository
-  implicit lazy val etmpAgentRepo = etmpAgentRepository
+
+  import uk.gov.hmrc.eeitt.implicits._
 
   def verification(groupId: GroupId, regimeId: RegimeId, affinityGroup: AffinityGroup) = affinityGroup match {
     case Agent => verify(groupId)
@@ -61,10 +59,11 @@ trait RegistrationController extends BaseController {
     }
   }
 
-  def register[A <: RegisterRequest: Reads: AddRegistration, B: PostcodeValidator](
+  def register[A <: RegisterRequest: Reads, B: PostcodeValidator](
     implicit
     findRegistration: FindRegistration[A],
-    findUser: FindUser[A, B]
+    findUser: FindUser[A, B],
+    addReg: A => Future[Either[String, Unit]]
   ) = Action.async(parse.json) { implicit request =>
     request.body.validate match {
       case JsSuccess(req, _) =>
