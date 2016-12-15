@@ -13,7 +13,7 @@ case class EtmpBusinessUser(
   customerName1: Option[String],
   customerName2: Option[String],
   postcode: Option[Postcode],
-  countryCode: String
+  countryCode: Option[String]
 )
 
 object EtmpBusinessUser {
@@ -31,7 +31,7 @@ case class EtmpAgent(
   name1: Option[String],
   name2: Option[String],
   postcode: Option[Postcode],
-  countryCode: String,
+  countryCode: Option[String],
   customers: Seq[EtmpBusinessUser]
 )
 

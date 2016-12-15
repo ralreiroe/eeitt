@@ -18,7 +18,7 @@ trait EtmpFixtures {
       Some(randomize("name1")),
       Some(randomize("name2")),
       Some(Postcode(randomize("postcode"))),
-      randomize("countryCode"),
+      Some(randomize("countryCode")),
       customers = Seq()
     )
   }
@@ -37,7 +37,7 @@ trait EtmpFixtures {
       Some(randomize("customerName1")),
       Some(randomize("customerName2")),
       Some(Postcode(randomize("postcode"))),
-      randomize("countryCode")
+      Some(randomize("countryCode"))
     )
   }
 

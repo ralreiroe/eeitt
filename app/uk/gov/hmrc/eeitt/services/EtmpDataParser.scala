@@ -13,7 +13,7 @@ object EtmpDataParser {
   }
 
   def parseBusinessUserLine(line: String): EtmpBusinessUser = {
-    line.split(escapedDelimiter) match {
+    line.split(escapedDelimiter, -1) match {
       case Array(
         fileType,
         registrationNumber,
@@ -40,7 +40,7 @@ object EtmpDataParser {
           optional(customerName1),
           optional(customerName2),
           mandatoryPostcodeIfFromTheUk(line, countryCode, Postcode(postcode)),
-          mandatory("countryCode", countryCode)
+          optional(countryCode)
         )
       }
       case _ => throw unexpectedNumberOfTokensException(line)
@@ -55,7 +55,7 @@ object EtmpDataParser {
   }
 
   def parseAgentLine(line: String): EtmpAgentRecord = {
-    val tokens = line.split(escapedDelimiter)
+    val tokens = line.split(escapedDelimiter, -1)
     val expectedNumberOfTokens = 23 // 23 > the unfortunate scala limit of 22 so had to make it more complex...
     val expectedPositionOfUser = 12
     if (tokens.size == expectedNumberOfTokens) {
@@ -86,7 +86,7 @@ object EtmpDataParser {
             optional(agentName1),
             optional(agentName2),
             mandatoryPostcodeIfFromTheUk(line, agentCountryCode, Postcode(agentPostcode)),
-            mandatory("agentCountryCode", agentCountryCode),
+            optional(agentCountryCode),
             customer = parseBusinessUserLine {
               // reusing customer parser but had to add a file type prefix which it expects
               val customerPartOfTheAgentLine = ("fileTypePrefix" +: userTokens).mkString(delimiter)
@@ -162,7 +162,7 @@ object EtmpDataParser {
     name1: Option[String],
     name2: Option[String],
     postcode: Option[Postcode],
-    countryCode: String,
+    countryCode: Option[String],
     customer: EtmpBusinessUser
   )
 
