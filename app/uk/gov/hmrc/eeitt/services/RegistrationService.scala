@@ -132,7 +132,7 @@ object RegistrationService {
             case Right(_) => RESPONSE_OK
             case Left(x) => RegistrationResponse(Some(x))
           }
-          case x :: Nil => Future.successful(ALREADY_REGISTERED)
+          case x :: Nil => Future.successful(RESPONSE_OK)
           case x :: xs => Future.successful(MULTIPLE_FOUND)
         }
       case _ =>
