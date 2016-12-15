@@ -44,7 +44,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
   }
 
   "Registering a business user with a group id which is present in repository" should {
-    "return an error if try to register another business user" in {
+    "return an error if try to register the same business user again" in {
 
       val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
       val existingRegistration = RegistrationBusinessUser(GroupId(""), RegistrationNumber(""), RegimeId(""))
@@ -60,7 +60,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
 
       val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
-      response.futureValue should be(ALREADY_REGISTERED)
+      response.futureValue should be(RESPONSE_OK)
     }
 
     "return an error if known facts do not agree with the request" in {
@@ -80,7 +80,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
   }
 
   "Registering a agent with a group id which is present in repository" should {
-    "return an error if try to register another agent" in {
+    "return OK if try to register the same agent again" in {
 
       val request = RegisterAgentRequest(GroupId("3"), Arn("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
       val existingRegistration = RegistrationAgent(GroupId(""), Arn(""))
@@ -96,7 +96,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       implicit val c = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
-      response.futureValue should be(ALREADY_REGISTERED)
+      response.futureValue should be(RESPONSE_OK)
     }
 
     "return an error if known facts do not agree with the request" in {
