@@ -8,13 +8,11 @@ import uk.gov.hmrc.eeitt.{ EtmpFixtures, RegistrationFixtures, TypeclassFixtures
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.eeitt.model.RegistrationResponse._
-import uk.gov.hmrc.eeitt.utils.CountryCodes
 import uk.gov.hmrc.eeitt.repositories.RegistrationAgentRepository
 import uk.gov.hmrc.eeitt.repositories.RegistrationRepository
 import uk.gov.hmrc.eeitt.repositories.EtmpAgentRepository
 import uk.gov.hmrc.eeitt.repositories.EtmpBusinessUsersRepository
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedClues with EtmpFixtures with RegistrationFixtures with TypeclassFixtures {
@@ -26,15 +24,15 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
 
       val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
 
-      implicit val a = findUser(List(testEtmpBusinessUser())) { req: RegisterBusinessUserRequest =>
+      implicit val a = FindUserTC.response(List(testEtmpBusinessUser())).withChecks { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List.empty[RegistrationBusinessUser]) { req: RegisterBusinessUserRequest =>
+      implicit val b = FindRegistrationTC.response(List.empty[RegistrationBusinessUser]).withChecks { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest =>
+      implicit val c = AddRegistrationTC.response(Right(())).withChecks { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in addRegistration"
       }
 
@@ -49,15 +47,15 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
       val existingRegistration = RegistrationBusinessUser(GroupId(""), RegistrationNumber(""), RegimeId(""))
 
-      implicit val a = findUser(List(testEtmpBusinessUser())) { req: RegisterBusinessUserRequest =>
+      implicit val a = FindUserTC.response(List(testEtmpBusinessUser())).withChecks { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List(existingRegistration)) { req: RegisterBusinessUserRequest =>
+      implicit val b = FindRegistrationTC.response(List(existingRegistration)).withChecks { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
+      implicit val c = AddRegistrationTC.response(Right(())).noChecks[RegisterBusinessUserRequest]
 
       val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(ALREADY_REGISTERED)
@@ -67,12 +65,12 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
 
       val request = RegisterBusinessUserRequest(GroupId("3"), RegistrationNumber("ALLX9876543210123"), Some(Postcode("ME1 9AB")))
 
-      implicit val a = findUser(List.empty[EtmpBusinessUser]) { req: RegisterBusinessUserRequest =>
+      implicit val a = FindUserTC.response(List.empty[EtmpBusinessUser]).withChecks { req: RegisterBusinessUserRequest =>
         req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List.empty[RegistrationBusinessUser]) { req: RegisterBusinessUserRequest => /* is not called */ }
-      implicit val c = addRegistration(Right(())) { req: RegisterBusinessUserRequest => /* is not called */ }
+      implicit val b = FindRegistrationTC.response(List.empty[RegistrationBusinessUser]).noChecks[RegisterBusinessUserRequest]
+      implicit val c = AddRegistrationTC.response(Right(())).noChecks[RegisterBusinessUserRequest]
 
       val response = RegistrationService.register[RegisterBusinessUserRequest, EtmpBusinessUser](request)
       response.futureValue should be(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
@@ -85,15 +83,15 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       val request = RegisterAgentRequest(GroupId("3"), Arn("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
       val existingRegistration = RegistrationAgent(GroupId(""), Arn(""))
 
-      implicit val a = findUser(List(testEtmpAgent())) { req: RegisterAgentRequest =>
+      implicit val a = FindUserTC.response(List(testEtmpAgent())).withChecks { req: RegisterAgentRequest =>
         req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List(existingRegistration)) { req: RegisterAgentRequest =>
+      implicit val b = FindRegistrationTC.response(List(existingRegistration)).withChecks { req: RegisterAgentRequest =>
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val c = AddRegistrationTC.response(Right(())).noChecks[RegisterAgentRequest]
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
       response.futureValue should be(ALREADY_REGISTERED)
@@ -103,12 +101,12 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
 
       val request = RegisterAgentRequest(GroupId("3"), Arn("ALLX9876543210123"), Some(Postcode("ME1 9AB")))
 
-      implicit val a = findUser(List.empty[EtmpAgent]) { req: RegisterAgentRequest =>
+      implicit val a = FindUserTC.response(List.empty[EtmpAgent]).withChecks { req: RegisterAgentRequest =>
         req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List.empty[RegistrationAgent]) { req: RegisterAgentRequest => /* is not called */ }
-      implicit val c = addRegistration(Right(())) { req: RegisterAgentRequest => /* is not called */ }
+      implicit val b = FindRegistrationTC.response(List.empty[RegistrationAgent]).noChecks[RegisterAgentRequest]
+      implicit val c = AddRegistrationTC.response(Right(())).noChecks[RegisterAgentRequest]
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
       response.futureValue should be(INCORRECT_KNOWN_FACTS_AGENTS)
@@ -118,15 +116,15 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
 
       val request = RegisterAgentRequest(GroupId("3"), Arn("ALLX9876543210123"), Some(Postcode("BN12 4XL")))
 
-      implicit val a = findUser(List(testEtmpAgent())) { req: RegisterAgentRequest =>
+      implicit val a = FindUserTC.response(List(testEtmpAgent())).withChecks { req: RegisterAgentRequest =>
         req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List.empty) { req: RegisterAgentRequest =>
+      implicit val b = FindRegistrationTC.response(List.empty).withChecks { req: RegisterAgentRequest =>
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Left("failed-to-add-registration")) { req: RegisterAgentRequest =>
+      implicit val c = AddRegistrationTC.response(Left("failed-to-add-registration")).withChecks { req: RegisterAgentRequest =>
         req should be(request) withClue "in addRegistration"
       }
 
@@ -140,15 +138,15 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
 
       val existingRegistration = RegistrationAgent(GroupId(""), Arn(""))
 
-      implicit val a = findUser(List(testEtmpAgent())) { req: RegisterAgentRequest =>
+      implicit val a = FindUserTC.response(List(testEtmpAgent())).withChecks { req: RegisterAgentRequest =>
         req should be(request) withClue "in findUser"
       }
 
-      implicit val b = findRegistration(List(existingRegistration, existingRegistration)) { req: RegisterAgentRequest =>
+      implicit val b = FindRegistrationTC.response(List(existingRegistration, existingRegistration)).withChecks { req: RegisterAgentRequest =>
         req should be(request) withClue "in findRegistration"
       }
 
-      implicit val c = addRegistration(Right(())) { req: RegisterAgentRequest => }
+      implicit val c = AddRegistrationTC.response(Right(())).noChecks[RegisterAgentRequest]
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
       response.futureValue should be(MULTIPLE_FOUND)

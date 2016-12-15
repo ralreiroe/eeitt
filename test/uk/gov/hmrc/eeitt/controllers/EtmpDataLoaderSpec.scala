@@ -4,11 +4,14 @@ import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
 import reactivemongo.api.commands.{ MultiBulkWriteResult, Upserted, WriteError }
+
 import scala.concurrent.Future
 import uk.gov.hmrc.eeitt.model.EtmpBusinessUser
 import uk.gov.hmrc.eeitt.services.EtmpDataParser
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
+  implicit val hc = new HeaderCarrier()
 
   "EtmpDataLoader" should "fail to parse empty input" in {
     val res = EtmpDataLoader.load("")(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
@@ -42,7 +45,7 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
          |99|AGENT_DATA|000000006""".stripMargin
 
     val res = EtmpDataLoader.load(agentData)(EtmpDataParser.parseFileWithAgents, EtmpDataLoader.dryRun)
-    res.futureValue should be(LoadOk(Json.obj("message" -> "3 unique objects imported successfully")))
+    res.futureValue should be(LoadOk(Json.obj("message" -> "3 unique objects imported successfully"), 3))
   }
 
   it should "parse Business Users payload" in {
@@ -59,7 +62,7 @@ class EtmpDataLoaderSpec extends FlatSpec with Matchers with ScalaFutures {
          |99|CUSTOMER_DATA|000000007""".stripMargin
 
     val res = EtmpDataLoader.load(businessUsersData)(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
-    res.futureValue should be(LoadOk(Json.obj("message" -> "7 unique objects imported successfully")))
+    res.futureValue should be(LoadOk(Json.obj("message" -> "7 unique objects imported successfully"), 7))
   }
 
   it should "fail if input payload is corrupted" in {
