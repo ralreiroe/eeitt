@@ -1,18 +1,32 @@
 package uk.gov.hmrc.eeitt.model
 
-import play.api.i18n.Messages
+import play.api.i18n.MessagesApi
 import play.api.libs.json.{ JsObject, JsString, Json, Writes }
 
-case class RegistrationResponse(error: Option[String])
+sealed trait RegistrationResponse {
 
-object RegistrationResponse {
-  implicit val registrationResponseWrites: Writes[RegistrationResponse] = Json.writes[RegistrationResponse]
-  val RESPONSE_OK = this(None)
-  val INCORRECT_KNOWN_FACTS_BUSINESS_USERS = this(Some(Messages("registration.incorrect.known.facts.business.users.msg")))
-  val INCORRECT_KNOWN_FACTS_AGENTS = this(Some(Messages("registration.incorrect.known.facts.agents.msg")))
-  val MULTIPLE_FOUND = this(Some(Messages("verification.response.multiple.found.msg")))
-  val INCORRECT_POSTCODE = this(Some(Messages("verification.response.incorrect.postcode.msg")))
-  val ALREADY_REGISTERED = this(Some(Messages("registration.already.registered")))
-  val IS_AGENT = this(Some(Messages("registration.is.registered.as.agent")))
-  val IS_NOT_AGENT = this(Some(Messages("registration.is.registered.as.not_agent")))
+  private def error(msg: String) = Json.obj("error" -> msg)
+
+  def toJson(messages: play.api.i18n.Messages): JsObject = this match {
+    case RESPONSE_OK => Json.obj()
+    case INCORRECT_KNOWN_FACTS_BUSINESS_USERS => error(messages("registration.incorrect.known.facts.business.users.msg"))
+    case INCORRECT_KNOWN_FACTS_AGENTS => error(messages("registration.incorrect.known.facts.agents.msg"))
+    case MULTIPLE_FOUND => error(messages("verification.response.multiple.found.msg"))
+    case INCORRECT_POSTCODE => error(messages("verification.response.incorrect.postcode.msg"))
+    case ALREADY_REGISTERED => error(messages("registration.already.registered"))
+    case IS_AGENT => error(messages("registration.is.registered.as.agent"))
+    case IS_NOT_AGENT => error(messages("registration.is.registered.as.not_agent"))
+    case Other(msg) => error(msg)
+
+  }
 }
+
+case object RESPONSE_OK extends RegistrationResponse
+case object INCORRECT_KNOWN_FACTS_BUSINESS_USERS extends RegistrationResponse
+case object INCORRECT_KNOWN_FACTS_AGENTS extends RegistrationResponse
+case object MULTIPLE_FOUND extends RegistrationResponse
+case object INCORRECT_POSTCODE extends RegistrationResponse
+case object ALREADY_REGISTERED extends RegistrationResponse
+case object IS_AGENT extends RegistrationResponse
+case object IS_NOT_AGENT extends RegistrationResponse
+case class Other(key: String) extends RegistrationResponse

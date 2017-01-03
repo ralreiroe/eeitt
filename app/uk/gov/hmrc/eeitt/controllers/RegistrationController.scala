@@ -1,6 +1,7 @@
 package uk.gov.hmrc.eeitt.controllers
 
 import play.api.Logger
+import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.libs.json._
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.model._
@@ -8,17 +9,20 @@ import uk.gov.hmrc.eeitt.services._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.eeitt.repositories._
-import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.typeclasses.{ HmrcAudit, SendRegistered }
 
 import scala.concurrent.Future
 
-object RegistrationController extends RegistrationController {
-  implicit lazy val registrationRepo = registrationRepository
-  implicit lazy val agentRegistrationRepo = agentRegistrationRepository
-  implicit lazy val etmpBusinessUserRepo = etmpBusinessUserRepository
-  implicit lazy val etmpAgentRepo = etmpAgentRepository
-  implicit lazy val auditService = new HmrcAuditService
+class RegistrationController(
+    val messagesApi: MessagesApi
+)(
+    implicit
+    registrationRepository: MongoRegistrationBusinessUserRepository,
+    agentRegistrationRepository: MongoRegistrationAgentRepository,
+    etmpBusinessUserRepository: MongoEtmpBusinessUsersRepository,
+    etmpAgentRepository: MongoEtmpAgentRepository,
+    auditService: AuditService
+) extends RegistrationControllerHelper {
 
   def verification(groupId: GroupId, regimeId: RegimeId, affinityGroup: AffinityGroup) = affinityGroup match {
     case Agent =>
@@ -44,7 +48,7 @@ object RegistrationController extends RegistrationController {
   def registerAgent = register[RegisterAgentRequest, EtmpAgent]
 }
 
-trait RegistrationController extends BaseController {
+trait RegistrationControllerHelper extends BaseController with I18nSupport {
 
   def verify[A: FindRegistration](findParams: A) = Action.async { implicit request =>
     RegistrationService.findRegistration(findParams)
@@ -76,17 +80,18 @@ trait RegistrationController extends BaseController {
     sendRegistered: SendRegistered[A],
     hmrcAudit: HmrcAudit[AuditData]
   ): Action[JsValue] = Action.async(parse.json) { implicit request =>
-
+    val messages = messagesApi.preferred(request)
     request.body.validate match {
       case JsSuccess(req, _) =>
-        RegistrationService.register(req).map {
-          case r @ RESPONSE_OK =>
-            val (postCode, tags) = sendRegistered(req)
-            val ad = new AuditData(request.path, postCode, tags)
-            hmrcAudit(ad)(hc(request))
-            Ok(Json.toJson(r))
-          case response =>
-            Ok(Json.toJson(response))
+        RegistrationService.register(req).map { regRes =>
+          regRes match {
+            case RESPONSE_OK =>
+              val (postCode, tags) = sendRegistered(req)
+              val ad = new AuditData(request.path, postCode, tags)
+              hmrcAudit(ad)(hc(request)) // send audit data
+            case _ =>
+          }
+          Ok(regRes.toJson(messages))
         }
       case JsError(jsonErrors) =>
         Logger.debug(s"incorrect request: $jsonErrors ")
@@ -94,8 +99,8 @@ trait RegistrationController extends BaseController {
         val response = jsonErrors match {
           // This occurs when registrationNumber is less that 15 characters. We want in such a case
           // return proper response (200) to the client.
-          case (JsPath(KeyPathNode("registrationNumber") :: _), _) :: _ => Ok(Json.toJson(INCORRECT_KNOWN_FACTS_BUSINESS_USERS))
-          case _ => BadRequest(Json.obj("message" -> JsError.toFlatJson(jsonErrors)))
+          case (JsPath(KeyPathNode("registrationNumber") :: _), _) :: _ => Ok(INCORRECT_KNOWN_FACTS_BUSINESS_USERS.toJson(messages))
+          case _ => BadRequest(Json.obj("message" -> JsError.toJson(jsonErrors)))
         }
         Future.successful(response)
     }
