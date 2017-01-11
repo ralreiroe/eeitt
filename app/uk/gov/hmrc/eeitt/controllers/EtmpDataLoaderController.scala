@@ -15,13 +15,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
 
-trait EtmpDataLoaderController extends BaseController {
+trait EtmpDataLoaderControllerHelper extends BaseController {
 
   def businessUserRepo: EtmpBusinessUsersRepository
 
   def agentRepo: EtmpAgentRepository
 
-  def auditService: AuditService = new HmrcAuditService
+  def auditService: AuditService
 
   def loadBusinessUsers = {
     Logger.info("Import business users - live")
@@ -55,7 +55,11 @@ trait EtmpDataLoaderController extends BaseController {
     }
 }
 
-object EtmpDataLoaderController extends EtmpDataLoaderController {
+class EtmpDataLoaderController(
+    etmpBusinessUserRepository: MongoEtmpBusinessUsersRepository,
+    etmpAgentRepository: MongoEtmpAgentRepository,
+    val auditService: AuditService
+) extends EtmpDataLoaderControllerHelper {
   val businessUserRepo = etmpBusinessUserRepository
   val agentRepo = etmpAgentRepository
 }

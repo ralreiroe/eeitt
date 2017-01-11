@@ -1,4 +1,5 @@
-import play.PlayImport.PlayKeys
+import play.sbt.PlayImport.PlayKeys
+import play.sbt.routes.RoutesKeys._
 import sbt.Keys._
 import sbt.Tests.{SubProcess, Group}
 import sbt._
@@ -24,13 +25,13 @@ trait MicroService {
 
 
   lazy val microservice = Project(appName, file("."))
-    .enablePlugins(Seq(play.PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin) ++ plugins : _*)
+    .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin) ++ plugins : _*)
     .settings(PlayKeys.playDefaultPort := 9191)
     .settings(playSettings : _*)
     .settings(scalaSettings: _*)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
-    .settings(play.PlayImport.PlayKeys.routesImport ++= Seq(
+    .settings(routesImport ++= Seq(
                 "uk.gov.hmrc.eeitt.binders.AffinityGroupBinder._",
                 "uk.gov.hmrc.eeitt.binders.ValueClassBinder._",
                 "uk.gov.hmrc.eeitt.model.AffinityGroup",
@@ -51,7 +52,9 @@ trait MicroService {
       addTestReportOption(IntegrationTest, "int-test-reports"),
       testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
       parallelExecution in IntegrationTest := false)
-    .settings(resolvers += Resolver.bintrayRepo("hmrc", "releases"))
+    .settings(
+      resolvers += Resolver.bintrayRepo("hmrc", "releases"),
+      resolvers += Resolver.jcenterRepo)
 }
 
 private object TestPhases {

@@ -2,14 +2,13 @@ package uk.gov.hmrc.eeitt.repositories
 
 import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatest.{ BeforeAndAfterEach, Inspectors, LoneElement }
-import org.specs2.matcher.ExceptionMatchers
 import reactivemongo.core.errors.DatabaseException
 import uk.gov.hmrc.eeitt.model.{ GroupId, RegistrationBusinessUser, RegimeId, RegistrationNumber }
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class RegistrationRepositorySpec extends UnitSpec with ExceptionMatchers with RegistrationRepositorySupport with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience {
+class RegistrationRepositorySpec extends UnitSpec with RegistrationRepositorySupport with BeforeAndAfterEach with ScalaFutures with LoneElement with Inspectors with IntegrationPatience {
 
   override protected def beforeEach(): Unit = {
     await(regRepo.removeAll())

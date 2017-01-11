@@ -1,7 +1,6 @@
 package uk.gov.hmrc.eeitt.services
 
 import play.api.libs.json.{ Json, JsObject }
-import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.eeitt.repositories._
 import uk.gov.hmrc.eeitt.services.PostcodeValidator._
@@ -130,7 +129,7 @@ object RegistrationService {
         findRegistration(registerRequest).flatMap {
           case Nil => addRegistration(registerRequest).map {
             case Right(_) => RESPONSE_OK
-            case Left(x) => RegistrationResponse(Some(x))
+            case Left(x) => Other(x)
           }
           case x :: Nil => Future.successful(RESPONSE_OK)
           case x :: xs => Future.successful(MULTIPLE_FOUND)

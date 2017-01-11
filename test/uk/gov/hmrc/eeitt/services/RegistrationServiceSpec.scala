@@ -7,7 +7,6 @@ import reactivemongo.api.commands.MultiBulkWriteResult
 import uk.gov.hmrc.eeitt.{ EtmpFixtures, RegistrationFixtures, TypeclassFixtures }
 import uk.gov.hmrc.eeitt.model._
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.repositories.RegistrationAgentRepository
 import uk.gov.hmrc.eeitt.repositories.RegistrationRepository
 import uk.gov.hmrc.eeitt.repositories.EtmpAgentRepository
@@ -129,7 +128,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       }
 
       val response = RegistrationService.register[RegisterAgentRequest, EtmpAgent](request)
-      response.futureValue should be(RegistrationResponse(Some("failed-to-add-registration")))
+      response.futureValue should be(Other("failed-to-add-registration"))
     }
 
     "return an error if multiple registration are found" in {

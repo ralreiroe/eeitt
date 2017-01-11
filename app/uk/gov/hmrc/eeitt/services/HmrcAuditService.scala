@@ -14,10 +14,10 @@ trait AuditService {
 
 }
 
-class HmrcAuditService extends AuditService {
+class HmrcAuditService(microserviceAuditConnector: MicroserviceAuditConnector) extends AuditService {
 
   val appName = "eeitt"
-  val audit = Audit(appName, MicroserviceAuditConnector)
+  val audit = Audit(appName, microserviceAuditConnector)
 
   def sendRegisteredEvent(path: String, postcode: Option[Postcode], tags: Map[String, String] = Map.empty)(implicit hc: HeaderCarrier): Unit = {
     val postcodeTag = postcode.map(p => ("postcode", p.value))

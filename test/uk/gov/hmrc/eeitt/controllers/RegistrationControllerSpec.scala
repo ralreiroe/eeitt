@@ -1,23 +1,32 @@
 package uk.gov.hmrc.eeitt.controllers
 
+import akka.stream.Materializer
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.Inside
+import play.api.Environment
 import play.api.http.Status
+import play.api.i18n.{ Messages, MessagesApi, DefaultLangs, DefaultMessagesApi }
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.test.{ FakeRequest, Helpers }
 import uk.gov.hmrc.eeitt.typeclasses.HmrcAudit
 import uk.gov.hmrc.eeitt.{ EtmpFixtures, RegistrationFixtures, TypeclassFixtures }
-import uk.gov.hmrc.eeitt.model.RegistrationResponse._
 import uk.gov.hmrc.eeitt.model.{ VerificationResponse, _ }
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.eeitt.checks._
+import uk.gov.hmrc.eeitt.ApplicationComponents
 
-class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with Inside with EtmpFixtures with RegistrationFixtures with TypeclassFixtures with ScalaFutures with MockFactory {
+class RegistrationControllerSpec extends UnitSpec with ApplicationComponents with Inside with EtmpFixtures with RegistrationFixtures with TypeclassFixtures with ScalaFutures with MockFactory {
 
-  object TestRegistrationController extends RegistrationController {}
+  implicit val materializer: Materializer = fakeApplication.materializer
+
+  val messagesApiDefault = new DefaultMessagesApi(Environment.simple(), fakeApplication.configuration, new DefaultLangs(fakeApplication.configuration))
+
+  object TestRegistrationController extends RegistrationControllerHelper {
+    val messagesApi = messagesApiDefault
+  }
 
   "GET /group-identifier/:gid/regimes/:regimeid/verification" should {
     "return 200 and is allowed for successful registration lookup where regime is authorised" in {
@@ -69,6 +78,8 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
 
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("1234567890ABCDE"), Some(Postcode("SE39EPX")))))
 
+      val messages = messagesApiDefault.preferred(fakeRequest)
+
       implicit val a = AddRegistrationTC
         .callCheck(addRegistrationCheck)
         .response(Right(()))
@@ -110,7 +121,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val action = TestRegistrationController.register[RegisterBusinessUserRequest, EtmpBusinessUser]
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_OK)
+      jsonBodyOf(await(result)) shouldBe RESPONSE_OK.toJson(messages)
     }
 
     "Register agent and send audit change" in {
@@ -121,6 +132,8 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val findRegistrationCheck = mock[FindRegistrationCheck]
 
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("1234567890ABCDE"), Some(Postcode("SE39EPX")))))
+
+      val messages = messagesApiDefault.preferred(fakeRequest)
 
       implicit val a = AddRegistrationTC
         .callCheck(addRegistrationCheck)
@@ -162,7 +175,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val action = TestRegistrationController.register[RegisterAgentRequest, EtmpAgent]
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(RESPONSE_OK)
+      jsonBodyOf(await(result)) shouldBe RESPONSE_OK.toJson(messages)
     }
 
     "return 200 and error if submitted known facts are different than stored known facts about business user" in {
@@ -170,6 +183,8 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val hmrcAuditCheck = mock[AuditCheck]
 
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterBusinessUserRequest(GroupId("1"), RegistrationNumber("1234567890ABCDE"), Some(Postcode("SE39EPX")))))
+
+      val messages = messagesApiDefault.preferred(fakeRequest)
 
       implicit val a = AddRegistrationTC.response(Right(())).noChecks[RegisterBusinessUserRequest]
       implicit val b = FindRegistrationTC.response(List.empty[RegisterBusinessUserRequest]).noChecks[RegisterBusinessUserRequest]
@@ -190,11 +205,12 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val action = TestRegistrationController.register[RegisterBusinessUserRequest, EtmpBusinessUser]
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_BUSINESS_USERS)
+      jsonBodyOf(await(result)) shouldBe INCORRECT_KNOWN_FACTS_BUSINESS_USERS.toJson(messages)
     }
 
     "return 200 and error if submitted known facts are different than stored known facts about agent" in {
       val fakeRequest = FakeRequest(Helpers.POST, "/register").withBody(toJson(RegisterAgentRequest(GroupId("1"), Arn("12LT009"), Some(Postcode("SE39EPX")))))
+      val messages = messagesApiDefault.preferred(fakeRequest)
 
       implicit val a = AddRegistrationTC.response(Right(())).noChecks[RegisterAgentRequest]
       implicit val b = FindRegistrationTC.response(List.empty[RegisterAgentRequest]).noChecks[RegisterAgentRequest]
@@ -217,7 +233,7 @@ class RegistrationControllerSpec extends UnitSpec with WithFakeApplication with 
       val action = TestRegistrationController.register[RegisterAgentRequest, EtmpAgent]
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      jsonBodyOf(await(result)) shouldBe toJson(INCORRECT_KNOWN_FACTS_AGENTS)
+      jsonBodyOf(await(result)) shouldBe INCORRECT_KNOWN_FACTS_AGENTS.toJson(messages)
     }
 
     "return 400 and error if submitted known facts are different than stored known facts about agent" in {
