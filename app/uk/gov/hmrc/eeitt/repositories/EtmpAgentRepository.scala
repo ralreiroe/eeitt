@@ -1,12 +1,13 @@
 package uk.gov.hmrc.eeitt.repositories
 
 import play.api.Logger
-import play.api.libs.json.Json
-import reactivemongo.api.commands.MultiBulkWriteResult
+import play.api.libs.json.{ JsObject, Json }
+import reactivemongo.api.commands.{ MultiBulkWriteResult, Upserted, WriteError }
 import reactivemongo.api.indexes.{ Index, IndexType }
 import reactivemongo.api.{ DB, ReadPreference }
 import reactivemongo.bson.BSONObjectID
-import uk.gov.hmrc.eeitt.model.{ EtmpAgent, Arn }
+import uk.gov.hmrc.eeitt.model.{ Arn, EtmpAgent }
+import uk.gov.hmrc.eeitt.utils.Differ
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -15,6 +16,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 trait EtmpAgentRepository {
   def findByArn(arn: Arn): Future[List[EtmpAgent]]
   def replaceAll(users: Seq[EtmpAgent]): Future[MultiBulkWriteResult]
+  def report(records: Seq[EtmpAgent]): Future[JsObject]
 }
 
 class MongoEtmpAgentRepository(implicit mongo: () => DB)
@@ -45,6 +47,14 @@ class MongoEtmpAgentRepository(implicit mongo: () => DB)
       } else {
         throw new Exception("Failed to replace users")
       }
+    }
+  }
+
+  def report(newRecords: Seq[EtmpAgent]): Future[JsObject] = {
+    findAll().map {
+      case oldRecords =>
+        val diffs = Differ.diff[EtmpAgent, Arn](oldRecords, newRecords, _.arn)
+        Json.obj("added" -> diffs.added.size, "changed" -> diffs.changed.size, "deleted" -> diffs.removed.size)
     }
   }
 

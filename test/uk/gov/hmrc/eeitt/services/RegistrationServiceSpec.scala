@@ -1,16 +1,14 @@
 package uk.gov.hmrc.eeitt.services
 
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.AppendedClues
-import org.scalatest.time.{ Span, Millis }
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Millis, Span}
+import play.api.libs.json.JsObject
 import reactivemongo.api.commands.MultiBulkWriteResult
-import uk.gov.hmrc.eeitt.{ EtmpFixtures, RegistrationFixtures, TypeclassFixtures }
 import uk.gov.hmrc.eeitt.model._
+import uk.gov.hmrc.eeitt.repositories.{EtmpAgentRepository, EtmpBusinessUsersRepository, RegistrationAgentRepository, RegistrationRepository}
+import uk.gov.hmrc.eeitt.{EtmpFixtures, RegistrationFixtures, TypeclassFixtures}
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.eeitt.repositories.RegistrationAgentRepository
-import uk.gov.hmrc.eeitt.repositories.RegistrationRepository
-import uk.gov.hmrc.eeitt.repositories.EtmpAgentRepository
-import uk.gov.hmrc.eeitt.repositories.EtmpBusinessUsersRepository
 
 import scala.concurrent.Future
 
@@ -193,6 +191,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       implicit val etmpAgentRepo = new EtmpAgentRepository {
         def findByArn(arn: Arn): Future[List[EtmpAgent]] = Future.successful(List.empty[EtmpAgent])
         def replaceAll(users: Seq[EtmpAgent]): Future[MultiBulkWriteResult] = ???
+        def report(users: Seq[EtmpAgent]): Future[JsObject] = ???
       }
 
       val findUser = implicitly[FindUser[RegisterAgentRequest, EtmpAgent]]
@@ -204,6 +203,7 @@ class RegistrationServiceSpec extends UnitSpec with ScalaFutures with AppendedCl
       implicit val etmpAgentRepo = new EtmpBusinessUsersRepository {
         def findByRegistrationNumber(registrationNumber: RegistrationNumber): Future[List[EtmpBusinessUser]] = Future.successful(List.empty[EtmpBusinessUser])
         def replaceAll(users: Seq[EtmpBusinessUser]): Future[MultiBulkWriteResult] = ???
+        def report(existingRecords: Seq[EtmpBusinessUser]): Future[JsObject] = ???
       }
 
       val findUser = implicitly[FindUser[RegisterBusinessUserRequest, EtmpBusinessUser]]
