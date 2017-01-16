@@ -1,12 +1,13 @@
 package uk.gov.hmrc.eeitt.repositories
 
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{ JsObject, Json }
 import reactivemongo.api.DB
 import reactivemongo.api.commands.MultiBulkWriteResult
 import reactivemongo.api.indexes.{ Index, IndexType }
 import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.eeitt.model.{ EtmpBusinessUser, RegistrationNumber }
+import uk.gov.hmrc.eeitt.utils.{ Diff, Differ }
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -15,6 +16,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 trait EtmpBusinessUsersRepository {
   def findByRegistrationNumber(registrationNumber: RegistrationNumber): Future[List[EtmpBusinessUser]]
   def replaceAll(users: Seq[EtmpBusinessUser]): Future[MultiBulkWriteResult]
+  def report(existingRecords: Seq[EtmpBusinessUser]): Future[JsObject]
 }
 
 class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
@@ -48,4 +50,11 @@ class MongoEtmpBusinessUsersRepository(implicit mongo: () => DB)
     }
   }
 
+  def report(newRecords: Seq[EtmpBusinessUser]): Future[JsObject] = {
+    findAll().map {
+      case (existing) =>
+        val diff: Diff[RegistrationNumber] = Differ.diff[EtmpBusinessUser, RegistrationNumber](existing, newRecords, _.registrationNumber)
+        Json.obj("added" -> diff.added.size, "changed" -> diff.changed.size, "deleted" -> diff.removed.size)
+    }
+  }
 }

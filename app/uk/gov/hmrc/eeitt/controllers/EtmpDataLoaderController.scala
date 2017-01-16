@@ -4,9 +4,9 @@ import play.api.Logger
 import play.api.libs.json.{ JsObject, Json }
 import play.api.mvc.Action
 import reactivemongo.api.commands.{ MultiBulkWriteResult, Upserted, WriteError }
-import uk.gov.hmrc.eeitt.typeclasses.SendDataLoadEvent
 import uk.gov.hmrc.eeitt.repositories._
-import uk.gov.hmrc.eeitt.services.{ AuditService, EtmpDataParser, HmrcAuditService, LineParsingException }
+import uk.gov.hmrc.eeitt.services.{ AuditService, EtmpDataParser, LineParsingException }
+import uk.gov.hmrc.eeitt.typeclasses.SendDataLoadEvent
 import uk.gov.hmrc.eeitt.utils.NonFatalWithLogging
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -25,27 +25,31 @@ trait EtmpDataLoaderControllerHelper extends BaseController {
 
   def loadBusinessUsers = {
     Logger.info("Import business users - live")
-    load(EtmpDataParser.parseFileWithBusinessUsers, businessUserRepo.replaceAll)
+    load(EtmpDataParser.parseFileWithBusinessUsers, businessUserRepo.replaceAll, businessUserRepo.report)
   }
 
   def loadAgents = {
     Logger.info("Import agents - live")
-    load(EtmpDataParser.parseFileWithAgents, agentRepo.replaceAll)
+    load(EtmpDataParser.parseFileWithAgents, agentRepo.replaceAll, agentRepo.report)
   }
 
   def loadBusinessUsersDryRun = {
     Logger.info("Import business users - dry-run")
-    load(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun)
+    load(EtmpDataParser.parseFileWithBusinessUsers, EtmpDataLoader.dryRun, businessUserRepo.report)
   }
 
   def loadAgentsDryRun = {
     Logger.info("Import agents - dry-run")
-    load(EtmpDataParser.parseFileWithAgents, EtmpDataLoader.dryRun)
+    load(EtmpDataParser.parseFileWithAgents, EtmpDataLoader.dryRun, agentRepo.report)
   }
 
-  def load[A](parseFile: String => Seq[A], replaceAll: Seq[A] => Future[MultiBulkWriteResult])(implicit sendData: SendDataLoadEvent[A]) =
+  def load[A](
+    parseFile: String => Seq[A],
+    replaceAll: Seq[A] => Future[MultiBulkWriteResult],
+    report: Seq[A] => Future[JsObject] = EtmpDataLoader.noReport
+  )(implicit sendData: SendDataLoadEvent[A]) =
     Action.async(parse.tolerantText) { implicit request =>
-      EtmpDataLoader.load(request.body)(parseFile, replaceAll).map {
+      EtmpDataLoader.load(request.body)(parseFile, replaceAll, report).map {
         case LoadOk(json, numberOfRecords) =>
           auditService.sendDataLoadEvent("/etmp-data/live", sendData(numberOfRecords))
           Ok(json)
@@ -77,20 +81,28 @@ object EtmpDataLoader {
   def dryRun[A](records: Seq[A]): Future[MultiBulkWriteResult] =
     Future.successful(MultiBulkWriteResult(true, records.size, 0, Seq.empty[Upserted], Seq.empty[WriteError], None, None, None, 0))
 
-  def load[A](requestBody: String)(parseFile: String => Seq[A], replaceAll: Seq[A] => Future[MultiBulkWriteResult])(implicit hc: HeaderCarrier): Future[EtmpDataLoaderResult] = {
+  def load[A](requestBody: String)(
+    parseFile: String => Seq[A],
+    replaceAll: Seq[A] => Future[MultiBulkWriteResult],
+    report: Seq[A] => Future[JsObject] = noReport
+  )(implicit hc: HeaderCarrier): Future[EtmpDataLoaderResult] = {
     Try(parseFile(requestBody)) match {
       case Success(records @ _ :: _) =>
-        replaceAll(records).map { writeResult =>
+        replaceAll(records).flatMap { writeResult =>
           val expectedNumberOfInserts = records.size
           if (writeResult.ok && writeResult.n == expectedNumberOfInserts) {
-            LoadOk(Json.obj("message" -> s"$expectedNumberOfInserts unique objects imported successfully"), expectedNumberOfInserts)
+            report(records).flatMap { diffrep =>
+              Future.successful(LoadOk(
+                Json.obj("message" -> s"$expectedNumberOfInserts unique objects imported successfully").++(diffrep), expectedNumberOfInserts
+              ))
+            }
           } else {
-            ServerFailure(
+            Future.successful(ServerFailure(
               Json.obj(
                 "message" -> s"Replaced existing records but failed to insert ${expectedNumberOfInserts - writeResult.n} records out of ${expectedNumberOfInserts} in input",
                 "details" -> writeResult.toString
               )
-            )
+            ))
           }
         }
       case Success(Nil) =>
@@ -104,4 +116,7 @@ object EtmpDataLoader {
         Future.successful(ParsingFailure(Json.obj("message" -> e.getMessage)))
     }
   }
+
+  def noReport[A] = (_: Seq[A]) => Future.successful(JsObject(Nil))
+
 }

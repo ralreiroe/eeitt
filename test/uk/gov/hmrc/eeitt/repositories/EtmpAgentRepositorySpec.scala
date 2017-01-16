@@ -2,6 +2,7 @@ package uk.gov.hmrc.eeitt.repositories
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
+import play.api.libs.json.Json
 import uk.gov.hmrc.eeitt.EtmpFixtures
 import uk.gov.hmrc.eeitt.model.{ Arn, EtmpAgent }
 import uk.gov.hmrc.mongo.MongoSpecSupport
@@ -29,15 +30,21 @@ class EtmpAgentRepositorySpec extends UnitSpec with MongoSpecSupport with Before
     "insert new agents if there were none before" in {
       val expectedAgents = (1 to 10).map(_ => testEtmpAgent())
 
+      repo.report(expectedAgents).futureValue shouldBe Json.obj("added" -> 10, "changed" -> 0, "deleted" -> 0)
+
       await(repo.replaceAll(expectedAgents))
 
       repo.findAll().futureValue should contain theSameElementsAs expectedAgents
+
+      repo.report(expectedAgents).futureValue shouldBe Json.obj("added" -> 0, "changed" -> 0, "deleted" -> 0)
+
     }
     "replace all existing agents with a new set of agents" in {
       val existingAgents = (1 to 10).map(_ => testEtmpAgent())
       await(repo.bulkInsert(existingAgents))
       val newAgents = (1 to 5).map(_ => testEtmpAgent())
 
+      repo.report(newAgents).futureValue shouldBe Json.obj("added" -> 5, "changed" -> 0, "deleted" -> 10)
       await(repo.replaceAll(newAgents))
 
       repo.findAll().futureValue should contain theSameElementsAs newAgents
