@@ -2,12 +2,12 @@ package uk.gov.hmrc.eeitt.services
 
 import org.scalatest.AppendedClues
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Span}
+import org.scalatest.time.{ Millis, Span }
 import play.api.libs.json.JsObject
 import reactivemongo.api.commands.MultiBulkWriteResult
 import uk.gov.hmrc.eeitt.model._
-import uk.gov.hmrc.eeitt.repositories.{EtmpAgentRepository, EtmpBusinessUsersRepository, RegistrationAgentRepository, RegistrationRepository}
-import uk.gov.hmrc.eeitt.{EtmpFixtures, RegistrationFixtures, TypeclassFixtures}
+import uk.gov.hmrc.eeitt.repositories.{ EtmpAgentRepository, EtmpBusinessUsersRepository, RegistrationAgentRepository, RegistrationRepository }
+import uk.gov.hmrc.eeitt.{ EtmpFixtures, RegistrationFixtures, TypeclassFixtures }
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future

@@ -11,3 +11,5 @@
 
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes
+
+DELETE        /test-only/prepop-data/:dataType/:id                 uk.gov.hmrc.eeitt.controllers.PrepopDataController.delete(dataType : String,id : String)

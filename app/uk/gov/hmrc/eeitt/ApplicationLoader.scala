@@ -20,7 +20,7 @@ import play.core.SourceMapper
 import play.modules.reactivemongo.ReactiveMongoComponentImpl
 import reactivemongo.api.DefaultDB
 import scala.concurrent.Future
-import uk.gov.hmrc.eeitt.controllers.{ RegistrationController, EtmpDataLoaderController }
+import uk.gov.hmrc.eeitt.controllers.{ RegistrationController, EtmpDataLoaderController, PrepopDataController }
 import uk.gov.hmrc.eeitt.repositories.{ MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationAgentRepository, MongoRegistrationBusinessUserRepository }
 import uk.gov.hmrc.eeitt.services.HmrcAuditService
 import uk.gov.hmrc.play.filters.{ NoCacheFilter, RecoveryFilter }
@@ -138,6 +138,7 @@ trait ApplicationModule extends BuiltInComponents
   lazy val registrationController = new RegistrationController(messagesApi)(registrationRepository, agentRegistrationRepository, etmpBusinessUserRepository, etmpAgentRepository, auditService)
 
   lazy val etmpDataLoaderController = new EtmpDataLoaderController(etmpBusinessUserRepository, etmpAgentRepository, auditService)
+  lazy val prepopDataController = new PrepopDataController()
 
   // We need to create explicit AdminController and provide it into injector so Runtime DI could be able
   // to find it when endpoints in health.Routes are being called
@@ -149,7 +150,7 @@ trait ApplicationModule extends BuiltInComponents
 
   lazy val metricsController = new MetricsController(metrics)
 
-  lazy val appRouter = new app.Routes(httpErrorHandler, registrationController, etmpDataLoaderController)
+  lazy val appRouter = new app.Routes(httpErrorHandler, registrationController, etmpDataLoaderController, prepopDataController)
 
   override lazy val router: Router = new prod.Routes(httpErrorHandler, appRouter, healthRoutes, metricsController)
 
