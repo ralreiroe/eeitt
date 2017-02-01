@@ -2,30 +2,27 @@ package uk.gov.hmrc.eeitt.controllers
 
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.MicroserviceShortLivedCache
+import uk.gov.hmrc.eeitt.model.PrepopulationJsonData
+import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Success
 
 trait PrepopDataControllerHelper extends BaseController {
-  def get(dataType: String, id: String) = Action.async {
-    //    val x = MicroserviceShortLivedCache.fetchAndGetEntry(id, dataType)
-    //    x match {
-    //      case Some(s) => ???
-    //      case _ => ???
-    //    }
-    val d: Option[String] = ???
-    d match {
-      case Some(jsonData) => Future.successful(Ok(jsonData))
-      case None => Future.successful(NotFound)
+  def get(formId: String, cacheId: String) = Action.async { implicit request =>
+    MicroserviceShortLivedCache.fetchAndGetEntry[PrepopulationJsonData](cacheId, formId).map {
+      case Some(d) => Ok(d.data)
+      case None => NotFound
     }
   }
 
-  def put(dataType: String, id: String, jsonData: String) = Action.async {
-    Future.successful(Ok)
-  }
-
-  def delete(dataType: String, id: String) = Action.async {
-    Future.successful(Ok)
+  def put(formId: String, cacheId: String, jsonData: String) = Action.async { implicit request =>
+    MicroserviceShortLivedCache.cache[PrepopulationJsonData](cacheId, formId, PrepopulationJsonData(jsonData)).map {
+      case c: CacheMap => Ok
+      case _ => BadRequest
+    }
   }
 
 }
