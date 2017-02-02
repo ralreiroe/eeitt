@@ -51,6 +51,7 @@ class RegistrationController(
 trait RegistrationControllerHelper extends BaseController with I18nSupport {
 
   def verify[A: FindRegistration](findParams: A) = Action.async { implicit request =>
+    Logger.info("We here ZZZZZZZZZZZ")
     RegistrationService.findRegistration(findParams)
       .map(_.size == 1)
       .map(response => Ok(Json.toJson(VerificationResponse(response))))
