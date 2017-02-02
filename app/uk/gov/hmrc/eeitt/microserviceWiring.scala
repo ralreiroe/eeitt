@@ -12,7 +12,7 @@ import uk.gov.hmrc.play.http.ws._
 import play.api.libs.ws.WSAPI
 import play.api.libs.ws.WSRequest
 
-object WSHttp extends WSGet with WSPut with WSPost with WSDelete with WSPatch with AppName {
+object WSHttp extends WSGet with WSPut with WSDelete with AppName {
   override val hooks: Seq[HttpHook] = NoneRequired
 }
 

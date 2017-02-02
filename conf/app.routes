@@ -13,5 +13,5 @@ POST       /etmp-data/live/agents                               uk.gov.hmrc.eeit
 POST       /etmp-data/dry-run/business-users                    uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadBusinessUsersDryRun
 POST       /etmp-data/dry-run/agents                            uk.gov.hmrc.eeitt.controllers.EtmpDataLoaderController.loadAgentsDryRun
 
-GET        /prepopulation/:formId/:cacheId                           uk.gov.hmrc.eeitt.controllers.PrepopDataController.get(formId : String, cacheId : String)
-PUT        /prepopulation/:formId/:cacheId/:jsonData                 uk.gov.hmrc.eeitt.controllers.PrepopDataController.put(formId : String, cacheId : String, jsonData : String)
+GET        /prepopulation/:formId/:cacheId                           uk.gov.hmrc.eeitt.controllers.PrepopulationDataController.get(formId : String, cacheId : String)
+PUT        /prepopulation/:formId/:cacheId/:jsonData                 uk.gov.hmrc.eeitt.controllers.PrepopulationDataController.put(formId : String, cacheId : String, jsonData : String)

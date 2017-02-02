@@ -20,7 +20,7 @@ import play.core.SourceMapper
 import play.modules.reactivemongo.ReactiveMongoComponentImpl
 import reactivemongo.api.DefaultDB
 import scala.concurrent.Future
-import uk.gov.hmrc.eeitt.controllers.{ RegistrationController, EtmpDataLoaderController, PrepopDataController }
+import uk.gov.hmrc.eeitt.controllers.{ RegistrationController, EtmpDataLoaderController, PrepopulationDataController }
 import uk.gov.hmrc.eeitt.repositories.{ MongoEtmpAgentRepository, MongoEtmpBusinessUsersRepository, MongoRegistrationAgentRepository, MongoRegistrationBusinessUserRepository }
 import uk.gov.hmrc.eeitt.services.HmrcAuditService
 import uk.gov.hmrc.play.filters.{ NoCacheFilter, RecoveryFilter }
@@ -138,13 +138,13 @@ trait ApplicationModule extends BuiltInComponents
   lazy val registrationController = new RegistrationController(messagesApi)(registrationRepository, agentRegistrationRepository, etmpBusinessUserRepository, etmpAgentRepository, auditService)
 
   lazy val etmpDataLoaderController = new EtmpDataLoaderController(etmpBusinessUserRepository, etmpAgentRepository, auditService)
-  lazy val prepopDataController = new PrepopDataController()
+  lazy val prepopDataController = new PrepopulationDataController()
 
   // We need to create explicit AdminController and provide it into injector so Runtime DI could be able
   // to find it when endpoints in health.Routes are being called
   lazy val adminController = new AdminController(configuration)
 
-  lazy val customInjector: Injector = new SimpleInjector(injector) + adminController
+  lazy val customInjector: Injector = new SimpleInjector(injector) + adminController + wsApi
 
   lazy val healthRoutes: health.Routes = health.Routes
 
