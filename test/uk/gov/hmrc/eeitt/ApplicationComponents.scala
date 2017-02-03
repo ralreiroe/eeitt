@@ -16,15 +16,32 @@
 
 package uk.gov.hmrc.eeitt
 
-import org.scalatest.{ BeforeAndAfterAll, Suite, TestData, TestSuite }
-import org.scalatestplus.play.guice.GuiceOneAppPerTest
+import org.scalatest.{ BeforeAndAfterAll, TestSuite }
+import org.scalatestplus.play.guice.{ GuiceOneAppPerSuite, GuiceOneAppPerTest }
 import play.api._
-import play.api.test.Helpers._
 
-trait ApplicationComponents extends GuiceOneAppPerTest with BeforeAndAfterAll {
+trait ApplicationComponentsOnePerTest extends GuiceOneAppPerTest with ApplicationComponents {
   this: TestSuite =>
 
   override val fakeApplication = new ApplicationLoader().load(context)
+
+  override def beforeAll() = beforeAll(fakeApplication)
+
+  override def afterAll() = afterAll(fakeApplication)
+}
+
+trait ApplicationComponentsOnePerSuite extends GuiceOneAppPerSuite with ApplicationComponents {
+  this: TestSuite =>
+
+  override val fakeApplication = new ApplicationLoader().load(context)
+
+  override def beforeAll() = beforeAll(fakeApplication)
+
+  override def afterAll() = afterAll(fakeApplication)
+}
+
+trait ApplicationComponents extends BeforeAndAfterAll {
+  this: TestSuite =>
 
   def context: ApplicationLoader.Context = {
     val classLoader = ApplicationLoader.getClass.getClassLoader
@@ -32,13 +49,14 @@ trait ApplicationComponents extends GuiceOneAppPerTest with BeforeAndAfterAll {
     ApplicationLoader.createContext(env)
   }
 
-  override def beforeAll() {
+  def beforeAll(a: Application) {
     super.beforeAll()
-    Play.start(fakeApplication)
+    Play.start(a)
   }
 
-  override def afterAll() {
+  def afterAll(a: Application) {
     super.afterAll()
-    Play.stop(fakeApplication)
+    Play.stop(a)
   }
+
 }
