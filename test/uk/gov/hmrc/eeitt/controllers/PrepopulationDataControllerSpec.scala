@@ -4,10 +4,10 @@ import org.scalatest.concurrent.ScalaFutures
 import play.api.Play
 import play.api.http.Status
 import play.api.test.FakeRequest
-import uk.gov.hmrc.eeitt.ApplicationComponents
+import uk.gov.hmrc.eeitt.ApplicationComponentsOnePerSuite
 import uk.gov.hmrc.play.test.UnitSpec
 
-class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponents with ScalaFutures {
+class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponentsOnePerSuite with ScalaFutures {
 
   implicit val m = fakeApplication.materializer
 

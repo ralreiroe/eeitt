@@ -16,9 +16,9 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{ UnitSpec, WithFakeApplication }
 import org.scalamock.scalatest.MockFactory
 import uk.gov.hmrc.eeitt.checks._
-import uk.gov.hmrc.eeitt.ApplicationComponents
+import uk.gov.hmrc.eeitt.ApplicationComponentsOnePerTest
 
-class RegistrationControllerSpec extends UnitSpec with ApplicationComponents with Inside with EtmpFixtures with RegistrationFixtures with TypeclassFixtures with ScalaFutures with MockFactory {
+class RegistrationControllerSpec extends UnitSpec with ApplicationComponentsOnePerTest with Inside with EtmpFixtures with RegistrationFixtures with TypeclassFixtures with ScalaFutures with MockFactory {
 
   implicit val materializer: Materializer = fakeApplication.materializer
 
