@@ -4,12 +4,11 @@ import org.scalatest.concurrent.ScalaFutures
 import play.api.Play
 import play.api.http.Status
 import play.api.libs.json.{Reads, Writes}
-import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.eeitt.model.PrepopulationJsonData
 import uk.gov.hmrc.eeitt.{ApplicationComponentsOnePerSuite, MicroserviceShortLivedCache}
 import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -22,73 +21,78 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
   object PrepopulationDataController extends PrepopulationDataControllerHelper {}
 
   object PrepopulationDataHelper extends BaseController {
-    val hc = HeaderCarrier()
-    def fetchAndGetEntry[T](cacheId: String,
-                            key: String, rds: Reads[T]): Future[Option[T]] =
-      MicroserviceShortLivedCache.fetchAndGetEntry[T](cacheId, key)(hc, rds)
 
-    def cache[A](cacheId: String,
-                 formId: String, body: A)(implicit hc: HeaderCarrier,
-                                          wts: Writes[A]): Future[CacheMap] =
-      MicroserviceShortLivedCache.cache[A](cacheId, formId, body)(hc, wts)
+    implicit val hc = HeaderCarrier()
+    implicit val wts = PrepopulationJsonData.formatWrites
+    implicit val rds = PrepopulationJsonData.formatReads
 
-    }
+    def fetchAndGetEntry(cacheId: String, key: String): Future[Option[PrepopulationJsonData]] =
+      MicroserviceShortLivedCache.fetchAndGetEntry[PrepopulationJsonData](cacheId, key)
 
-  "GET /prepopulation/:formId/:cacheId" should {
+    def cache(cacheId: String, formId: String, body: PrepopulationJsonData): Future[CacheMap] =
+      MicroserviceShortLivedCache.cache[PrepopulationJsonData](cacheId, formId, body)
+
+    def remove(cacheId: String): Future[HttpResponse] =
+      MicroserviceShortLivedCache.remove(cacheId)(hc)
+
+  }
+
+  "GET /prepopulation/:cacheId/:formId" should {
     "return 404 for unknown ids" in {
+      await(PrepopulationDataHelper.remove("i-and-and"))
       val fakeRequest = FakeRequest()
-      val action = PrepopulationDataController.get("iii", "i-and-i")
+      val action = PrepopulationDataController.get("i-and-i", "iii")
       val result = action(fakeRequest)
       status(result) shouldBe Status.NOT_FOUND
     }
   }
 
-  "PUT /prepopulation/:formId/:cacheId/:jsonData" should {
-    "return 200" in {
+  "GET /prepopulation/:cacheId/:formId" should {
+    "return 200 for with correct data for existing cached data" in {
       val fakeRequest = FakeRequest()
-      val action = PrepopulationDataController.put("ii", "i-and-i", "{}")
+      await(PrepopulationDataHelper.cache("i-and-i", "ii", PrepopulationJsonData(""""{"i":"and-"}"""")))
+      val action = PrepopulationDataController.get("i-and-i", "ii")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      val p = PrepopulationDataHelper.fetchAndGetEntry[PrepopulationJsonData]("i-and-i", "ii", PrepopulationJsonData.formatReads)
-      await(p) shouldBe Some(PrepopulationJsonData("{}"))
+      bodyOf(await(result)) shouldBe """"{"i":"and-"}""""
     }
   }
 
-  "GET /prepopulation/:formId/:cacheId" should {
-    "return 200 for with correct data for what was put" in {
+  "PUT /prepopulation/:cacheId/:formId/:jsonData" should {
+    "return 200 and the data now cached" in {
       val fakeRequest = FakeRequest()
-      val action = PrepopulationDataController.get("ii", "i-and-i")
+      await(PrepopulationDataHelper.remove("i-and-i"))
+      val action = PrepopulationDataController.put("i-and-i", "ii", """"{"i":"and-"}"""")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      bodyOf(await(result)) shouldBe "{}"
+      await(PrepopulationDataHelper.fetchAndGetEntry("i-and-i", "ii")) shouldBe
+        Some(PrepopulationJsonData(""""{"i":"and-"}""""))
     }
   }
 
-  "PUT /prepopulation/:formId/:cacheId/:jsonData" should {
-    "return 200 to put another formId to the same cacheId" in {
+  "PUT /prepopulation/:cacheId/:formId/:jsonData" should {
+    "return 200 to put another formId to the same cacheId, both formIds should have correct data" in {
       val fakeRequest = FakeRequest()
-      val action = PrepopulationDataController.put("ii", "i-and-and", """{"i":"and"}""")
+      await(PrepopulationDataHelper.remove("i-and-and"))
+      await(PrepopulationDataHelper.cache("i-and-and", "i", PrepopulationJsonData(""""{"i":"and-"}"""")))
+      val action = PrepopulationDataController.put("i-and-and", "ii", """{"i":"and-and"}""")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
+      await(PrepopulationDataHelper.fetchAndGetEntry("i-and-and", "i")) shouldBe
+        Some(PrepopulationJsonData(""""{"i":"and-"}""""))
+      await(PrepopulationDataHelper.fetchAndGetEntry("i-and-and", "ii")) shouldBe
+        Some(PrepopulationJsonData("""{"i":"and-and"}"""))
     }
   }
 
-  "GET /prepopulation/:formId/:cacheId" should {
-    "return 200 for with correct data for what was put to the second formId" in {
+  "DELETE /prepopulation/:cacheId" should {
+    "return 200 and the data should no longer be cached" in {
       val fakeRequest = FakeRequest()
-      val action = PrepopulationDataController.get("ii", "i-and-and")
+      await(PrepopulationDataHelper.cache("i-and-i", "ii", PrepopulationJsonData(""""{"i":"and-"}"""")))
+      val action = PrepopulationDataController.delete("i-and-i")
       val result = action(fakeRequest)
-      status(result) shouldBe Status.OK
-      bodyOf(await(result)) shouldBe """{"i":"and"}"""
-    }
-  }
-  "GET /prepopulation/:formId/:cacheId" should {
-    "return 200 for with correct data for what was put to the first formId" in {
-      val fakeRequest = FakeRequest()
-      val action = PrepopulationDataController.get("ii", "i-and-i")
-      val result = action(fakeRequest)
-      status(result) shouldBe Status.OK
-      bodyOf(await(result)) shouldBe "{}"
+      status(result) shouldBe Status.NO_CONTENT
+      await(PrepopulationDataHelper.fetchAndGetEntry("i-and-i", "ii")) shouldBe None
     }
   }
 
