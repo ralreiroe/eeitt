@@ -25,7 +25,8 @@ trait PrepopulationDataControllerHelper extends BaseController {
     }
   }
 
-  def put(cacheId: String, formId: String, jsonData: String) = Action.async { implicit request =>
+  def put(cacheId: String, formId: String) = Action.async { implicit request =>
+    val jsonData = request.body.asText.getOrElse("")
     val c = MicroserviceShortLivedCache.cache[PrepopulationJsonData](cacheId, formId, PrepopulationJsonData(jsonData))
     c.map {
       case c: CacheMap => {
