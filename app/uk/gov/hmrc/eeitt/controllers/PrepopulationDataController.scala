@@ -1,6 +1,7 @@
 package uk.gov.hmrc.eeitt.controllers
 
 import play.api.Logger
+import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.eeitt.MicroserviceShortLivedCache
 import uk.gov.hmrc.eeitt.model.PrepopulationJsonData
@@ -16,7 +17,7 @@ trait PrepopulationDataControllerHelper extends BaseController {
     fetched.map {
       case Some(d) => {
         Logger.info(s"""PrepopulationDataControllerHelper fetchAndGetEntry("$cacheId","$formId") returned $d""")
-        Ok(d.data)
+        Ok(Json.parse(d.data))
       }
       case None => {
         Logger.info(s"""PrepopulationDataControllerHelper fetchAndGetEntry("$cacheId","$formId") returned None""")
@@ -26,7 +27,8 @@ trait PrepopulationDataControllerHelper extends BaseController {
   }
 
   def put(cacheId: String, formId: String) = Action.async { implicit request =>
-    val jsonData = request.body.asText.getOrElse("")
+    val jsonData2 : String = request.body.asText.getOrElse("")
+    val jsonData : String = (request.body.asJson.map{x => x.toString}).getOrElse("")
     val c = MicroserviceShortLivedCache.cache[PrepopulationJsonData](cacheId, formId, PrepopulationJsonData(jsonData))
     c.map {
       case c: CacheMap => {

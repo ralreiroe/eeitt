@@ -3,7 +3,7 @@ package uk.gov.hmrc.eeitt.controllers
 import org.scalatest.concurrent.ScalaFutures
 import play.api.Play
 import play.api.http.Status
-import play.api.libs.json.{Reads, Writes}
+import play.api.libs.json.{JsValue, Json, Reads, Writes}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.eeitt.model.PrepopulationJsonData
 import uk.gov.hmrc.eeitt.{ApplicationComponentsOnePerSuite, MicroserviceShortLivedCache}
@@ -50,36 +50,36 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
   "GET /prepopulation/:cacheId/:formId" should {
     "return 200 for with correct data for existing cached data" in {
       val fakeRequest = FakeRequest()
-      await(PrepopulationDataHelper.cache("i-and-i", "ii", PrepopulationJsonData(""""{"i":"and-"}"""")))
+      await(PrepopulationDataHelper.cache("i-and-i", "ii", PrepopulationJsonData("""{"i":"and-"}""")))
       val action = PrepopulationDataController.get("i-and-i", "ii")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      bodyOf(await(result)) shouldBe """"{"i":"and-"}""""
+      bodyOf(await(result)) shouldBe """{"i":"and-"}"""
     }
   }
 
   "PUT /prepopulation/:cacheId/:formId/:jsonData" should {
     "return 200 and the data now cached" in {
-      val fakeRequest = FakeRequest().withTextBody(""""{"i":"and-"}"""")
+      val fakeRequest = FakeRequest().withJsonBody(Json.parse("""{"i":"and-"}"""))
       await(PrepopulationDataHelper.remove("i-and-i"))
       val action = PrepopulationDataController.put("i-and-i", "ii")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
       await(PrepopulationDataHelper.fetchAndGetEntry("i-and-i", "ii")) shouldBe
-        Some(PrepopulationJsonData(""""{"i":"and-"}""""))
+        Some(PrepopulationJsonData("""{"i":"and-"}"""))
     }
   }
 
   "PUT /prepopulation/:cacheId/:formId/:jsonData" should {
     "return 200 to put another formId to the same cacheId, both formIds should have correct data" in {
-      val fakeRequest = FakeRequest().withTextBody("""{"i":"and-and"}""")
+      val fakeRequest = FakeRequest().withJsonBody(Json.parse("""{"i":"and-and"}"""))
       await(PrepopulationDataHelper.remove("i-and-and"))
-      await(PrepopulationDataHelper.cache("i-and-and", "i", PrepopulationJsonData(""""{"i":"and-"}"""")))
+      await(PrepopulationDataHelper.cache("i-and-and", "i", PrepopulationJsonData("""{"i":"and-"}""")))
       val action = PrepopulationDataController.put("i-and-and", "ii")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
       await(PrepopulationDataHelper.fetchAndGetEntry("i-and-and", "i")) shouldBe
-        Some(PrepopulationJsonData(""""{"i":"and-"}""""))
+        Some(PrepopulationJsonData("""{"i":"and-"}"""))
       await(PrepopulationDataHelper.fetchAndGetEntry("i-and-and", "ii")) shouldBe
         Some(PrepopulationJsonData("""{"i":"and-and"}"""))
     }
@@ -88,7 +88,7 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
   "DELETE /prepopulation/:cacheId" should {
     "return 200 and the data should no longer be cached" in {
       val fakeRequest = FakeRequest()
-      await(PrepopulationDataHelper.cache("i-and-i", "ii", PrepopulationJsonData(""""{"i":"and-"}"""")))
+      await(PrepopulationDataHelper.cache("i-and-i", "ii", PrepopulationJsonData("""{"i":"and-"}""")))
       val action = PrepopulationDataController.delete("i-and-i")
       val result = action(fakeRequest)
       status(result) shouldBe Status.NO_CONTENT
