@@ -19,14 +19,9 @@ trait PrepopulationDataControllerHelper extends BaseController {
     }
   }
 
-    def put(cacheId: String, formId: String) = Action.async(parse.json) { implicit request =>
-      MicroserviceShortLivedCache.cache[JsValue](cacheId, formId, request.body).map {
-        case c: CacheMap =>
-          Ok
-        case _ =>
-          BadRequest
-      }
-    }
+  def put(cacheId: String, formId: String) = Action.async(parse.json) { implicit request =>
+    MicroserviceShortLivedCache.cache[JsValue](cacheId, formId, request.body).map(_ => Ok)
+  }
 
   def delete(cacheId: String) = Action.async { implicit request =>
     MicroserviceShortLivedCache.remove(cacheId).map {
