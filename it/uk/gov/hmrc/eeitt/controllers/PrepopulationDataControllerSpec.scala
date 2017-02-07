@@ -64,7 +64,7 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
 
   "PUT /prepopulation/:cacheId/:formId/:jsonData" should {
     "return 200 and the data now cached" in {
-      val fakeRequest = FakeRequest().withJsonBody(Json.parse("""{"i":"and-"}"""))
+      val fakeRequest = FakeRequest().withBody(Json.parse("""{"i":"and-"}"""))
       await(PrepopulationDataHelper.remove("i-and-i"))
       val action = PrepopulationDataController.put("i-and-i", "ii")
       val result = action(fakeRequest)
@@ -76,7 +76,7 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
 
   "PUT /prepopulation/:cacheId/:formId/:jsonData" should {
     "return 200 to put another formId to the same cacheId, both formIds should have correct data" in {
-      val fakeRequest = FakeRequest().withJsonBody(Json.parse("""{"i":"and-and"}"""))
+      val fakeRequest = FakeRequest().withBody(Json.parse("""{"i":"and-and"}"""))
       await(PrepopulationDataHelper.remove("i-and-and"))
       await(PrepopulationDataHelper.cache("i-and-and", "i", Json.toJson("""{"i":"and-"}""")))
       val action = PrepopulationDataController.put("i-and-and", "ii")
