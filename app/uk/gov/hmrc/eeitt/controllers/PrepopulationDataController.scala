@@ -8,12 +8,10 @@ import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 trait PrepopulationDataControllerHelper extends BaseController {
   def get(cacheId: String, formId: String) = Action.async { implicit request =>
-    val fetched = MicroserviceShortLivedCache.fetchAndGetEntry[JsValue](cacheId, formId)
-    fetched.map {
+    MicroserviceShortLivedCache.fetchAndGetEntry[JsValue](cacheId, formId).map {
       case Some(d) =>
         Ok(d)
       case None =>
@@ -21,19 +19,17 @@ trait PrepopulationDataControllerHelper extends BaseController {
     }
   }
 
-  def put(cacheId: String, formId: String) = Action.async { implicit request =>
-    request.body.asJson.map {
-      case v: JsValue =>
-        MicroserviceShortLivedCache.cache[JsValue](cacheId, formId, v).map {
-          case c: CacheMap =>
-            Ok
-        }
-    }.getOrElse(Future.successful(BadRequest))
-  }
+    def put(cacheId: String, formId: String) = Action.async(parse.json) { implicit request =>
+      MicroserviceShortLivedCache.cache[JsValue](cacheId, formId, request.body).map {
+        case c: CacheMap =>
+          Ok
+        case _ =>
+          BadRequest
+      }
+    }
 
   def delete(cacheId: String) = Action.async { implicit request =>
-    val c = MicroserviceShortLivedCache.remove(cacheId)
-    c.map {
+    MicroserviceShortLivedCache.remove(cacheId).map {
       case hr: HttpResponse if (hr.status == NO_CONTENT) =>
         NoContent
       case _ =>
