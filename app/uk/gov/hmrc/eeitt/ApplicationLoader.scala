@@ -138,7 +138,7 @@ trait ApplicationModule extends BuiltInComponents
   lazy val registrationController = new RegistrationController(messagesApi)(registrationRepository, agentRegistrationRepository, etmpBusinessUserRepository, etmpAgentRepository, auditService)
 
   lazy val etmpDataLoaderController = new EtmpDataLoaderController(etmpBusinessUserRepository, etmpAgentRepository, auditService)
-  lazy val prepopDataController = new PrepopulationDataController()
+  lazy val prepopDataController = new PrepopulationDataController(MicroserviceShortLivedCache)
 
   // We need to create explicit AdminController and provide it into injector so Runtime DI could be able
   // to find it when endpoints in health.Routes are being called
