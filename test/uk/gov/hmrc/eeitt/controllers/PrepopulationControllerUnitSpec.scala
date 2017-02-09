@@ -23,7 +23,7 @@ class PrepopulationControllerUnitSpec extends UnitSpec {
     "return 204 (No Content) for unknown ids" in {
 
       val cacheReturningNoneUponFetch = new ShortLivedCacheStub {
-        override def fetchAndGetEntry[T](cacheId: String, key: String)(implicit hc: HeaderCarrier, rds: Reads[T]): Future[Option[T]] = Future.successful(None)
+        override def fetchAndGetEntry[T](c: String, k: String)(implicit hc: HeaderCarrier, r: Reads[T]) = Future.successful(None)
       }
 
       val irrelevant = "1"
