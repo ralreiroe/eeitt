@@ -74,7 +74,8 @@ private object AppDependencies {
         "org.scalatest" %% "scalatest" % scalaTestVersion % scope,
         "org.pegdown" % "pegdown" % pegdownVersion % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-        "uk.gov.hmrc" %% "reactivemongo-test" % reactiveMongoTestVersion % scope
+        "uk.gov.hmrc" %% "reactivemongo-test" % reactiveMongoTestVersion % scope,
+        "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0-M1" % scope
       )
     }.test
   }
