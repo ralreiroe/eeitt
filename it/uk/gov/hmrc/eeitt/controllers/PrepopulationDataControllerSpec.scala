@@ -18,39 +18,24 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
 
   implicit val m = fakeApplication.materializer
 
-  object PrepopulationDataController extends PrepopulationDataControllerHelper {}
+  implicit val hc = HeaderCarrier()
 
-  object PrepopulationDataHelper extends BaseController {
+  val prepopController = new PrepopulationDataController(MicroserviceShortLivedCache)
 
-    implicit val hc = HeaderCarrier()
+  def fetchAndGetEntry(cacheId: String, key: String): Future[Option[JsValue]] =
+    MicroserviceShortLivedCache.fetchAndGetEntry[JsValue](cacheId, key)
 
+  def cache(cacheId: String, formId: String, body: JsValue): Future[CacheMap] =
+    MicroserviceShortLivedCache.cache[JsValue](cacheId, formId, body)
 
-    def fetchAndGetEntry(cacheId: String, key: String): Future[Option[JsValue]] =
-      MicroserviceShortLivedCache.fetchAndGetEntry[JsValue](cacheId, key)
-
-    def cache(cacheId: String, formId: String, body: JsValue): Future[CacheMap] =
-      MicroserviceShortLivedCache.cache[JsValue](cacheId, formId, body)
-
-    def remove(cacheId: String): Future[HttpResponse] =
-      MicroserviceShortLivedCache.remove(cacheId)(hc)
-
-  }
-
-  "GET /prepopulation/:cacheId/:formId" should {
-    "return 404 for unknown ids" in {
-      await(PrepopulationDataHelper.remove("i-and-and"))
-      val fakeRequest = FakeRequest()
-      val action = PrepopulationDataController.get("i-and-i", "iii")
-      val result = action(fakeRequest)
-      status(result) shouldBe Status.NOT_FOUND
-    }
-  }
+  def remove(cacheId: String): Future[HttpResponse] =
+    MicroserviceShortLivedCache.remove(cacheId)
 
   "GET /prepopulation/:cacheId/:formId" should {
     "return 200 for with correct data for existing cached data" in {
       val fakeRequest = FakeRequest()
-      await(PrepopulationDataHelper.cache("i-and-i", "ii", Json.toJson("""{"i":"and-"}""")))
-      val action = PrepopulationDataController.get("i-and-i", "ii")
+      await(cache("i-and-i", "ii", Json.toJson("""{"i":"and-"}""")))
+      val action = prepopController.get("i-and-i", "ii")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
       val await1: Result = await(result)
@@ -65,11 +50,11 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
   "PUT /prepopulation/:cacheId/:formId/:jsonData" should {
     "return 200 and the data now cached" in {
       val fakeRequest = FakeRequest().withBody(Json.parse("""{"i":"and-"}"""))
-      await(PrepopulationDataHelper.remove("i-and-i"))
-      val action = PrepopulationDataController.put("i-and-i", "ii")
+      await(remove("i-and-i"))
+      val action = prepopController.put("i-and-i", "ii")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      await(PrepopulationDataHelper.fetchAndGetEntry("i-and-i", "ii")) shouldBe
+      await(fetchAndGetEntry("i-and-i", "ii")) shouldBe
         Some(Json.parse("""{"i":"and-"}"""))
     }
   }
@@ -77,14 +62,14 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
   "PUT /prepopulation/:cacheId/:formId/:jsonData" should {
     "return 200 to put another formId to the same cacheId, both formIds should have correct data" in {
       val fakeRequest = FakeRequest().withBody(Json.parse("""{"i":"and-and"}"""))
-      await(PrepopulationDataHelper.remove("i-and-and"))
-      await(PrepopulationDataHelper.cache("i-and-and", "i", Json.toJson("""{"i":"and-"}""")))
-      val action = PrepopulationDataController.put("i-and-and", "ii")
+      await(remove("i-and-and"))
+      await(cache("i-and-and", "i", Json.toJson("""{"i":"and-"}""")))
+      val action = prepopController.put("i-and-and", "ii")
       val result = action(fakeRequest)
       status(result) shouldBe Status.OK
-      await(PrepopulationDataHelper.fetchAndGetEntry("i-and-and", "i")) shouldBe
+      await(fetchAndGetEntry("i-and-and", "i")) shouldBe
         Some(Json.toJson("""{"i":"and-"}"""))
-      await(PrepopulationDataHelper.fetchAndGetEntry("i-and-and", "ii")) shouldBe
+      await(fetchAndGetEntry("i-and-and", "ii")) shouldBe
         Some(Json.parse("""{"i":"and-and"}"""))
     }
   }
@@ -92,11 +77,11 @@ class PrepopulationDataControllerSpec extends UnitSpec with ApplicationComponent
   "DELETE /prepopulation/:cacheId" should {
     "return 200 and the data should no longer be cached" in {
       val fakeRequest = FakeRequest()
-      await(PrepopulationDataHelper.cache("i-and-i", "ii", Json.toJson("""{"i":"and-"}""")))
-      val action = PrepopulationDataController.delete("i-and-i")
+      await(cache("i-and-i", "ii", Json.toJson("""{"i":"and-"}""")))
+      val action = prepopController.delete("i-and-i")
       val result = action(fakeRequest)
       status(result) shouldBe Status.NO_CONTENT
-      await(PrepopulationDataHelper.fetchAndGetEntry("i-and-i", "ii")) shouldBe None
+      await(fetchAndGetEntry("i-and-i", "ii")) shouldBe None
     }
   }
 
