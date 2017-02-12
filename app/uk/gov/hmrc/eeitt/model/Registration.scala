@@ -1,16 +1,7 @@
 package uk.gov.hmrc.eeitt.model
 
 import play.api.data.validation.ValidationError
-import play.api.libs.json.{
-  Json,
-  OFormat,
-  Format,
-  JsResult,
-  JsSuccess,
-  JsError,
-  JsString,
-  JsValue
-}
+import play.api.libs.json._
 
 class GroupId(val value: String) extends AnyVal
 class RegimeId(val value: String) extends AnyVal
@@ -51,10 +42,11 @@ object RegistrationNumber {
   def apply(value: String) = new RegistrationNumber(value)
 
   implicit val format: Format[RegistrationNumber] = {
-    val format = ValueClassFormat.format(RegistrationNumber.apply)(_.value)
-    val reads = format.filter(ValidationError("Registration number must be 15 characters long"))(_.value.size == 15)
-
+    val format: Format[RegistrationNumber] = ValueClassFormat.format(RegistrationNumber.apply)(_.value)
+    val reads: Reads[RegistrationNumber] =
+      format.filter(ValidationError("Registration number must be 15 characters long"))(_.value.size == 15)
     Format(reads, format)
+
   }
 }
 

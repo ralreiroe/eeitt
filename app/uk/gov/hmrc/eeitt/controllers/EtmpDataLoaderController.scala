@@ -84,27 +84,43 @@ object EtmpDataLoader {
   def load[A](requestBody: String)(
     parseFile: String => Seq[A],
     replaceAll: Seq[A] => Future[MultiBulkWriteResult],
-    report: Seq[A] => Future[JsObject] = noReport
+    report: Seq[A] => Future[JsObject] = EtmpDataLoader.noReport
   )(implicit hc: HeaderCarrier): Future[EtmpDataLoaderResult] = {
+
     Try(parseFile(requestBody)) match {
-      case Success(records @ _ :: _) =>
-        replaceAll(records).flatMap { writeResult =>
-          val expectedNumberOfInserts = records.size
-          if (writeResult.ok && writeResult.n == expectedNumberOfInserts) {
-            report(records).flatMap { diffrep =>
-              Future.successful(LoadOk(
-                Json.obj("message" -> s"$expectedNumberOfInserts unique objects imported successfully").++(diffrep), expectedNumberOfInserts
-              ))
-            }
-          } else {
-            Future.successful(ServerFailure(
-              Json.obj(
-                "message" -> s"Replaced existing records but failed to insert ${expectedNumberOfInserts - writeResult.n} records out of ${expectedNumberOfInserts} in input",
-                "details" -> writeResult.toString
+
+      case Success(records @ _ :: _) => {
+
+        val ret: Future[EtmpDataLoaderResult with Product with Serializable] =
+        (for {
+          eventualdiff <- report(records)
+          eventualwriteresult <- replaceAll(records)
+        } yield {
+          (eventualdiff, eventualwriteresult)
+        }).map {
+          case (diffrep, writeResult) =>
+            val expectedNumberOfInserts = records.size
+            if (writeResult.ok && writeResult.n == expectedNumberOfInserts) {
+              LoadOk(Json.obj("message" -> s"$expectedNumberOfInserts unique objects imported successfully") ++ (diffrep), expectedNumberOfInserts)
+            } else {
+              ServerFailure(
+                Json.obj(
+                  "message" -> s"Replaced existing records but failed to insert ${expectedNumberOfInserts - writeResult.n} records out of ${expectedNumberOfInserts} in input",
+                  "details" -> writeResult.toString
+                )
               )
+            }
+        } recover {
+          case (ex: Exception) => {
+            Logger.error(s"Unexpected failure when talking to db: $ex")
+            ServerFailure(Json.obj(
+              "message" -> s"unexpected",
+              "details" -> ex.toString
             ))
           }
         }
+        ret
+      }
       case Success(Nil) =>
         Future.successful(ParsingFailure(Json.obj(
           "message" -> "Not a single input line was parsed correctly.",
